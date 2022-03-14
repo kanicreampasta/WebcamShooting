@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { degToRad } from 'three/src/math/MathUtils';
+import "./index.css"
+
 
 const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer();
 const scene: THREE.Scene = new THREE.Scene();
