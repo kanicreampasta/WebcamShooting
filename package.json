@@ -23,7 +23,9 @@
   "homepage": "https://github.com/kanicreampasta/cannonJsFpsTest#readme",
   "dependencies": {
     "@types/cannon": "^0.1.8",
-    "cannon": "^0.6.2"
+    "@types/three": "^0.138.0",
+    "cannon": "^0.6.2",
+    "three": "^0.138.3"
   },
   "devDependencies": {
     "@webpack-cli/generators": "^2.4.2",
