@@ -1,10 +1,15 @@
 {
-  "name": "cannonjsfpstest",
+  "name": "my-webpack-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "My webpack project",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --mode=production --node-env=production",
+    "build:dev": "webpack --mode=development",
+    "build:prod": "webpack --mode=production --node-env=production",
+    "watch": "webpack --watch",
+    "serve": "webpack serve"
   },
   "repository": {
     "type": "git",
@@ -22,7 +27,12 @@
   },
   "devDependencies": {
     "@webpack-cli/generators": "^2.4.2",
+    "html-webpack-plugin": "^5.1.0",
+    "prettier": "^2.2.1",
+    "ts-loader": "^9.2.8",
+    "typescript": "^4.6.2",
     "webpack": "^5.70.0",
-    "webpack-cli": "^4.9.2"
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^3.11.2"
   }
 }
