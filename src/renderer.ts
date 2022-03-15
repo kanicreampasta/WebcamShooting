@@ -20,6 +20,13 @@ export class RenderingManager {
 		this.scene.add(ambient);
 		this.scene.add(directionalLight);
 		document.body.appendChild(this.renderer.domElement);
+
+		// Pointer Lock API
+		const canvas = this.renderer.domElement;
+		canvas.requestPointerLock = canvas.requestPointerLock || (canvas as any).mozRequestPointerLock;
+		canvas.addEventListener('click', () => {
+			canvas.requestPointerLock();
+		});
 	}
 	render() {
 		this.renderer.render(this.scene, this.camera);
@@ -43,5 +50,8 @@ export class RenderingManager {
 		mesh.setRotationFromEuler(rotation);
 		mesh.position.set(position.x, position.y, position.z);
 		this.scene.add(mesh);
+	}
+	getCanvas(): HTMLCanvasElement {
+		return this.renderer.domElement;
 	}
 }
