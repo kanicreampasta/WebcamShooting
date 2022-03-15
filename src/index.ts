@@ -1,103 +1,53 @@
 import * as THREE from 'three';
 import * as CANNON from "cannon";
 import "./index.css";
-
-
-const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer();
-const scene: THREE.Scene = new THREE.Scene();
-
-const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
-camera.position.set(0, 1, 10);
-camera.aspect = window.innerWidth / window.innerHeight;
-
-{
-	const testMesh: THREE.Mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-	testMesh.setRotationFromEuler(new THREE.Euler(0, 45, 0));
-	testMesh.position.set(0, 0, 0);
-	scene.add(testMesh);
-}
-{
-	const testMesh: THREE.Mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-	testMesh.setRotationFromEuler(new THREE.Euler(0, 45, 0));
-	testMesh.position.set(2, 0, 0);
-	scene.add(testMesh);
-}
-{
-	const testMesh: THREE.Mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
-	testMesh.setRotationFromEuler(new THREE.Euler(0, 45, 0));
-	testMesh.position.set(-2, 0, 0);
-	scene.add(testMesh);
-}
-renderer.setSize(window.innerWidth, window.innerHeight);
-
-const directionalLight: THREE.DirectionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(0, 1, 1);
-const ambient: THREE.AmbientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambient);
-scene.add(directionalLight);
-
-document.body.appendChild(renderer.domElement);
-
-
-const world = new CANNON.World();
-world.gravity.set(0, -9.82, 0);
-world.broadphase = new CANNON.NaiveBroadphase();
-(world.solver as CANNON.GSSolver).iterations = 10;
-world.allowSleep = true;
-
-{
-	const cubeBody: CANNON.Body = new CANNON.Body({ mass: 0 });
-	cubeBody.addShape(new CANNON.Box(new CANNON.Vec3(10, 0.5, 10)));
-	cubeBody.position.x = 0;
-	cubeBody.position.y = -5;
-	cubeBody.position.z = -5;
-	cubeBody.quaternion.setFromEuler(0, 0, Math.PI / 4);
-	world.addBody(cubeBody);
-	const floor: THREE.Mesh =
-		new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-	floor.position.set(cubeBody.position.x, cubeBody.position.y, cubeBody.position.z);
-	floor.quaternion.set(cubeBody.quaternion.x, cubeBody.quaternion.y, cubeBody.quaternion.z, cubeBody.quaternion.w);
-	scene.add(floor);
-}
-
-const playerBody: CANNON.Body = new CANNON.Body({ mass: 1 });
-playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0, 0));
-playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0.5, 0));
-playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, -0.5, 0));
-playerBody.position.y = 2;
-playerBody.position.z = -5;
-// playerBody.quaternion.setFromEuler(0,0,Math.PI/4);
-playerBody.fixedRotation = true;
-playerBody.updateMassProperties();
-world.addBody(playerBody);
-
-const playerMesh: THREE.Object3D = new THREE.Object3D();
-{
-	for (let i: number = -1; i <= 1; i++) {
-		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-		sphere.position.set(0, i * 0.5, 0);
-		playerMesh.add(sphere);
+import { RenderingManager } from "./renderer";
+import { PhysicsManager } from "./physics";
+import { Player } from "./player";
+class GameManager {
+	rendering: RenderingManager;
+	physics: PhysicsManager;
+	players: Player[];
+	frametime: number = 0;
+	lastFrame: Date;
+	constructor() {
+		this.rendering = new RenderingManager();
+		this.physics = new PhysicsManager();
+		this.players = [new Player(this.rendering.scene, this.physics.world)];
+		this.generateWorld();
+		this.lastFrame = new Date();
+	}
+	generateWorld() {
+		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0));
+		this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0));
+	}
+	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler) {
+		this.rendering.addCube(position, dimention, rotation);
+		this.physics.addCube(new CANNON.Vec3(position.x, position.y, position.z), new CANNON.Vec3(dimention.x, dimention.y, dimention.z), rotation);
+	}
+	step() {
+		const currentFrame: Date = new Date();
+		const dt: number = (currentFrame.getTime() - this.lastFrame.getTime()) * 0.001;
+		this.players[0].applyGraphics();
+		this.rendering.setFPSCamera(this.players[0]);
+		this.physics.world.step(dt);
+		this.rendering.render();
+		this.lastFrame = currentFrame;
+	}
+	mouseMove(x: number, y: number) {
+		this.players[0].yaw = x / window.innerWidth * 6;
+		this.players[0].pitch = (y / window.innerHeight - 0.5) * Math.PI;
 	}
 }
-scene.add(playerMesh);
-
-
-
-
-let frametime: number = 0;
-let lastFrame: Date = new Date();
-function loop() {
-	const currentFrame: Date = new Date();
-	const dt: number = (currentFrame.getTime() - lastFrame.getTime()) * 0.001;
-	playerMesh.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z);
-	playerMesh.quaternion.set(playerBody.quaternion.x, playerBody.quaternion.y, playerBody.quaternion.z, playerBody.quaternion.w);
-	renderer.render(scene, camera);
-	console.log(playerMesh.position);
-	frametime += dt;
-	world.step(dt);
-	lastFrame = currentFrame;
-
-	requestAnimationFrame(loop);
-}
-loop();
-console.log("Hello World!");
+let manager: GameManager = null;
+window.onload = function () {
+	manager = new GameManager();
+	function loop() {
+		manager.step();
+		requestAnimationFrame(loop);
+	}
+	loop();
+	window.onmousemove = function (e: MouseEvent) {
+		manager.mouseMove(e.clientX, e.clientY);
+	}
+};
