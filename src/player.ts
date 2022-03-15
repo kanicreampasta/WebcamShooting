@@ -9,6 +9,7 @@ function GetPlayerBody(): CANNON.Body {
 	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, -0.5, 0));
 	let mat = new CANNON.Material('capsuleMat');
 	mat.friction = 0;
+	mat.restitution = 0;
 	playerBody.material = mat;
 	playerBody.fixedRotation = true;
 	playerBody.updateMassProperties();
@@ -56,6 +57,8 @@ export class Player {
 		vx /= r;
 		vx *= 10;
 		vz *= 10;
-		this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
+		this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
+		this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
+		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}
 }

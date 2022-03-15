@@ -36,9 +36,10 @@ export class RenderingManager {
 	setKillCamera(target: THREE.Vector3) {
 		throw "not implemented";
 	}
-	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler) {
+	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler,color?: THREE.ColorRepresentation) {
+		color = color || new THREE.Color("#fff");
 		const mesh: THREE.Mesh = new THREE.Mesh(new THREE.BoxGeometry(dimention.x, dimention.y, dimention.z),
-			new THREE.MeshLambertMaterial({ color: 0xffffff }));
+			new THREE.MeshLambertMaterial({ color: color }));
 		mesh.setRotationFromEuler(rotation);
 		mesh.position.set(position.x, position.y, position.z);
 		this.scene.add(mesh);
