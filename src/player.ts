@@ -7,8 +7,12 @@ function GetPlayerBody(): CANNON.Body {
 	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0, 0));
 	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0.5, 0));
 	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, -0.5, 0));
+	let mat = new CANNON.Material('capsuleMat');
+	mat.friction = 0;
+	playerBody.material = mat;
 	playerBody.fixedRotation = true;
 	playerBody.updateMassProperties();
+
 	return playerBody;
 }
 
@@ -45,8 +49,13 @@ export class Player {
 		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 	}
 	walk(vx: number, vz: number) {
-		const rg = this.rigidbody;
 		const theta = this.yaw;
-		rg.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), rg.position);
+		let r = Math.sqrt(vx * vx + vz * vz);
+		r = Math.max(r, 1);
+		vz /= r;
+		vx /= r;
+		vx *= 10;
+		vz *= 10;
+		this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}
 }
