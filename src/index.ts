@@ -35,8 +35,8 @@ class GameManager {
 		this.lastFrame = currentFrame;
 	}
 	mouseMove(x: number, y: number) {
-		this.players[0].yaw = x / window.innerWidth * 6;
-		this.players[0].pitch = (y / window.innerHeight - 0.5) * Math.PI;
+		this.players[0].yaw = -x / window.innerWidth * 6;
+		this.players[0].pitch = -(y / window.innerHeight - 0.5) * Math.PI;
 	}
 }
 let manager: GameManager = null;
