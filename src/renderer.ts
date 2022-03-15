@@ -51,4 +51,7 @@ export class RenderingManager {
 		mesh.position.set(position.x, position.y, position.z);
 		this.scene.add(mesh);
 	}
+	getCanvas(): HTMLCanvasElement {
+		return this.renderer.domElement;
+	}
 }

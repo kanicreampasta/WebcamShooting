@@ -59,6 +59,9 @@ class GameManager {
 		}
 		this.players[0].walk(v.x, v.z);
 	}
+	getCanvas(): HTMLCanvasElement {
+		return this.rendering.getCanvas();
+	}
 }
 class KeyState {
 	W: boolean = false;
@@ -79,9 +82,15 @@ window.onload = function () {
 	}
 	const state: KeyState = new KeyState();
 	loop();
-	window.onmousemove = function (e: MouseEvent) {
-		manager.mouseMove(e.clientX, e.clientY);
-	};
+	{
+		let mouseMoveX = 0;
+		let mouseMoveY = 0;
+		manager.getCanvas().onmousemove = function (e: MouseEvent) {
+			mouseMoveX += e.movementX;
+			mouseMoveY += e.movementY;
+			manager.mouseMove(mouseMoveX, mouseMoveY);
+		};
+	}
 	manager.setKey(state);
 	window.onkeydown = function (e: KeyboardEvent) {
 		if (e.code == "KeyW") {
