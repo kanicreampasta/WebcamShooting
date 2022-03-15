@@ -51,27 +51,31 @@ world.allowSleep = true;
 	cubeBody.position.x = 0;
 	cubeBody.position.y = -5;
 	cubeBody.position.z = -5;
+	cubeBody.quaternion.setFromEuler(0, 0, Math.PI / 4);
 	world.addBody(cubeBody);
 	const floor: THREE.Mesh =
 		new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), new THREE.MeshLambertMaterial({ color: 0xffffff }));
 	floor.position.set(cubeBody.position.x, cubeBody.position.y, cubeBody.position.z);
+	floor.quaternion.set(cubeBody.quaternion.x, cubeBody.quaternion.y, cubeBody.quaternion.z, cubeBody.quaternion.w);
 	scene.add(floor);
 }
 
 const playerBody: CANNON.Body = new CANNON.Body({ mass: 1 });
 playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0, 0));
-playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 1, 0));
-playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, -1, 0));
+playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0.5, 0));
+playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, -0.5, 0));
 playerBody.position.y = 2;
 playerBody.position.z = -5;
-playerBody.quaternion.setFromEuler(0,0,Math.PI/4);
+// playerBody.quaternion.setFromEuler(0,0,Math.PI/4);
+playerBody.fixedRotation = true;
+playerBody.updateMassProperties();
 world.addBody(playerBody);
 
 const playerMesh: THREE.Object3D = new THREE.Object3D();
 {
 	for (let i: number = -1; i <= 1; i++) {
 		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-		sphere.position.set(0,i,0);
+		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
 }
