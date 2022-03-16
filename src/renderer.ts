@@ -6,7 +6,7 @@ export class RenderingManager {
 	camera: THREE.PerspectiveCamera;
 	constructor() {
 		this.renderer = new THREE.WebGLRenderer();
-		this.renderer.setSize(window.innerWidth,window.innerHeight);
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		this.scene = new THREE.Scene();
 
 		this.camera = new THREE.PerspectiveCamera();
@@ -43,7 +43,7 @@ export class RenderingManager {
 	setKillCamera(target: THREE.Vector3) {
 		throw "not implemented";
 	}
-	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler,color?: THREE.ColorRepresentation) {
+	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		color = color || new THREE.Color("#fff");
 		const mesh: THREE.Mesh = new THREE.Mesh(new THREE.BoxGeometry(dimention.x, dimention.y, dimention.z),
 			new THREE.MeshLambertMaterial({ color: color }));

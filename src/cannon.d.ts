@@ -1,4 +1,4 @@
-﻿declare module CANNON {
+﻿declare module 'cannon' {
 
     export interface IAABBOptions {
 
@@ -14,14 +14,14 @@
 
         constructor(options?: IAABBOptions);
 
-        clone() : AABB;
+        clone(): AABB;
         setFromPoints(points: Vec3[], position?: Vec3, quaternion?: Quaternion, skinSize?: number): void;
         copy(aabb: AABB): void;
         extend(aabb: AABB): void;
-        getCorners( a: Vec3, b: Vec3, c: Vec3, d: Vec3, e: Vec3, f: Vec3, g: Vec3, h: Vec3 ) : void;
+        getCorners(a: Vec3, b: Vec3, c: Vec3, d: Vec3, e: Vec3, f: Vec3, g: Vec3, h: Vec3): void;
         overlaps(aabb: AABB): boolean;
-        toLocalFrame( frame: Transform, target: AABB ) : AABB;
-        toWorldFrame( frame: Transform, target: AABB ) : AABB;
+        toLocalFrame(frame: Transform, target: AABB): AABB;
+        toWorldFrame(frame: Transform, target: AABB): AABB;
     }
 
     export class ArrayCollisionMatrix {
@@ -274,7 +274,7 @@
         computeGiMGt(): number;
         addToWlamda(deltalambda: number): number;
         computeC(): number;
-        computeInvC( eps: number ): number;
+        computeInvC(eps: number): number;
     }
 
     export class FrictionEquation extends Equation {
@@ -384,10 +384,10 @@
 
         name: string;
         id: number;
-        friction:number;
-        restitution:number;
+        friction: number;
+        restitution: number;
 
-        constructor(options?: string|IMaterialOptions);
+        constructor(options?: string | IMaterialOptions);
 
     }
 
@@ -1065,10 +1065,10 @@
         convexHeightfield(convexShape: Shape, hfShape: Heightfield, convexPos: Vec3, hfPos: Vec3, convexQuat: Quaternion, hfQuat: Quaternion, convexBody: Body, hfBody: Body): void;
         convexConvex(si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         convexParticle(result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
-        convexTrimesh( result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
+        convexTrimesh(result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         createContactEquation(bi: Body, bj: Body, si: Shape, sj: Shape, rsi: Shape, rsj: Shape): ContactEquation;
         getContacts(p1: Body[], p2: Body[], world: World, result: ContactEquation[], oldcontacts: ContactEquation[]): void;
-        particlePlane( result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
+        particlePlane(result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         particleSphere(result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         planeBox(result: ContactEquation[], si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         planeConvex(si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
@@ -1076,7 +1076,7 @@
         sphereBox(si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         sphereConvex(si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         sphereHeightfield(sphereShape: Shape, hfShape: Heightfield, spherePos: Vec3, hfPos: Vec3, sphereQuat: Quaternion, hfQuat: Quaternion, sphereBody: Body, hfBody: Body): void;
-        spherePlane( si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
+        spherePlane(si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         sphereSphere(si: Shape, sj: Shape, xi: Vec3, xj: Vec3, qi: Quaternion, qj: Quaternion, bi: Body, bj: Body): void;
         sphereTrimesh(sphereShape: Shape, trimeshShape: Shape, spherePos: Vec3, trimeshPos: Vec3, sphereQuat: Quaternion, trimeshQuat: Quaternion, sphereBody: Body, trimeshBody: Body): void;
 
@@ -1193,9 +1193,9 @@
 
     export class Demo {
 
-        constructor( options: Object );
+        constructor(options: Object);
 
-        addScene( title: string, initfunc: Function ): void;
+        addScene(title: string, initfunc: Function): void;
         restartCurrentScene(): void;
 
     }
