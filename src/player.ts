@@ -19,7 +19,7 @@ function GetPlayerBody(): CANNON.Body {
 
 function GetPlayerMesh(): THREE.Object3D {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
-	for (let i: number = -1; i <= 1; i++) {
+	for (let i: number = -1; i <= -1; i++) {
 		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
@@ -35,7 +35,7 @@ export class Player {
 	constructor(scene: THREE.Scene, world: CANNON.World) {
 		this.rigidbody = GetPlayerBody();
 		this.playerMesh = GetPlayerMesh();
-		// scene.add(this.playerMesh);
+		scene.add(this.playerMesh);
 		world.addBody(this.rigidbody);
 	}
 	applyGraphics() {

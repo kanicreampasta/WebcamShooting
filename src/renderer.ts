@@ -37,7 +37,7 @@ export class RenderingManager {
 		const m = new THREE.Quaternion().multiplyQuaternions(y, p);
 		this.camera.setRotationFromQuaternion(m);
 		const position = player.getPosition();
-		position.z += 0.5;
+		position.y += 0.5;
 		this.camera.position.set(position.x, position.y, position.z);
 	}
 	setKillCamera(target: THREE.Vector3) {
