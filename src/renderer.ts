@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import * as PLAYER from "./player";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 export class RenderingManager {
 	renderer: THREE.WebGLRenderer;
 	scene: THREE.Scene;
 	camera: THREE.PerspectiveCamera;
 	constructor() {
 		this.renderer = new THREE.WebGLRenderer();
-		this.renderer.setSize(window.innerWidth,window.innerHeight);
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		this.scene = new THREE.Scene();
 
 		this.camera = new THREE.PerspectiveCamera();
@@ -43,7 +44,7 @@ export class RenderingManager {
 	setKillCamera(target: THREE.Vector3) {
 		throw "not implemented";
 	}
-	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler,color?: THREE.ColorRepresentation) {
+	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		color = color || new THREE.Color("#fff");
 		const mesh: THREE.Mesh = new THREE.Mesh(new THREE.BoxGeometry(dimention.x, dimention.y, dimention.z),
 			new THREE.MeshLambertMaterial({ color: color }));
@@ -53,5 +54,20 @@ export class RenderingManager {
 	}
 	getCanvas(): HTMLCanvasElement {
 		return this.renderer.domElement;
+	}
+	loadModel(modelPath: string) {
+		const loader = new GLTFLoader();
+		loader.load(
+			modelPath,
+			(gltf) => {
+				this.scene.add(gltf.scene);
+			},
+			(xhr) => {
+				console.log((xhr.loaded / xhr.total) * 100.0 + ' % loaded');
+			},
+			(error) => {
+				console.log('error loading model:', error);
+			}
+		)
 	}
 }

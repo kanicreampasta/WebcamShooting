@@ -19,11 +19,12 @@ class GameManager {
 		this.lastFrame = new Date();
 	}
 	generateWorld() {
-		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0),"#f00");
-		this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0),"#fff");
+		// this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0),"#f00");
+		// this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0),"#fff");
+		this.rendering.loadModel('public/densodai.glb');
 	}
-	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler,color?:THREE.ColorRepresentation) {
-		this.rendering.addCube(position, dimention, rotation,color);
+	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
+		this.rendering.addCube(position, dimention, rotation, color);
 		this.physics.addCube(new CANNON.Vec3(position.x, position.y, position.z), new CANNON.Vec3(dimention.x, dimention.y, dimention.z), rotation);
 	}
 	step() {
