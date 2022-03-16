@@ -1,4 +1,4 @@
-import * as CANNON from "cannon";
+import * as CANNON from 'cannon';
 import * as THREE from 'three';
 
 
