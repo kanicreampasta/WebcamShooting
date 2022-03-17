@@ -62,16 +62,16 @@ export class Player {
 		this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
 		this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
 		const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
-		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
+		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 1.5, this.rigidbody.position.z);
 		var result: CANNON.RaycastResult;
 		const rayCastOptions = {
-			collisionFilterMask: ~0x10,
+			collisionFilterMask: 1,
 			skipBackfaces: true      /* ignore back faces */
 		};
 		if (world.raycastClosest(start, end, rayCastOptions, result)) {
 			document.getElementById("log").innerText += " grounded";
 			console.log(result);
-
+			
 		}
 		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}

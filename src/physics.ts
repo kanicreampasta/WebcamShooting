@@ -14,8 +14,8 @@ export class PhysicsManager {
 		const cubeBody: CANNON.Body = new CANNON.Body({ mass: 0 });
 		cubeBody.addShape(new CANNON.Box(new CANNON.Vec3(dimention.x, dimention.y, dimention.z)));
 		cubeBody.position = position;
-		cubeBody.collisionFilterMask=2;
-		cubeBody.collisionFilterGroup=1;
+		cubeBody.collisionFilterMask = 2;
+		cubeBody.collisionFilterGroup = 1;
 		cubeBody.quaternion.setFromEuler(rotation.x, rotation.y, rotation.z);
 		this.world.addBody(cubeBody);
 	}
