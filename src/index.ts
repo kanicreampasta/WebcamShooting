@@ -57,7 +57,7 @@ class GameManager {
 		if (this.keyState.D) {
 			v.x = 1;
 		}
-		this.players[0].walk(v.x, v.z);
+		this.players[0].walk(v.x, v.z, this.physics.world);
 	}
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();

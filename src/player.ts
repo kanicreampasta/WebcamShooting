@@ -12,6 +12,8 @@ function GetPlayerBody(): CANNON.Body {
 	mat.restitution = 0;
 	playerBody.material = mat;
 	playerBody.fixedRotation = true;
+	playerBody.collisionFilterMask = 1;
+	playerBody.collisionFilterGroup = 2;
 	playerBody.updateMassProperties();
 
 	return playerBody;
@@ -49,7 +51,7 @@ export class Player {
 	getPosition(): THREE.Vector3 {
 		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 	}
-	walk(vx: number, vz: number) {
+	walk(vx: number, vz: number, world: CANNON.World) {
 		const theta = this.yaw;
 		let r = Math.sqrt(vx * vx + vz * vz);
 		r = Math.max(r, 1);
@@ -59,6 +61,18 @@ export class Player {
 		vz *= 10;
 		this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
 		this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
+		const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
+		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
+		var result: CANNON.RaycastResult;
+		const rayCastOptions = {
+			collisionFilterMask: ~0x10,
+			skipBackfaces: true      /* ignore back faces */
+		};
+		if (world.raycastClosest(start, end, rayCastOptions, result)) {
+			document.getElementById("log").innerText += " grounded";
+			console.log(result);
+
+		}
 		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}
 }
