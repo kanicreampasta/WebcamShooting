@@ -12,7 +12,7 @@ export class PhysicsManager {
 	}
 	addCube(position: CANNON.Vec3, dimention: CANNON.Vec3, rotation: THREE.Euler) {
 		const cubeBody: CANNON.Body = new CANNON.Body({ mass: 0 });
-		cubeBody.addShape(new CANNON.Box(new CANNON.Vec3(dimention.x, dimention.y, dimention.z)));
+		cubeBody.addShape(new CANNON.Box(new CANNON.Vec3(dimention.x, dimention.y, dimention.z).mult(0.5)));
 		cubeBody.position = position;
 		cubeBody.collisionFilterMask = 2;
 		cubeBody.collisionFilterGroup = 1;
