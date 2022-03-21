@@ -5,6 +5,7 @@ import { RenderingManager } from "./renderer";
 import { PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
+import { NumberKeyframeTrack } from 'three';
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -73,6 +74,14 @@ class GameManager {
 		if (id !== undefined) {
 			this.playerIdMap.set(id, player);
 		}
+	}
+	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): void {
+		console.log('createNewPlayer id: ' + id);
+		const player = new Player(this.rendering.scene, this.physics.world);
+		player.warp(position[0], position[1], position[2]);
+		player.vx = velocity[0];
+		player.vz = velocity[1];
+		this.addPlayer(player, id);
 	}
 	deletePlayerByIndex(index: number): void {
 		this.players[index].delete(this.rendering.scene, this.physics.world);
@@ -163,14 +172,26 @@ window.onload = function () {
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
 		const player = manager.getPlayerById(pid);
-		if (player === undefined) return;
-		if (update.velocity !== undefined) {
-			player.vx = update.velocity[0];
-			player.vz = update.velocity[2];
-		}
-		if (update.position !== undefined) {
-			const p = update.position;
-			player.warp(p[0], p[1], p[2]);
+		if (player === undefined) {
+			// create new player
+			const position = update.position || [0, 0, 0];
+			let velocity: [number, number];
+			if (update.velocity === undefined) {
+				velocity = [0, 0];
+			} else {
+				velocity = [update.velocity[0], update.velocity[2]];
+			}
+			manager.createNewPlayer(pid, position, velocity);
+		} else {
+			// move existing player
+			if (update.velocity !== undefined) {
+				player.vx = update.velocity[0];
+				player.vz = update.velocity[2];
+			}
+			if (update.position !== undefined) {
+				const p = update.position;
+				player.warp(p[0], p[1], p[2]);
+			}
 		}
 	};
 	loop();
