@@ -58,6 +58,7 @@ export class NetworkClient {
     private onmessage(ev: MessageEvent<any>) {
         // console.log(ev);
         const data = JSON.parse(ev.data);
+        // console.log(data);
         if (typeof (data) !== 'object') return;
         const type = data['type'];
         if (typeof (type) !== 'string') return;

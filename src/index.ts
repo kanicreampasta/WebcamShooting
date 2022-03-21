@@ -134,9 +134,7 @@ class GameManager {
 		if (this.keyState.D) {
 			v.x = 1;
 		}
-		for (var p of this.players) {
-			p.walk(v.x, v.z, this.physics.world);
-		}
+		this.getMyPlayer().walk(v.x, v.z, this.physics.world);
 	}
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();
