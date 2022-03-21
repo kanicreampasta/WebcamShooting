@@ -9,6 +9,7 @@ class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
 	players: Player[];
+	playerIdMap: Map<string, Player>;
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
@@ -16,11 +17,13 @@ class GameManager {
 	constructor() {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
-		this.players = [new Player(this.rendering.scene, this.physics.world)];
+		this.players = [];
+		this.playerIdMap = new Map();
+		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
 		this.generateWorld();
 		this.lastFrame = new Date();
 		//add test online player
-		this.players.push(new Player(this.rendering.scene, this.physics.world, true));
+		this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
 	}
 	generateWorld() {
@@ -38,14 +41,14 @@ class GameManager {
 		if (time > 8) {
 			if (this.players.length >= 3) {
 				console.log(this.players.length);
-				this.deletePlayer(1);
+				this.deletePlayerByIndex(1);
 				console.log(this.players.length);
 				console.log(this.players);
 			}
 		} else if (time > 3) {
 			if (this.players.length < 3) {
 				var newenemy: Player = new Player(this.rendering.scene, this.physics.world, true);
-				this.players.push(newenemy);
+				this.addPlayer(newenemy);
 				newenemy.vx = 1;
 			}
 		} else {
@@ -65,9 +68,35 @@ class GameManager {
 		this.rendering.render();
 		this.lastFrame = currentFrame;
 	}
-	deletePlayer(index: number): void {
+	addPlayer(player: Player, id?: string): void {
+		this.players.push(player);
+		if (id !== undefined) {
+			this.playerIdMap.set(id, player);
+		}
+	}
+	deletePlayerByIndex(index: number): void {
 		this.players[index].delete(this.rendering.scene, this.physics.world);
-		this.players.splice(index, 1);
+		const deleted = this.players.splice(index, 1)[0];
+		for (const [k, v] of this.playerIdMap) {
+			if (v === deleted) {
+				this.playerIdMap.delete(k);
+				break;
+			}
+		}
+	}
+	deletePlayerById(id: string): void {
+		if (this.playerIdMap.has(id)) {
+			const playerToDelete = this.playerIdMap.get(id);
+			playerToDelete.delete(this.rendering.scene, this.physics.world);
+			this.playerIdMap.delete(id);
+			const index = this.players.indexOf(playerToDelete);
+			if (index !== -1) {
+				this.players.splice(index, 1);
+			}
+		}
+	}
+	getMyPlayer(): Player {
+		return this.players[0];
 	}
 	mouseMove(x: number, y: number) {
 		this.players[0].yaw = -x / window.innerWidth * 6;
