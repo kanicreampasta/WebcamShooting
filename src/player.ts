@@ -62,7 +62,7 @@ export class Player {
 		this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
 		this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
 		const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
-		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 1.5, this.rigidbody.position.z);
+		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 4, this.rigidbody.position.z);
 		var result: CANNON.RaycastResult = new CANNON.RaycastResult();
 		const rayCastOptions = {
 			collisionFilterMask: 1,
@@ -73,11 +73,13 @@ export class Player {
 			console.log(result.distance);
 			const velocity = new THREE.Vector3(this.rigidbody.velocity.x, this.rigidbody.velocity.y, this.rigidbody.velocity.z);
 			const normal = new THREE.Vector3(result.hitNormalWorld.x, result.hitNormalWorld.y, result.hitNormalWorld.z);
-			const slopeY: number = velocity.dot(normal);//positive when going up slope
-			const normalcomponent = normal.multiplyScalar(-slopeY);
-			const finalvelocity = velocity.add(normalcomponent);
-			this.rigidbody.velocity = new CANNON.Vec3(finalvelocity.x, finalvelocity.y, finalvelocity.z);
-			document.getElementById("log").innerText += slopeY + "";
+			if (result.distance < 1 + Math.sqrt(normal.x * normal.x + normal.z * normal.z) * 3) {
+				const slopeY: number = velocity.dot(normal);//positive when going up slope
+				const normalcomponent = normal.multiplyScalar(-slopeY);
+				const finalvelocity = velocity.add(normalcomponent);
+				this.rigidbody.velocity = new CANNON.Vec3(finalvelocity.x, finalvelocity.y, finalvelocity.z);
+				document.getElementById("log").innerText += slopeY + "";
+			}
 			// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
 			// const correctedVy: number = -slopeY;
 			// this.rigidbody.velocity.y = correctedVy;
