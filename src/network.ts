@@ -1,18 +1,20 @@
-import { DefaultEventsMap } from "@socket.io/component-emitter";
-import { io, Socket } from "socket.io-client"
-
 type Position = [number, number, number];
 
 export class NetworkClient {
-    private socket: Socket<DefaultEventsMap, DefaultEventsMap>;
+    private socket: WebSocket;
 
     constructor() {
-        this.socket = io("http://localhost:3000");
+        this.socket = null;
+    }
+
+    async init(): Promise<void> {
+        this.socket = new WebSocket("ws://localhost:3000");
+        return new Promise((resolve) => {
+            this.socket.onopen = (ev) => resolve();
+        });
     }
 
     start() {
-        this.socket.send('spawn', (initPos: Position) => {
-            console.log("initPos:", initPos);
-        });
+        this.socket.send('spawn');
     }
 }

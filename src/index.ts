@@ -84,7 +84,7 @@ window.onload = function () {
 		requestAnimationFrame(loop);
 	}
 	const state: KeyState = new KeyState();
-	network.start();
+	network.init().then(() => network.start());
 	loop();
 	{
 		let mouseMoveX = 0;
