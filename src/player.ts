@@ -46,8 +46,8 @@ export class Player {
 	isOtherPlayer: boolean = false;
 	//used for online players
 	//global coordinate
-	vx: number;
-	vz: number;
+	vx: number = 0;
+	vz: number = 0;
 
 	constructor(scene: THREE.Scene, world: CANNON.World, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
@@ -87,8 +87,8 @@ export class Player {
 		vx *= 10;
 		vz *= 10;
 		if (this.isOtherPlayer) {
-			this.rigidbody.velocity.x = vx;
-			this.rigidbody.velocity.z = vz;
+			this.rigidbody.velocity.x = this.vx;
+			this.rigidbody.velocity.z = this.vz;
 		} else {
 			this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
 			this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
@@ -102,7 +102,7 @@ export class Player {
 		};
 		if (world.raycastClosest(start, end, rayCastOptions, result)) {
 			document.getElementById("log").innerText += " grounded ";
-			console.log(result.distance);
+			// console.log(result.distance);
 			const velocity = new THREE.Vector3(this.rigidbody.velocity.x, this.rigidbody.velocity.y, this.rigidbody.velocity.z);
 			const normal = new THREE.Vector3(result.hitNormalWorld.x, result.hitNormalWorld.y, result.hitNormalWorld.z);
 			if (result.distance < 1 + Math.sqrt(normal.x * normal.x + normal.z * normal.z) * 3) {

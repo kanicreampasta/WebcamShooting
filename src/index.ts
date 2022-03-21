@@ -11,6 +11,7 @@ class GameManager {
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
+	startFrame: Date;
 	constructor() {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
@@ -19,6 +20,7 @@ class GameManager {
 		this.lastFrame = new Date();
 		//add test online player
 		this.players.push(new Player(this.rendering.scene, this.physics.world, true));
+		this.startFrame = new Date();
 	}
 	generateWorld() {
 		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
@@ -31,18 +33,40 @@ class GameManager {
 	step() {
 		const currentFrame: Date = new Date();
 		const dt: number = (currentFrame.getTime() - this.lastFrame.getTime()) * 0.001;
+		const time: number = (currentFrame.getTime() - this.startFrame.getTime()) * 0.001;
+		if (time > 8) {
+			if (this.players.length >= 3) {
+				console.log(this.players.length);
+				this.deletePlayer(1);
+				console.log(this.players.length);
+				console.log(this.players);
+			}
+		} else if (time > 3) {
+			if (this.players.length < 3) {
+				var newenemy: Player = new Player(this.rendering.scene, this.physics.world, true);
+				this.players.push(newenemy);
+				newenemy.vx = 1;
+			}
+		} else {
+			if (Math.random() < 1 - Math.exp(-dt)) {
+				this.players[1].warp(1, 0, 0);
+			}
+		}
+
 
 		this.addThrust();
 		this.physics.world.step(dt);
-		if (Math.random() < 1 - Math.exp(-dt)) {
-			this.players[1].warp(1, 0, 0);
-		}
+
 		for (var p of this.players) {
 			p.applyGraphics();
 		}
 		this.rendering.setFPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
+	}
+	deletePlayer(index: number): void {
+		this.players[index].delete(this.rendering.scene, this.physics.world);
+		this.players.splice(index, 1);
 	}
 	mouseMove(x: number, y: number) {
 		this.players[0].yaw = -x / window.innerWidth * 6;
@@ -65,7 +89,9 @@ class GameManager {
 		if (this.keyState.D) {
 			v.x = 1;
 		}
-		this.players[0].walk(v.x, v.z, this.physics.world);
+		for (var p of this.players) {
+			p.walk(v.x, v.z, this.physics.world);
+		}
 	}
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();
