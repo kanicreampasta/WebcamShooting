@@ -23,7 +23,7 @@ class GameManager {
 		this.generateWorld();
 		this.lastFrame = new Date();
 		//add test online player
-		this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
+		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
 	}
 	generateWorld() {
@@ -37,25 +37,25 @@ class GameManager {
 	step() {
 		const currentFrame: Date = new Date();
 		const dt: number = (currentFrame.getTime() - this.lastFrame.getTime()) * 0.001;
-		const time: number = (currentFrame.getTime() - this.startFrame.getTime()) * 0.001;
-		if (time > 8) {
-			if (this.players.length >= 3) {
-				console.log(this.players.length);
-				this.deletePlayerByIndex(1);
-				console.log(this.players.length);
-				console.log(this.players);
-			}
-		} else if (time > 3) {
-			if (this.players.length < 3) {
-				var newenemy: Player = new Player(this.rendering.scene, this.physics.world, true);
-				this.addPlayer(newenemy);
-				newenemy.vx = 1;
-			}
-		} else {
-			if (Math.random() < 1 - Math.exp(-dt)) {
-				this.players[1].warp(1, 0, 0);
-			}
-		}
+		// const time: number = (currentFrame.getTime() - this.startFrame.getTime()) * 0.001;
+		// if (time > 8) {
+		// 	if (this.players.length >= 3) {
+		// 		console.log(this.players.length);
+		// 		this.deletePlayerByIndex(1);
+		// 		console.log(this.players.length);
+		// 		console.log(this.players);
+		// 	}
+		// } else if (time > 3) {
+		// 	if (this.players.length < 3) {
+		// 		var newenemy: Player = new Player(this.rendering.scene, this.physics.world, true);
+		// 		this.addPlayer(newenemy);
+		// 		newenemy.vx = 1;
+		// 	}
+		// } else {
+		// 	if (Math.random() < 1 - Math.exp(-dt)) {
+		// 		this.players[1].warp(1, 0, 0);
+		// 	}
+		// }
 
 
 		this.addThrust();
