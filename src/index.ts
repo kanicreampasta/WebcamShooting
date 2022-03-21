@@ -17,6 +17,8 @@ class GameManager {
 		this.players = [new Player(this.rendering.scene, this.physics.world)];
 		this.generateWorld();
 		this.lastFrame = new Date();
+		//add test online player
+		this.players.push(new Player(this.rendering.scene, this.physics.world, true));
 	}
 	generateWorld() {
 		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
@@ -29,10 +31,16 @@ class GameManager {
 	step() {
 		const currentFrame: Date = new Date();
 		const dt: number = (currentFrame.getTime() - this.lastFrame.getTime()) * 0.001;
-		this.players[0].applyGraphics();
-		this.rendering.setFPSCamera(this.players[0]);
+
 		this.addThrust();
 		this.physics.world.step(dt);
+		if (Math.random() < 1 - Math.exp(-dt)) {
+			this.players[1].warp(1, 0, 0);
+		}
+		for (var p of this.players) {
+			p.applyGraphics();
+		}
+		this.rendering.setFPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
 	}

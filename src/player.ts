@@ -28,17 +28,41 @@ function GetPlayerMesh(): THREE.Object3D {
 	}
 	return playerMesh;
 }
+function GetOtherPlayerMesh(): THREE.Object3D {
+	const playerMesh: THREE.Object3D = new THREE.Object3D();
+	for (let i: number = -1; i <= 1; i++) {
+		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+		sphere.position.set(0, i * 0.5, 0);
+		playerMesh.add(sphere);
+	}
+	return playerMesh;
+}
 
 export class Player {
 	rigidbody: CANNON.Body;
 	playerMesh: THREE.Object3D;
 	yaw: number = 0;
 	pitch: number = 0;
-	constructor(scene: THREE.Scene, world: CANNON.World) {
+	isOtherPlayer: boolean = false;
+	//used for online players
+	//global coordinate
+	vx: number;
+	vz: number;
+
+	constructor(scene: THREE.Scene, world: CANNON.World, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
-		this.playerMesh = GetPlayerMesh();
+		if (isOtherPlayer) {
+			this.playerMesh = GetOtherPlayerMesh();
+		} else {
+			this.playerMesh = GetPlayerMesh();
+		}
 		scene.add(this.playerMesh);
 		world.addBody(this.rigidbody);
+		this.isOtherPlayer = isOtherPlayer;
+	}
+	delete(scene: THREE.Scene, world: CANNON.World) {
+		world.removeBody(this.rigidbody);
+		scene.remove(this.playerMesh);
 	}
 	applyGraphics() {
 		const pos: CANNON.Vec3 = this.rigidbody.position;
@@ -51,6 +75,9 @@ export class Player {
 	getPosition(): THREE.Vector3 {
 		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 	}
+	warp(x: number, y: number, z: number) {
+		this.rigidbody.position = new CANNON.Vec3(x, y, z);
+	}
 	walk(vx: number, vz: number, world: CANNON.World) {
 		const theta = this.yaw;
 		let r = Math.sqrt(vx * vx + vz * vz);
@@ -59,8 +86,13 @@ export class Player {
 		vx /= r;
 		vx *= 10;
 		vz *= 10;
-		this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
-		this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
+		if (this.isOtherPlayer) {
+			this.rigidbody.velocity.x = vx;
+			this.rigidbody.velocity.z = vz;
+		} else {
+			this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
+			this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
+		}
 		const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 4, this.rigidbody.position.z);
 		var result: CANNON.RaycastResult = new CANNON.RaycastResult();
