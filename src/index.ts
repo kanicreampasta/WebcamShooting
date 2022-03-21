@@ -30,7 +30,7 @@ class GameManager {
 	step() {
 		const currentFrame: Date = new Date();
 		const dt: number = (currentFrame.getTime() - this.lastFrame.getTime()) * 0.001;
-		this.players[0].applyGraphics();
+		this.players.forEach(p => p.applyGraphics());
 		this.rendering.setFPSCamera(this.players[0]);
 		this.addThrust();
 		this.physics.world.step(dt);
