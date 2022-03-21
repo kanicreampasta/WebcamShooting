@@ -4,6 +4,7 @@ import "./index.css";
 import { RenderingManager } from "./renderer";
 import { PhysicsManager } from "./physics";
 import { Player } from "./player";
+import { NetworkClient } from './network';
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -73,14 +74,17 @@ class KeyState {
 	}
 }
 let manager: GameManager = null;
+let network: NetworkClient = null;
 window.onload = function () {
 	manager = new GameManager();
+	network = new NetworkClient();
 	function loop() {
 		document.getElementById("log").innerText = state.toString();
 		manager.step();
 		requestAnimationFrame(loop);
 	}
 	const state: KeyState = new KeyState();
+	network.start();
 	loop();
 	{
 		let mouseMoveX = 0;
