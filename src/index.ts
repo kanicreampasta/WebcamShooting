@@ -98,6 +98,12 @@ class GameManager {
 	getMyPlayer(): Player {
 		return this.players[0];
 	}
+	setIdOfMyPlayer(id: string): void {
+		this.playerIdMap.set(id, this.getMyPlayer());
+	}
+	getPlayerById(id: string): Player | undefined {
+		return this.playerIdMap.get(id);
+	}
 	mouseMove(x: number, y: number) {
 		this.players[0].yaw = -x / window.innerWidth * 6;
 		this.players[0].pitch = -(y / window.innerHeight - 0.5) * Math.PI;
