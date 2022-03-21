@@ -160,6 +160,19 @@ window.onload = function () {
 			velocity: player.getVelocity().toArray()
 		}
 	})).catch(console.error)
+	network.onplayerupdate = (pid, update) => {
+		if (pid === network.myPid) return;
+		const player = manager.getPlayerById(pid);
+		if (player === undefined) return;
+		if (update.velocity !== undefined) {
+			player.vx = update.velocity[0];
+			player.vz = update.velocity[2];
+		}
+		if (update.position !== undefined) {
+			const p = update.position;
+			player.warp(p[0], p[1], p[2]);
+		}
+	};
 	loop();
 	{
 		let mouseMoveX = 0;

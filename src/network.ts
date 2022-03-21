@@ -11,6 +11,11 @@ export class NetworkClient {
     private loopKey: NodeJS.Timer;
     private pid: string | null;
 
+    onplayerupdate: undefined | ((pid: string, update: {
+        position?: Position,
+        velocity?: Velocity
+    }) => void);
+
     constructor() {
         this.socket = null;
         this.pid = null;
@@ -35,6 +40,10 @@ export class NetworkClient {
         clearInterval(this.loopKey);
     }
 
+    public get myPid(): string {
+        return this.pid;
+    }
+
     private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
         const pl = getPlayer();
@@ -47,7 +56,7 @@ export class NetworkClient {
     }
 
     private onmessage(ev: MessageEvent<any>) {
-        console.log(ev);
+        // console.log(ev);
         const data = JSON.parse(ev.data);
         if (typeof (data) !== 'object') return;
         const type = data['type'];
@@ -62,7 +71,49 @@ export class NetworkClient {
                 }
                 this.pid = pid;
                 console.log(`pid set to ${pid}`);
+                break;
+            }
+            case 'update': {
+                const players = data['players'];
+                if (players === undefined) {
+                    console.warn('invalid players data');
+                    return;
+                }
+                for (const player of players) {
+                    this.processPlayer(player);
+                }
+                break;
             }
         }
+    }
+
+    private processPlayer(playerData: any) {
+        if (this.onplayerupdate === undefined) {
+            console.warn('onplayerupdate not set');
+            return;
+        }
+
+        const pid = playerData['pid'];
+        if (pid === undefined) {
+            console.warn('contains no pid information');
+            return;
+        }
+
+        const updateData: {
+            position?: Position,
+            velocity?: Velocity
+        } = {};
+
+        const position = playerData['position'];
+        if (position !== undefined) {
+            updateData.position = position;
+        }
+
+        const velocity = playerData['velocity'];
+        if (velocity !== undefined) {
+            updateData.velocity = velocity;
+        }
+
+        this.onplayerupdate(pid, updateData);
     }
 }
