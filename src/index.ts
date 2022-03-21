@@ -77,7 +77,7 @@ class GameManager {
 	}
 	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): void {
 		console.log('createNewPlayer id: ' + id);
-		const player = new Player(this.rendering.scene, this.physics.world);
+		const player = new Player(this.rendering.scene, this.physics.world, true);
 		player.warp(position[0], position[1], position[2]);
 		player.vx = velocity[0];
 		player.vz = velocity[1];
@@ -183,6 +183,7 @@ window.onload = function () {
 		} else {
 			// move existing player
 			if (update.velocity !== undefined) {
+				console.log('set velocity');
 				player.vx = update.velocity[0];
 				player.vz = update.velocity[2];
 			}
