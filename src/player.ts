@@ -51,6 +51,9 @@ export class Player {
 	getPosition(): THREE.Vector3 {
 		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 	}
+	getVelocity(): THREE.Vector3 {
+		return new THREE.Vector3(this.rigidbody.velocity.x, this.rigidbody.velocity.y, this.rigidbody.velocity.z);
+	}
 	walk(vx: number, vz: number, world: CANNON.World) {
 		const theta = this.yaw;
 		let r = Math.sqrt(vx * vx + vz * vz);

@@ -1,4 +1,10 @@
 type Position = [number, number, number];
+type Velocity = [number, number, number];
+
+type PlayerGetter = () => {
+    position: Position,
+    velocity: Velocity,
+};
 
 export class NetworkClient {
     private socket: WebSocket;
@@ -18,24 +24,25 @@ export class NetworkClient {
         });
     }
 
-    start(getPosition: () => Position) {
+    start(getPlayer: PlayerGetter) {
         this.socket.send(JSON.stringify({
             type: 'spawn'
         }));
-        this.loopKey = setInterval(() => this.loop(getPosition), 500);
+        this.loopKey = setInterval(() => this.loop(getPlayer), 500);
     }
 
     stop() {
         clearInterval(this.loopKey);
     }
 
-    private loop(getPosition: () => Position) {
+    private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
-        const position = getPosition();
+        const pl = getPlayer();
         this.socket.send(JSON.stringify({
             type: 'position',
             pid: this.pid,
-            position: position
+            position: pl.position,
+            velocity: pl.velocity
         }));
     }
 

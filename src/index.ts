@@ -84,7 +84,13 @@ window.onload = function () {
 		requestAnimationFrame(loop);
 	}
 	const state: KeyState = new KeyState();
-	network.init().then(() => network.start(() => manager.players[0].getPosition().toArray())).catch(console.error);
+	network.init().then(() => network.start(() => {
+		const player = manager.players[0];
+		return {
+			position: player.getPosition().toArray(),
+			velocity: player.getVelocity().toArray()
+		}
+	})).catch(console.error)
 	loop();
 	{
 		let mouseMoveX = 0;
