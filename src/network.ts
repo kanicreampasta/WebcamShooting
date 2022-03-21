@@ -9,12 +9,19 @@ export class NetworkClient {
 
     async init(): Promise<void> {
         this.socket = new WebSocket("ws://localhost:3000");
+        this.socket.addEventListener('message', (ev) => this.onmessage(ev))
         return new Promise((resolve) => {
             this.socket.onopen = (ev) => resolve();
         });
     }
 
     start() {
-        this.socket.send('spawn');
+        this.socket.send(JSON.stringify({
+            type: 'spawn'
+        }));
+    }
+
+    private onmessage(ev: MessageEvent<any>) {
+        console.log(ev);
     }
 }
