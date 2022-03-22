@@ -356,7 +356,7 @@ function newRemoteFeed(janus: Janus, id: string, display: string, streams0: any[
                 // attach stream
                 // videoTags[1].srcObject = stream;
                 // videoTags[1].play();
-                onvideostream(stream, "<enemy pid here>");
+                onvideostream(stream, display);
             }
         },
         oncleanup: function () {

@@ -224,6 +224,8 @@ window.onload = function () {
 			// my video
 			// previewVideo.srcObject = stream;
 			// previewVideo.play();
+		} else {
+			manager.getPlayerById(pid)?.setFaceImage(stream);
 		}
 	};
 	network.initVideoServer();

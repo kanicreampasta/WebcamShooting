@@ -82,7 +82,12 @@ export class Player {
 		this.playerMesh.position.set(pos.x, pos.y, pos.z);
 		this.playerMesh.rotation.set(0, this.yaw, 0);
 	}
-	setFaceImage(material: THREE.Material) {
+	setFaceImage(stream: MediaStream) {
+		const video = document.createElement('video');
+		video.srcObject = stream;
+		video.play();
+		const webcam = new THREE.VideoTexture(video);
+		const material = new THREE.MeshBasicMaterial({ map: webcam });
 		this.playerScreen.material = material;
 	}
 	getPosition(): THREE.Vector3 {
