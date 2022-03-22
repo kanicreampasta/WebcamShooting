@@ -54,7 +54,8 @@ export class Player {
 		if (isOtherPlayer) {
 			this.playerMesh = GetOtherPlayerMesh();
 		} else {
-			this.playerMesh = GetPlayerMesh();
+			// this.playerMesh = GetPlayerMesh();
+			this.playerMesh = GetOtherPlayerMesh();
 		}
 		scene.add(this.playerMesh);
 		world.addBody(this.rigidbody);
@@ -114,6 +115,9 @@ export class Player {
 				const finalvelocity = velocity.add(normalcomponent);
 				this.rigidbody.velocity = new CANNON.Vec3(finalvelocity.x, finalvelocity.y, finalvelocity.z);
 				document.getElementById("log").innerText += slopeY + "";
+			}
+			if (result.distance < 1) {
+				this.rigidbody.position.y = result.hitPointWorld.y + 1;
 			}
 			// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
 			// const correctedVy: number = -slopeY;

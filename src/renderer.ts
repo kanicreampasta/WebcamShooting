@@ -41,6 +41,18 @@ export class RenderingManager {
 		position.y += 0.5;
 		this.camera.position.set(position.x, position.y, position.z);
 	}
+	setTPSCamera(player: PLAYER.Player) {
+		const p = new THREE.Quaternion().setFromEuler(new THREE.Euler(player.pitch, 0, 0));
+		const y = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, player.yaw, 0));
+		const m = new THREE.Quaternion().multiplyQuaternions(y, p);
+		this.camera.setRotationFromQuaternion(m);
+		const position = player.getPosition();
+		position.y += 0.5;
+		const offset = new THREE.Vector3(0, 0, 10);
+		offset.applyQuaternion(m);
+		position.add(offset);
+		this.camera.position.set(position.x, position.y, position.z);
+	}
 	setKillCamera(target: THREE.Vector3) {
 		throw "not implemented";
 	}

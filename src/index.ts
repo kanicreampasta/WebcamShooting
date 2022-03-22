@@ -80,7 +80,8 @@ class GameManager {
 		for (var p of this.players) {
 			p.applyGraphics();
 		}
-		this.rendering.setFPSCamera(this.players[0]);
+		// this.rendering.setFPSCamera(this.players[0]);
+		this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
 	}
