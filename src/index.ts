@@ -5,7 +5,7 @@ import { RenderingManager } from "./renderer";
 import { PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
-import { NumberKeyframeTrack } from 'three';
+import { ModelLoader } from "./model-loader";
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -15,7 +15,10 @@ class GameManager {
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
 	startFrame: Date;
-	constructor() {
+	onload: () => void;
+	loaders: ModelLoader[] = [];
+	stageLoaders: ModelLoader[] = [];
+	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
 		this.players = [];
@@ -26,10 +29,21 @@ class GameManager {
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
+		this.onload = onload;
+	}
+	async loadGame() {
+		{
+			const promises = this.stageLoaders.map((ld) => {
+				return ld.loadStage(this.rendering.scene, this.physics.world);
+			});
+			await Promise.all(promises);
+		}
+		this.onload();
 	}
 	generateWorld() {
 		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
 		this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0), "#fff");
+		this.stageLoaders.push(new ModelLoader("demostage.glb"));
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		this.rendering.addCube(position, dimention, rotation, color);
@@ -160,13 +174,13 @@ class KeyState {
 let manager: GameManager = null;
 let network: NetworkClient = null;
 window.onload = function () {
-	manager = new GameManager();
-	network = new NetworkClient();
 	function loop() {
 		document.getElementById("log").innerText = state.toString();
 		manager.step();
 		requestAnimationFrame(loop);
 	}
+	manager = new GameManager(loop);
+	network = new NetworkClient();
 	const state: KeyState = new KeyState();
 	network.init().then(() => network.start(() => {
 		const player = manager.players[0];
@@ -201,7 +215,6 @@ window.onload = function () {
 			}
 		}
 	};
-	loop();
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;
@@ -242,4 +255,6 @@ window.onload = function () {
 		}
 		manager.setKey(state);
 	};
+
+	manager.loadGame();
 };

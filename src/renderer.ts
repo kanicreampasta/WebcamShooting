@@ -11,6 +11,7 @@ export class RenderingManager {
 
 		this.camera = new THREE.PerspectiveCamera();
 		this.camera.position.set(0, 1, 10);
+		this.camera.fov = 90;
 		this.camera.aspect = window.innerWidth / window.innerHeight;
 
 
