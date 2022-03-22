@@ -5,6 +5,7 @@ import { RenderingManager } from "./renderer";
 import { PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
+import { ModelLoader } from "./model-loader";
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -15,6 +16,8 @@ class GameManager {
 	keyState: KeyState = new KeyState();
 	startFrame: Date;
 	onload: () => void;
+	loaders: ModelLoader[] = [];
+	stageLoaders: ModelLoader[] = [];
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
@@ -28,12 +31,19 @@ class GameManager {
 		this.startFrame = new Date();
 		this.onload = onload;
 	}
-	loadGame() {
+	async loadGame() {
+		{
+			const promises = this.stageLoaders.map((ld) => {
+				return ld.loadStage(this.rendering.scene, this.physics.world);
+			});
+			await Promise.all(promises);
+		}
 		this.onload();
 	}
 	generateWorld() {
 		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
 		this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0), "#fff");
+		this.stageLoaders.push(new ModelLoader("demostage.glb"));
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		this.rendering.addCube(position, dimention, rotation, color);
