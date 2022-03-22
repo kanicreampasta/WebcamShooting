@@ -75,6 +75,9 @@ export class Player {
 	getPosition(): THREE.Vector3 {
 		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 	}
+	getVelocity(): THREE.Vector3 {
+		return new THREE.Vector3(this.rigidbody.velocity.x, this.rigidbody.velocity.y, this.rigidbody.velocity.z);
+	}
 	warp(x: number, y: number, z: number) {
 		this.rigidbody.position = new CANNON.Vec3(x, y, z);
 	}

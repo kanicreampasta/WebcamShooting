@@ -4,10 +4,13 @@ import "./index.css";
 import { RenderingManager } from "./renderer";
 import { PhysicsManager } from "./physics";
 import { Player } from "./player";
+import { NetworkClient } from './network';
+import { NumberKeyframeTrack } from 'three';
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
 	players: Player[];
+	playerIdMap: Map<string, Player>;
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
@@ -15,11 +18,13 @@ class GameManager {
 	constructor() {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
-		this.players = [new Player(this.rendering.scene, this.physics.world)];
+		this.players = [];
+		this.playerIdMap = new Map();
+		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
 		this.generateWorld();
 		this.lastFrame = new Date();
 		//add test online player
-		this.players.push(new Player(this.rendering.scene, this.physics.world, true));
+		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
 	}
 	generateWorld() {
@@ -33,25 +38,25 @@ class GameManager {
 	step() {
 		const currentFrame: Date = new Date();
 		const dt: number = (currentFrame.getTime() - this.lastFrame.getTime()) * 0.001;
-		const time: number = (currentFrame.getTime() - this.startFrame.getTime()) * 0.001;
-		if (time > 8) {
-			if (this.players.length >= 3) {
-				console.log(this.players.length);
-				this.deletePlayer(1);
-				console.log(this.players.length);
-				console.log(this.players);
-			}
-		} else if (time > 3) {
-			if (this.players.length < 3) {
-				var newenemy: Player = new Player(this.rendering.scene, this.physics.world, true);
-				this.players.push(newenemy);
-				newenemy.vx = 1;
-			}
-		} else {
-			if (Math.random() < 1 - Math.exp(-dt)) {
-				this.players[1].warp(1, 0, 0);
-			}
-		}
+		// const time: number = (currentFrame.getTime() - this.startFrame.getTime()) * 0.001;
+		// if (time > 8) {
+		// 	if (this.players.length >= 3) {
+		// 		console.log(this.players.length);
+		// 		this.deletePlayerByIndex(1);
+		// 		console.log(this.players.length);
+		// 		console.log(this.players);
+		// 	}
+		// } else if (time > 3) {
+		// 	if (this.players.length < 3) {
+		// 		var newenemy: Player = new Player(this.rendering.scene, this.physics.world, true);
+		// 		this.addPlayer(newenemy);
+		// 		newenemy.vx = 1;
+		// 	}
+		// } else {
+		// 	if (Math.random() < 1 - Math.exp(-dt)) {
+		// 		this.players[1].warp(1, 0, 0);
+		// 	}
+		// }
 
 
 		this.addThrust();
@@ -64,9 +69,49 @@ class GameManager {
 		this.rendering.render();
 		this.lastFrame = currentFrame;
 	}
-	deletePlayer(index: number): void {
+	addPlayer(player: Player, id?: string): void {
+		this.players.push(player);
+		if (id !== undefined) {
+			this.playerIdMap.set(id, player);
+		}
+	}
+	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): void {
+		console.log('createNewPlayer id: ' + id);
+		const player = new Player(this.rendering.scene, this.physics.world, true);
+		player.warp(position[0], position[1], position[2]);
+		player.vx = velocity[0];
+		player.vz = velocity[1];
+		this.addPlayer(player, id);
+	}
+	deletePlayerByIndex(index: number): void {
 		this.players[index].delete(this.rendering.scene, this.physics.world);
-		this.players.splice(index, 1);
+		const deleted = this.players.splice(index, 1)[0];
+		for (const [k, v] of this.playerIdMap) {
+			if (v === deleted) {
+				this.playerIdMap.delete(k);
+				break;
+			}
+		}
+	}
+	deletePlayerById(id: string): void {
+		if (this.playerIdMap.has(id)) {
+			const playerToDelete = this.playerIdMap.get(id);
+			playerToDelete.delete(this.rendering.scene, this.physics.world);
+			this.playerIdMap.delete(id);
+			const index = this.players.indexOf(playerToDelete);
+			if (index !== -1) {
+				this.players.splice(index, 1);
+			}
+		}
+	}
+	getMyPlayer(): Player {
+		return this.players[0];
+	}
+	setIdOfMyPlayer(id: string): void {
+		this.playerIdMap.set(id, this.getMyPlayer());
+	}
+	getPlayerById(id: string): Player | undefined {
+		return this.playerIdMap.get(id);
 	}
 	mouseMove(x: number, y: number) {
 		this.players[0].yaw = -x / window.innerWidth * 6;
@@ -89,8 +134,14 @@ class GameManager {
 		if (this.keyState.D) {
 			v.x = 1;
 		}
-		for (var p of this.players) {
-			p.walk(v.x, v.z, this.physics.world);
+		for (let i = 0; i < this.players.length; i++) {
+			if (i === 0) {
+				// player
+				this.players[i].walk(v.x, v.z, this.physics.world);
+			} else {
+				// enemy
+				this.players[i].walk(v.x, v.z, this.physics.world);
+			}
 		}
 	}
 	getCanvas(): HTMLCanvasElement {
@@ -107,14 +158,49 @@ class KeyState {
 	}
 }
 let manager: GameManager = null;
+let network: NetworkClient = null;
 window.onload = function () {
 	manager = new GameManager();
+	network = new NetworkClient();
 	function loop() {
 		document.getElementById("log").innerText = state.toString();
 		manager.step();
 		requestAnimationFrame(loop);
 	}
 	const state: KeyState = new KeyState();
+	network.init().then(() => network.start(() => {
+		const player = manager.players[0];
+		return {
+			position: player.getPosition().toArray(),
+			velocity: player.getVelocity().toArray()
+		}
+	})).catch(console.error)
+	network.onplayerupdate = (pid, update) => {
+		if (pid === network.myPid) return;
+		const player = manager.getPlayerById(pid);
+		if (player === undefined) {
+			// create new player
+			const position = update.position || [0, 0, 0];
+			let velocity: [number, number];
+			if (update.velocity === undefined) {
+				velocity = [0, 0];
+			} else {
+				velocity = [update.velocity[0], update.velocity[2]];
+			}
+			manager.createNewPlayer(pid, position, velocity);
+		} else {
+			// move existing player
+			if (update.velocity !== undefined) {
+				console.log('set velocity');
+				player.vx = update.velocity[0];
+				player.vz = update.velocity[2];
+			}
+			if (update.position !== undefined) {
+				const p = update.position;
+				player.warp(p[0], p[1], p[2]);
+			}
+		}
+	};
 	loop();
 	{
 		let mouseMoveX = 0;
