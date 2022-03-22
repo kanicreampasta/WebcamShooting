@@ -5,7 +5,6 @@ import { RenderingManager } from "./renderer";
 import { PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
-import { NumberKeyframeTrack } from 'three';
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
