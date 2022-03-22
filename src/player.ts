@@ -84,8 +84,8 @@ export class Player {
 	}
 	setFaceImage(stream: MediaStream) {
 		const video = document.createElement('video');
+		video.autoplay = true;
 		video.srcObject = stream;
-		video.play();
 		const webcam = new THREE.VideoTexture(video);
 		const material = new THREE.MeshBasicMaterial({ map: webcam });
 		this.playerScreen.material = material;
