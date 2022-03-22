@@ -33,7 +33,7 @@ export class NetworkClient {
         this.socket.send(JSON.stringify({
             type: 'spawn'
         }));
-        this.loopKey = setInterval(() => this.loop(getPlayer), 500);
+        this.loopKey = setInterval(() => this.loop(getPlayer), 1000 / 30);
     }
 
     stop() {

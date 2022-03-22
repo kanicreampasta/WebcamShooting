@@ -134,7 +134,15 @@ class GameManager {
 		if (this.keyState.D) {
 			v.x = 1;
 		}
-		this.getMyPlayer().walk(v.x, v.z, this.physics.world);
+		for (let i = 0; i < this.players.length; i++) {
+			if (i === 0) {
+				// player
+				this.players[i].walk(v.x, v.z, this.physics.world);
+			} else {
+				// enemy
+				this.players[i].walk(v.x, v.z, this.physics.world);
+			}
+		}
 	}
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();
