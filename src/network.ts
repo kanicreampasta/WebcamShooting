@@ -1,3 +1,5 @@
+import * as video from './video/video';
+
 type Position = [number, number, number];
 type Velocity = [number, number, number];
 
@@ -25,12 +27,17 @@ export class NetworkClient {
         this.pid = null;
     }
 
-    async init(): Promise<void> {
+    async initGameServer(): Promise<void> {
         this.socket = new WebSocket("ws://localhost:3000");
         this.socket.addEventListener('message', (ev) => this.onmessage(ev))
         return new Promise((resolve) => {
             this.socket.onopen = (ev) => resolve();
         });
+    }
+
+    async initVideoServer(): Promise<void> {
+        await video.initJanus();
+        video.initiateSession("http://localhost:8088/janus");
     }
 
     start(getPlayer: PlayerGetter) {

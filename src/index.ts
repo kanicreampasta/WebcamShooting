@@ -169,7 +169,7 @@ window.onload = function () {
 		requestAnimationFrame(loop);
 	}
 	const state: KeyState = new KeyState();
-	network.init().then(() => network.start(() => {
+	network.initGameServer().then(() => network.start(() => {
 		const player = manager.players[0];
 		return {
 			position: player.getPosition().toArray(),
@@ -177,7 +177,8 @@ window.onload = function () {
 			yaw: player.yaw,
 			pitch: player.pitch
 		};
-	})).catch(console.error)
+	})).catch(console.error);
+	network.initVideoServer();
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
 		const player = manager.getPlayerById(pid);

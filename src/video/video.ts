@@ -5,7 +5,7 @@ const roomName = 1234;
 
 export const videoTags: HTMLVideoElement[] = [];
 
-function initJanus(): Promise<void> {
+export function initJanus(): Promise<void> {
     return new Promise(resolve => {
         Janus.init({
             debug: true,
@@ -20,7 +20,7 @@ function initJanus(): Promise<void> {
     });
 }
 
-function initiateSession(server: string) {
+export function initiateSession(server: string) {
     const janus = new Janus(
         {
             server: server, //'http://localhost:8088/janus'
