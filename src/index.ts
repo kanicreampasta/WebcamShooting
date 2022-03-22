@@ -14,7 +14,8 @@ class GameManager {
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
 	startFrame: Date;
-	constructor() {
+	onload: () => void;
+	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
 		this.players = [];
@@ -25,6 +26,10 @@ class GameManager {
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
+		this.onload = onload;
+	}
+	loadGame() {
+		this.onload();
 	}
 	generateWorld() {
 		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
@@ -159,13 +164,13 @@ class KeyState {
 let manager: GameManager = null;
 let network: NetworkClient = null;
 window.onload = function () {
-	manager = new GameManager();
-	network = new NetworkClient();
 	function loop() {
 		document.getElementById("log").innerText = state.toString();
 		manager.step();
 		requestAnimationFrame(loop);
 	}
+	manager = new GameManager(loop);
+	network = new NetworkClient();
 	const state: KeyState = new KeyState();
 	network.init().then(() => network.start(() => {
 		const player = manager.players[0];
@@ -200,7 +205,6 @@ window.onload = function () {
 			}
 		}
 	};
-	loop();
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;
@@ -241,4 +245,6 @@ window.onload = function () {
 		}
 		manager.setKey(state);
 	};
+
+	manager.loadGame();
 };
