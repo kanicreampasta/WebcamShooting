@@ -34,7 +34,7 @@ export class NetworkClient {
     }
 
     async initGameServer(): Promise<void> {
-        this.socket = new WebSocket("ws://localhost:3000");
+        this.socket = new WebSocket("ws://tinax.work:3000");
         this.socket.addEventListener('message', (ev) => this.onmessage(ev))
         return new Promise((resolve) => {
             this.socket.onopen = (ev) => resolve();
@@ -45,7 +45,7 @@ export class NetworkClient {
         video.setOnVideoStream((stream, pid) => this.onvideostream(stream, pid));
         await video.initJanus();
         this.onmypid = (pid) => {
-            video.initiateSession("http://192.168.1.15:8088/janus", pid);
+            video.initiateSession("http://tinax.work:8088/janus", pid);
         };
     }
 

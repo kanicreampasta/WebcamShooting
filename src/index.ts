@@ -80,8 +80,8 @@ class GameManager {
 		for (var p of this.players) {
 			p.applyGraphics();
 		}
-		// this.rendering.setFPSCamera(this.players[0]);
-		this.rendering.setTPSCamera(this.players[0]);
+		this.rendering.setFPSCamera(this.players[0]);
+		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
 	}
@@ -247,7 +247,7 @@ window.onload = function () {
 			manager.getPlayerById(pid)?.setFaceImage(stream);
 		}
 	};
-	// network.initVideoServer();
+	network.initVideoServer();
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;
