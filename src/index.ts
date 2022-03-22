@@ -247,7 +247,7 @@ window.onload = function () {
 			manager.getPlayerById(pid)?.setFaceImage(stream);
 		}
 	};
-	network.initVideoServer();
+	// network.initVideoServer();
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;
