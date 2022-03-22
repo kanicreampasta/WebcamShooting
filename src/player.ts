@@ -19,28 +19,37 @@ function GetPlayerBody(): CANNON.Body {
 	return playerBody;
 }
 
-function GetPlayerMesh(): THREE.Object3D {
+function GetPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
 	for (let i: number = -1; i <= -1; i++) {
 		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
-	return playerMesh;
+	const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshNormalMaterial());
+	screen.position.set(0, 0.5, -0.5);
+	screen.rotation.y = Math.PI;
+	playerMesh.add(screen);
+	return [playerMesh, screen];
 }
-function GetOtherPlayerMesh(): THREE.Object3D {
+function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
 	for (let i: number = -1; i <= 1; i++) {
 		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
-	return playerMesh;
+	const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshNormalMaterial());
+	screen.position.set(0, 0.5, -0.5);
+	screen.rotation.y = Math.PI;
+	playerMesh.add(screen);
+	return [playerMesh, screen];
 }
 
 export class Player {
 	rigidbody: CANNON.Body;
 	playerMesh: THREE.Object3D;
+	playerScreen: THREE.Mesh
 	yaw: number = 0;
 	pitch: number = 0;
 	isOtherPlayer: boolean = false;
@@ -52,10 +61,13 @@ export class Player {
 	constructor(scene: THREE.Scene, world: CANNON.World, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
-			this.playerMesh = GetOtherPlayerMesh();
+			const mesh = GetOtherPlayerMesh();
+			this.playerMesh = mesh[0];
+			this.playerScreen = mesh[1];
 		} else {
-			// this.playerMesh = GetPlayerMesh();
-			this.playerMesh = GetOtherPlayerMesh();
+			const mesh = GetOtherPlayerMesh();
+			this.playerMesh = mesh[0];
+			this.playerScreen = mesh[1];
 		}
 		scene.add(this.playerMesh);
 		world.addBody(this.rigidbody);
@@ -70,8 +82,13 @@ export class Player {
 		this.playerMesh.position.set(pos.x, pos.y, pos.z);
 		this.playerMesh.rotation.set(0, this.yaw, 0);
 	}
-	setFaceImage() {
-		throw "Not Implemented yet";
+	setFaceImage(stream: MediaStream) {
+		const video = document.createElement('video');
+		video.autoplay = true;
+		video.srcObject = stream;
+		const webcam = new THREE.VideoTexture(video);
+		const material = new THREE.MeshBasicMaterial({ map: webcam });
+		this.playerScreen.material = material;
 	}
 	getPosition(): THREE.Vector3 {
 		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);

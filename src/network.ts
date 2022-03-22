@@ -1,9 +1,13 @@
+import * as video from './video/video';
+
 type Position = [number, number, number];
 type Velocity = [number, number, number];
 
 type PlayerGetter = () => {
     position: Position,
     velocity: Velocity,
+    yaw: number,
+    pitch: number
 };
 
 export class NetworkClient {
@@ -13,20 +17,36 @@ export class NetworkClient {
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
-        velocity?: Velocity
+        velocity?: Velocity,
+        yaw?: number,
+        pitch?: number
     }) => void);
+
+    onplayerdelete: undefined | ((pid: string) => void);
+
+    onvideostream: undefined | video.VideoSetter;
+
+    onmypid: undefined | ((pid: string) => void);
 
     constructor() {
         this.socket = null;
         this.pid = null;
     }
 
-    async init(): Promise<void> {
+    async initGameServer(): Promise<void> {
         this.socket = new WebSocket("ws://localhost:3000");
         this.socket.addEventListener('message', (ev) => this.onmessage(ev))
         return new Promise((resolve) => {
             this.socket.onopen = (ev) => resolve();
         });
+    }
+
+    async initVideoServer(): Promise<void> {
+        video.setOnVideoStream((stream, pid) => this.onvideostream(stream, pid));
+        await video.initJanus();
+        this.onmypid = (pid) => {
+            video.initiateSession("http://192.168.1.15:8088/janus", pid);
+        };
     }
 
     start(getPlayer: PlayerGetter) {
@@ -51,7 +71,9 @@ export class NetworkClient {
             type: 'position',
             pid: this.pid,
             position: pl.position,
-            velocity: pl.velocity
+            velocity: pl.velocity,
+            yaw: pl.yaw,
+            pitch: pl.pitch
         }));
     }
 
@@ -72,6 +94,9 @@ export class NetworkClient {
                 }
                 this.pid = pid;
                 console.log(`pid set to ${pid}`);
+                if (this.onmypid !== undefined) {
+                    this.onmypid(pid);
+                }
                 break;
             }
             case 'update': {
@@ -83,6 +108,19 @@ export class NetworkClient {
                 for (const player of players) {
                     this.processPlayer(player);
                 }
+                break;
+            }
+            case 'leave': {
+                if (this.onplayerdelete === undefined) {
+                    console.warn('onplayerdelete not set');
+                    return;
+                }
+                const pid = data['pid'];
+                if (pid === undefined || typeof (pid) !== 'string') {
+                    console.warn('invalid message');
+                    return;
+                }
+                this.onplayerdelete(pid);
                 break;
             }
         }
@@ -102,7 +140,9 @@ export class NetworkClient {
 
         const updateData: {
             position?: Position,
-            velocity?: Velocity
+            velocity?: Velocity,
+            yaw?: number,
+            pitch?: number
         } = {};
 
         const position = playerData['position'];
@@ -113,6 +153,16 @@ export class NetworkClient {
         const velocity = playerData['velocity'];
         if (velocity !== undefined) {
             updateData.velocity = velocity;
+        }
+
+        const yaw = playerData['yaw'];
+        if (yaw !== undefined) {
+            updateData.yaw = yaw;
+        }
+
+        const pitch = playerData['pitch'];
+        if (pitch !== undefined) {
+            updateData.pitch = pitch;
         }
 
         this.onplayerupdate(pid, updateData);

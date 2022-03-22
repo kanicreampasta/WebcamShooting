@@ -91,13 +91,14 @@ class GameManager {
 			this.playerIdMap.set(id, player);
 		}
 	}
-	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): void {
+	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): Player {
 		console.log('createNewPlayer id: ' + id);
 		const player = new Player(this.rendering.scene, this.physics.world, true);
 		player.warp(position[0], position[1], position[2]);
 		player.vx = velocity[0];
 		player.vz = velocity[1];
 		this.addPlayer(player, id);
+		return player;
 	}
 	deletePlayerByIndex(index: number): void {
 		this.players[index].delete(this.rendering.scene, this.physics.world);
@@ -184,13 +185,16 @@ window.onload = function () {
 	manager = new GameManager(loop);
 	network = new NetworkClient();
 	const state: KeyState = new KeyState();
-	network.init().then(() => network.start(() => {
+	// game server network
+	network.initGameServer().then(() => network.start(() => {
 		const player = manager.players[0];
 		return {
 			position: player.getPosition().toArray(),
-			velocity: player.getVelocity().toArray()
-		}
-	})).catch(console.error)
+			velocity: player.getVelocity().toArray(),
+			yaw: player.yaw,
+			pitch: player.pitch
+		};
+	})).catch(console.error);
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
 		const player = manager.getPlayerById(pid);
@@ -203,11 +207,16 @@ window.onload = function () {
 			} else {
 				velocity = [update.velocity[0], update.velocity[2]];
 			}
-			manager.createNewPlayer(pid, position, velocity);
+			const newPlayer = manager.createNewPlayer(pid, position, velocity);
+			if (update.yaw !== undefined) {
+				newPlayer.yaw = update.yaw;
+			}
+			if (update.pitch !== undefined) {
+				newPlayer.pitch = update.pitch;
+			}
 		} else {
 			// move existing player
 			if (update.velocity !== undefined) {
-				console.log('set velocity');
 				player.vx = update.velocity[0];
 				player.vz = update.velocity[2];
 			}
@@ -215,8 +224,30 @@ window.onload = function () {
 				const p = update.position;
 				player.warp(p[0], p[1], p[2]);
 			}
+			if (update.yaw !== undefined) {
+				player.yaw = update.yaw;
+			}
+			if (update.pitch !== undefined) {
+				player.pitch = update.pitch;
+			}
 		}
 	};
+	network.onplayerdelete = (pid) => {
+		console.log(`deleted player ${pid}`);
+		manager.deletePlayerById(pid);
+	};
+	// video server network
+	network.onvideostream = (stream, pid) => {
+		console.log(`got stream ${stream} for pid ${pid}`);
+		if (pid === undefined) {
+			// my video
+			// previewVideo.srcObject = stream;
+			// previewVideo.play();
+		} else {
+			manager.getPlayerById(pid)?.setFaceImage(stream);
+		}
+	};
+	network.initVideoServer();
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;
