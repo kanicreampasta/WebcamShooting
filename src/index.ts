@@ -161,6 +161,7 @@ class KeyState {
 let manager: GameManager = null;
 let network: NetworkClient = null;
 window.onload = function () {
+	// const previewVideo = document.querySelector('#previewVideo') as HTMLVideoElement;
 	manager = new GameManager();
 	network = new NetworkClient();
 	function loop() {
@@ -169,6 +170,7 @@ window.onload = function () {
 		requestAnimationFrame(loop);
 	}
 	const state: KeyState = new KeyState();
+	// game server network
 	network.initGameServer().then(() => network.start(() => {
 		const player = manager.players[0];
 		return {
@@ -178,7 +180,6 @@ window.onload = function () {
 			pitch: player.pitch
 		};
 	})).catch(console.error);
-	network.initVideoServer();
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
 		const player = manager.getPlayerById(pid);
@@ -216,6 +217,16 @@ window.onload = function () {
 			}
 		}
 	};
+	// video server network
+	network.onvideostream = (stream, pid) => {
+		console.log(`got stream ${stream} for pid ${pid}`);
+		if (pid === undefined) {
+			// my video
+			// previewVideo.srcObject = stream;
+			// previewVideo.play();
+		}
+	};
+	network.initVideoServer();
 	loop();
 	{
 		let mouseMoveX = 0;

@@ -22,6 +22,10 @@ export class NetworkClient {
         pitch?: number
     }) => void);
 
+    onvideostream: undefined | video.VideoSetter;
+
+    onmypid: undefined | ((pid: string) => void);
+
     constructor() {
         this.socket = null;
         this.pid = null;
@@ -36,8 +40,11 @@ export class NetworkClient {
     }
 
     async initVideoServer(): Promise<void> {
+        video.setOnVideoStream((stream, pid) => this.onvideostream(stream, pid));
         await video.initJanus();
-        video.initiateSession("http://localhost:8088/janus");
+        this.onmypid = (pid) => {
+            video.initiateSession("http://192.168.1.15:8088/janus", pid);
+        };
     }
 
     start(getPlayer: PlayerGetter) {
@@ -85,6 +92,9 @@ export class NetworkClient {
                 }
                 this.pid = pid;
                 console.log(`pid set to ${pid}`);
+                if (this.onmypid !== undefined) {
+                    this.onmypid(pid);
+                }
                 break;
             }
             case 'update': {

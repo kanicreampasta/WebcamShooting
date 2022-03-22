@@ -3,7 +3,11 @@ import adapter from './adapter';
 
 const roomName = 1234;
 
-export const videoTags: HTMLVideoElement[] = [];
+export type VideoSetter = (stream: MediaStream | null, pid?: string) => void;
+let onvideostream: VideoSetter;
+export function setOnVideoStream(callback: (stream: MediaStream, pid?: string) => void) {
+    onvideostream = callback;
+}
 
 export function initJanus(): Promise<void> {
     return new Promise(resolve => {
@@ -20,12 +24,12 @@ export function initJanus(): Promise<void> {
     });
 }
 
-export function initiateSession(server: string) {
+export function initiateSession(server: string, username: string) {
     const janus = new Janus(
         {
             server: server, //'http://localhost:8088/janus'
             success: function () {
-                startVideoRoom(janus);
+                startVideoRoom(janus, username);
             },
             error: function (cause: any) {
                 console.log('error: cause:', cause);
@@ -48,11 +52,10 @@ const feedStreams: {
 const localTracks: any = {};
 const remoteTracks: any = {};
 
-function startVideoRoom(janus: Janus) {
+function startVideoRoom(janus: Janus, username: string) {
     let pHandle: any = null;
     let myid: any = null;
     let mypvtid: any = null;
-    let username = "tinax";
     janus.attach({
         plugin: "janus.plugin.videoroom",
         success: function (handle: any) {
@@ -172,7 +175,9 @@ function startVideoRoom(janus: Janus) {
                     } catch (e) { }
                 }
                 if (track.kind === 'video') {
-                    videoTags[0].srcObject = null;
+                    // local player video is not shown
+                    // videoTags[0].srcObject = null;
+                    onvideostream(null, undefined);
                 }
                 delete localTracks[trackId];
             } else {
@@ -188,8 +193,10 @@ function startVideoRoom(janus: Janus) {
                     console.log('created local stream:', stream);
                     console.log(stream.getTracks());
                     console.log(stream.getVideoTracks());
-                    videoTags[0].srcObject = stream;
-                    videoTags[0].play();
+                    // local player video is not shown
+                    // videoTags[0].srcObject = stream;
+                    // videoTags[0].play();
+                    onvideostream(stream, undefined);
                 }
             }
         },
@@ -347,8 +354,9 @@ function newRemoteFeed(janus: Janus, id: string, display: string, streams0: any[
                 remoteFeed.remoteTracks[mid] = stream;
                 console.log("created remote video stream:", stream);
                 // attach stream
-                videoTags[1].srcObject = stream;
-                videoTags[1].play();
+                // videoTags[1].srcObject = stream;
+                // videoTags[1].play();
+                onvideostream(stream, "<enemy pid here>");
             }
         },
         oncleanup: function () {
