@@ -30,6 +30,7 @@ class GameManager {
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
 		this.onload = onload;
+		this.players[0].rigidbody.position.y = 20;
 	}
 	async loadGame() {
 		{

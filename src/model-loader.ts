@@ -39,6 +39,8 @@ export class ModelLoader {
 		scene.add(gltf.scene);
 		console.log(gltf.scene);
 		const body: CANNON.Body = new CANNON.Body({ mass: 0 });
+		body.collisionFilterMask = 2;
+		body.collisionFilterGroup = 1;
 		for (const mesh of gltf.scene.children) {
 			if (mesh instanceof THREE.Mesh) {
 				console.log(mesh);
