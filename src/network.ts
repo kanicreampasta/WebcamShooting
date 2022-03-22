@@ -22,6 +22,8 @@ export class NetworkClient {
         pitch?: number
     }) => void);
 
+    onplayerdelete: undefined | ((pid: string) => void);
+
     onvideostream: undefined | video.VideoSetter;
 
     onmypid: undefined | ((pid: string) => void);
@@ -106,6 +108,19 @@ export class NetworkClient {
                 for (const player of players) {
                     this.processPlayer(player);
                 }
+                break;
+            }
+            case 'leave': {
+                if (this.onplayerdelete === undefined) {
+                    console.warn('onplayerdelete not set');
+                    return;
+                }
+                const pid = data['pid'];
+                if (pid === undefined || typeof (pid) !== 'string') {
+                    console.warn('invalid message');
+                    return;
+                }
+                this.onplayerdelete(pid);
                 break;
             }
         }

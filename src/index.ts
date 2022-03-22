@@ -217,6 +217,10 @@ window.onload = function () {
 			}
 		}
 	};
+	network.onplayerdelete = (pid) => {
+		console.log(`deleted player ${pid}`);
+		manager.deletePlayerById(pid);
+	};
 	// video server network
 	network.onvideostream = (stream, pid) => {
 		console.log(`got stream ${stream} for pid ${pid}`);
