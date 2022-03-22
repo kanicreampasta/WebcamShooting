@@ -26,6 +26,9 @@ function GetPlayerMesh(): THREE.Object3D {
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
+	const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshNormalMaterial());
+	screen.position.set(0.5, 0.5, 0);
+	playerMesh.add(screen);
 	return playerMesh;
 }
 function GetOtherPlayerMesh(): THREE.Object3D {
@@ -35,6 +38,9 @@ function GetOtherPlayerMesh(): THREE.Object3D {
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
+	const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshNormalMaterial());
+	screen.position.set(0.5, 0.5, 0);
+	playerMesh.add(screen);
 	return playerMesh;
 }
 
