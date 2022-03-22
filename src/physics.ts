@@ -7,7 +7,7 @@ export class PhysicsManager {
 		this.world = new CANNON.World();
 		this.world.gravity.set(0, -9.82, 0);
 		this.world.broadphase = new CANNON.NaiveBroadphase();
-		(this.world.solver as CANNON.GSSolver).iterations = 10;
+		(this.world.solver as CANNON.GSSolver).iterations = 1;
 		this.world.allowSleep = false;
 	}
 	addCube(position: CANNON.Vec3, dimention: CANNON.Vec3, rotation: THREE.Euler) {

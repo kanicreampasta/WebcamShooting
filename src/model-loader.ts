@@ -37,5 +37,33 @@ export class ModelLoader {
 	async loadStage(scene: THREE.Scene, world: CANNON.World) {
 		const gltf: GLTF = await this.loadModel();
 		scene.add(gltf.scene);
+		console.log(gltf.scene);
+		const body: CANNON.Body = new CANNON.Body({ mass: 0 });
+		for (const mesh of gltf.scene.children) {
+			if (mesh instanceof THREE.Mesh) {
+				console.log(mesh);
+				const geometry: THREE.BufferGeometry = mesh.geometry;
+				const rawindex = geometry.index.array;
+				const rawverts = geometry.attributes.position.array;
+				const rawnormals = geometry.attributes.normal.array;
+
+				const index: number[] = [];
+				const verts = [];
+				const normals = [];
+				for (let i = 0; i < rawindex.length; i++) {
+					index.push(rawindex[i]);
+				}
+				for (let i = 0; i < rawverts.length; i++) {
+					verts.push(rawverts[i]);
+				}
+				for (let i = 0; i < rawnormals.length; i++) {
+					normals.push(rawnormals[i]);
+				}
+				const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
+				const offset: CANNON.Vec3 = new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z);
+				body.addShape(shape, offset);
+			}
+		}
+		world.addBody(body);
 	}
 }
