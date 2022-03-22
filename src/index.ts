@@ -75,13 +75,14 @@ class GameManager {
 			this.playerIdMap.set(id, player);
 		}
 	}
-	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): void {
+	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): Player {
 		console.log('createNewPlayer id: ' + id);
 		const player = new Player(this.rendering.scene, this.physics.world, true);
 		player.warp(position[0], position[1], position[2]);
 		player.vx = velocity[0];
 		player.vz = velocity[1];
 		this.addPlayer(player, id);
+		return player;
 	}
 	deletePlayerByIndex(index: number): void {
 		this.players[index].delete(this.rendering.scene, this.physics.world);
@@ -172,8 +173,10 @@ window.onload = function () {
 		const player = manager.players[0];
 		return {
 			position: player.getPosition().toArray(),
-			velocity: player.getVelocity().toArray()
-		}
+			velocity: player.getVelocity().toArray(),
+			yaw: player.pitch,
+			pitch: player.pitch
+		};
 	})).catch(console.error)
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
@@ -187,17 +190,28 @@ window.onload = function () {
 			} else {
 				velocity = [update.velocity[0], update.velocity[2]];
 			}
-			manager.createNewPlayer(pid, position, velocity);
+			const newPlayer = manager.createNewPlayer(pid, position, velocity);
+			if (update.yaw !== undefined) {
+				newPlayer.yaw = update.yaw;
+			}
+			if (update.pitch !== undefined) {
+				newPlayer.pitch = update.pitch;
+			}
 		} else {
 			// move existing player
 			if (update.velocity !== undefined) {
-				console.log('set velocity');
 				player.vx = update.velocity[0];
 				player.vz = update.velocity[2];
 			}
 			if (update.position !== undefined) {
 				const p = update.position;
 				player.warp(p[0], p[1], p[2]);
+			}
+			if (update.yaw !== undefined) {
+				player.yaw = update.yaw;
+			}
+			if (update.pitch !== undefined) {
+				player.pitch = update.pitch;
 			}
 		}
 	};

@@ -4,6 +4,8 @@ type Velocity = [number, number, number];
 type PlayerGetter = () => {
     position: Position,
     velocity: Velocity,
+    yaw: number,
+    pitch: number
 };
 
 export class NetworkClient {
@@ -13,7 +15,9 @@ export class NetworkClient {
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
-        velocity?: Velocity
+        velocity?: Velocity,
+        yaw?: number,
+        pitch?: number
     }) => void);
 
     constructor() {
@@ -51,7 +55,9 @@ export class NetworkClient {
             type: 'position',
             pid: this.pid,
             position: pl.position,
-            velocity: pl.velocity
+            velocity: pl.velocity,
+            yaw: pl.yaw,
+            pitch: pl.pitch
         }));
     }
 
@@ -102,7 +108,9 @@ export class NetworkClient {
 
         const updateData: {
             position?: Position,
-            velocity?: Velocity
+            velocity?: Velocity,
+            yaw?: number,
+            pitch?: number
         } = {};
 
         const position = playerData['position'];
@@ -113,6 +121,16 @@ export class NetworkClient {
         const velocity = playerData['velocity'];
         if (velocity !== undefined) {
             updateData.velocity = velocity;
+        }
+
+        const yaw = playerData['yaw'];
+        if (yaw !== undefined) {
+            updateData.yaw = yaw;
+        }
+
+        const pitch = playerData['pitch'];
+        if (pitch !== undefined) {
+            updateData.pitch = pitch;
         }
 
         this.onplayerupdate(pid, updateData);
