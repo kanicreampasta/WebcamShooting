@@ -174,7 +174,7 @@ window.onload = function () {
 		return {
 			position: player.getPosition().toArray(),
 			velocity: player.getVelocity().toArray(),
-			yaw: player.pitch,
+			yaw: player.yaw,
 			pitch: player.pitch
 		};
 	})).catch(console.error)
