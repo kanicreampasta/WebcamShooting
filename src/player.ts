@@ -71,7 +71,7 @@ function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 export class Player {
 	rigidbody: Ammo.btRigidBody;
 	playerMesh: THREE.Object3D;
-	playerScreen: THREE.Mesh
+	playerScreen: THREE.Mesh;
 	yaw: number = 0;
 	pitch: number = 0;
 	isOtherPlayer: boolean = false;
@@ -148,64 +148,69 @@ export class Player {
 		motionState.setWorldTransform(trans);
 		this.rigidbody.setMotionState(motionState);
 	}
-	walk(vx: number, vz: number, world: Ammo.btDiscreteDynamicsWorld) {
+	walk(sideways: number, forward: number, world: Ammo.btDiscreteDynamicsWorld) {
 		const theta = this.yaw;
-		let r = Math.sqrt(vx * vx + vz * vz);
+		let r = Math.sqrt(sideways * sideways + forward * forward);
 		r = Math.max(r, 1);
-		vz /= r;
-		vx /= r;
-		vx *= 10;
-		vz *= 10;
-		let targetVx: number, targetVz: number;
+		sideways /= r;
+		forward /= r;
+		sideways *= 10;
+		forward *= 10;
+		let vx: number, vz: number;
 		if (this.isOtherPlayer) {
-			targetVx = this.vx;
-			targetVz = this.vz;
+			vx = this.vx;
+			vz = this.vz;
 		} else {
-			targetVx = vx * Math.cos(-theta) + vz * Math.sin(-theta);
-			targetVz = vx * Math.sin(-theta) - vz * Math.cos(-theta);
+			vx = sideways * Math.cos(-theta) + forward * Math.sin(-theta);
+			vz = sideways * Math.sin(-theta) - forward * Math.cos(-theta);
 		}
-
-		const currentV = this.rigidbody.getLinearVelocity();
-		currentV.setX(targetVx);
-		currentV.setZ(targetVz);
-		this.rigidbody.setLinearVelocity(currentV);
-
 		const p = this.getPosition();
 		const start = new gAmmo.btVector3(p.x, p.y, p.z);
-		const end = new gAmmo.btVector3(p.x, p.y - 4, p.z);
+		const end = new gAmmo.btVector3(p.x, p.y - 1.5, p.z);
 		var result = new gAmmo.ClosestRayResultCallback(start, end); // TODO: reuse callback object
 		result.set_m_collisionFilterGroup(2);
-		// const rayCastOptions = {
-		// 	collisionFilterMask: 1,
-		// 	skipBackfaces: true      /* ignore back faces */
-		// };
 		world.rayTest(start, end, result);
-
-		// console.log(result.hasHit());
 		if (result.hasHit()) {
-			document.getElementById("log").innerText += " grounded ";
-			// console.log(result.distance);
-			const velocity = this.getVelocity();
-			const normal = result.get_m_hitNormalWorld();
 
-			const hitPoint = result.get_m_hitPointWorld();
-			const distance = (() => {
+			document.getElementById("log").innerText += " grounded ";
+			const normal: Ammo.btVector3 = result.get_m_hitNormalWorld();
+			const hitPoint: Ammo.btVector3 = result.get_m_hitPointWorld();
+			const distance: number = (() => {
 				const dx = start.x() - hitPoint.x();
 				const dy = start.y() - hitPoint.y();
 				const dz = start.z() - hitPoint.z();
 				return Math.sqrt(dx * dx + dy * dy + dz * dz);
 			})();
+			if (normal.y() !== 0) {
+				const vy: number = -(normal.x() * vx + normal.z() * vz) / normal.y();
+				const vn2 = (vx * vx + vz * vz);
+				const vt2 = (vx * vx + vz * vz + vy * vy);
 
-			if (distance < 1 + Math.sqrt(normal.x() * normal.x() + normal.z() * normal.z()) * 3) {
-				const normalTHREE = new THREE.Vector3(normal.x(), normal.y(), normal.z());
-				const slopeY: number = velocity.dot(normalTHREE);//positive when going up slope
-				const normalcomponent = normalTHREE.multiplyScalar(-slopeY);
-				const finalvelocity = velocity.add(normalcomponent);
-				this.setVelocity(finalvelocity.x, finalvelocity.y, finalvelocity.z);
-				document.getElementById("log").innerText += slopeY + "";
-			}
-			if (distance < 1) {
-				this.setPositionY(hitPoint.y() + 1);
+				//slope correction
+				let vx1: number = vx;
+				let vz1: number = vz;
+				let vy1: number = vy;
+				//|velocity| = target * tangent 
+				if (vy > 0 && vt2 > 0) {
+					vx1 *= vn2 / vt2;
+					vz1 *= vn2 / vt2;
+					vy1 *= vn2 / vt2;
+					document.getElementById("log").innerText += " uphill";
+				}
+				//|velocity| = |target|
+				if (vy < 0) {
+					vx1 *= Math.sqrt(vn2 / vt2);
+					vy1 *= Math.sqrt(vn2 / vt2);
+					vz1 *= Math.sqrt(vn2 / vt2);
+					document.getElementById("log").innerText += " downhill";
+				}
+				const velocity: Ammo.btVector3 = this.rigidbody.getLinearVelocity();
+				velocity.setX(vx1);
+				velocity.setZ(vz1);
+				if (velocity.y() > vy1) {
+					velocity.setY(vy1);
+				}
+				this.rigidbody.setLinearVelocity(velocity);
 			}
 			// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
 			// const correctedVy: number = -slopeY;
