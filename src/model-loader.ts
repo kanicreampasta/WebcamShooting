@@ -66,21 +66,34 @@ export class ModelLoader {
 				// console.log('verts', verts);
 				// console.log('index', index);
 				// const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
-				// const offset: CANNON.Vec3 = new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z);
+				const offset = new gAmmo.btVector3(mesh.position.x, mesh.position.y, mesh.position.z);
 				// body.addShape(shape, offset);
-				const shape = new gAmmo.btConvexHullShape();
-				for (let i = 0; i < rawindex.length; i++) {
-					const index = rawindex[i];
-					const x = rawverts[index * 3];
-					const y = rawverts[index * 3 + 1];
-					const z = rawverts[index * 3 + 2];
-					const v = new gAmmo.btVector3(x, y, z);
-					shape.addPoint(v);
+				// https://stackoverflow.com/questions/59665854/ammo-js-custom-mesh-collision-with-sphere
+				const v = rawverts;
+				const trimesh = new gAmmo.btTriangleMesh(true, true);
+				for (let i = 0; i * 3 < rawindex.length; i++) {
+					const i0 = rawindex[i * 3] * 3;
+					const i1 = rawindex[i * 3 + 1] * 3;
+					const i2 = rawindex[i * 3 + 2] * 3;
+					trimesh.addTriangle(
+						new gAmmo.btVector3(
+							v[i0], v[i0 + 1], v[i0 + 2]
+						),
+						new gAmmo.btVector3(
+							v[i1], v[i1 + 1], v[i1 + 2]
+						),
+						new gAmmo.btVector3(
+							v[i2], v[i2 + 1], v[i2 + 2]
+						),
+						false
+					);
 				}
 
+				const shape = new gAmmo.btBvhTriangleMeshShape(trimesh, false);
 				const trans = new gAmmo.btTransform();
 				trans.setIdentity();
-				// compoundShape.addChildShape(trans, shape);
+				trans.setOrigin(offset);
+				compoundShape.addChildShape(trans, shape);
 			}
 		}
 

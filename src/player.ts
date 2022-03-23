@@ -174,7 +174,7 @@ export class Player {
 		const p = this.getPosition();
 		const start = new gAmmo.btVector3(p.x, p.y, p.z);
 		const end = new gAmmo.btVector3(p.x, p.y - 4, p.z);
-		var result = new gAmmo.ClosestRayResultCallback(start, end);
+		var result = new gAmmo.ClosestRayResultCallback(start, end); // TODO: reuse callback object
 		result.set_m_collisionFilterGroup(2);
 		// const rayCastOptions = {
 		// 	collisionFilterMask: 1,
@@ -182,7 +182,7 @@ export class Player {
 		// };
 		world.rayTest(start, end, result);
 
-		console.log(result.hasHit());
+		// console.log(result.hasHit());
 		if (result.hasHit()) {
 			document.getElementById("log").innerText += " grounded ";
 			// console.log(result.distance);

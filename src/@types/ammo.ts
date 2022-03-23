@@ -19,6 +19,9 @@ export declare class AmmoInstance {
     btCompoundShape: new () => btCompoundShape;
     btSphereShape: new (radius: number) => btSphereShape;
     btConvexHullShape: new (points?: number[], numPoints?: number) => btConvexHullShape;
+    btBvhTriangleMeshShape: new (meshInterface: btStridingMeshInterface, useQuantizedAabbCompression: boolean, buildBvh?: boolean) => btBvhTriangleMeshShape;
+
+    btTriangleMesh: new (use32bitIndices?: boolean, use4componentVertices?: boolean) => btTriangleMesh;
 
     btDefaultMotionState: new (transform: btTransform) => btDefaultMotionState;
 
@@ -168,6 +171,11 @@ export declare class btConvexHullShape implements btCollisionShape {
     getNumVertices(): number;
 }
 
+export declare class btBvhTriangleMeshShape implements btCollisionShape {
+    calculateLocalInertia(mass: number, inertia: btVector3): void;
+
+}
+
 export declare interface RayResultCallback {
     hasHit(): boolean;
 
@@ -204,4 +212,15 @@ export declare class ClosestRayResultCallback implements RayResultCallback {
 
     set_m_hitPointWorld(v: btVector3): void;
     get_m_hitPointWorld(): btVector3;
+}
+
+export declare interface btStridingMeshInterface {
+    setScaling(scaling: btVector3): void;
+}
+
+export declare class btTriangleMesh implements btStridingMeshInterface {
+    setScaling(scaling: btVector3): void;
+    addTriangle(vertex0: btVector3, vertex1: btVector3, vertex2: btVector3, removeDuplicateVertices?: boolean): void;
+    findOrAddVertex(vertex: btVector3, removeDuplicateVertices?: boolean): number;
+    addIndex(index: number): void;
 }
