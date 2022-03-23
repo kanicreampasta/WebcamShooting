@@ -10,6 +10,9 @@ type PlayerGetter = () => {
     pitch: number
 };
 
+const GAME_SERVER = "ws://localhost:3000";
+const VIDEO_SERVER = "http://192.168.1.15:8088/janus";
+
 export class NetworkClient {
     private socket: WebSocket;
     private loopKey: NodeJS.Timer;
@@ -34,7 +37,7 @@ export class NetworkClient {
     }
 
     async initGameServer(): Promise<void> {
-        this.socket = new WebSocket("ws://tinax.work:3000");
+        this.socket = new WebSocket(GAME_SERVER);
         this.socket.addEventListener('message', (ev) => this.onmessage(ev))
         return new Promise((resolve) => {
             this.socket.onopen = (ev) => resolve();
@@ -45,7 +48,7 @@ export class NetworkClient {
         video.setOnVideoStream((stream, pid) => this.onvideostream(stream, pid));
         await video.initJanus();
         this.onmypid = (pid) => {
-            video.initiateSession("http://tinax.work:8088/janus", pid);
+            video.initiateSession(VIDEO_SERVER, pid);
         };
     }
 
