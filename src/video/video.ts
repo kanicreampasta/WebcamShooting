@@ -148,7 +148,7 @@ function startVideoRoom(janus: Janus, username: string) {
                 console.log('handling SDP...', jsep);
                 pHandle.handleRemoteJsep({ jsep: jsep });
                 const audio = msg["audio_codec"];
-                //// TODO: check if media has been refused
+                // TODO: check if media has been refused
             }
         },
         webrtcState: function (on: boolean) {
