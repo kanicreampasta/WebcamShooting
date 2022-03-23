@@ -1,6 +1,7 @@
 import { gAmmo } from './physics';
 // import * as CANNON from 'cannon';
 import * as THREE from 'three';
+import { btDiscreteDynamicsWorld, btRigidBody, btVector3 } from './ammo';
 
 
 function GetPlayerBody(): any {
@@ -67,7 +68,7 @@ function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 }
 
 export class Player {
-	rigidbody: any; // Ammo.btRigidBody
+	rigidbody: btRigidBody
 	playerMesh: THREE.Object3D;
 	playerScreen: THREE.Mesh
 	yaw: number = 0;
@@ -78,7 +79,7 @@ export class Player {
 	vx: number = 0;
 	vz: number = 0;
 
-	constructor(scene: THREE.Scene, world: any /*Ammo.btDiscreteDynamicsWorld*/, isOtherPlayer?: boolean) {
+	constructor(scene: THREE.Scene, world: btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
 			const mesh = GetOtherPlayerMesh();
@@ -90,16 +91,18 @@ export class Player {
 			this.playerScreen = mesh[1];
 		}
 		scene.add(this.playerMesh);
-		world.addBody(this.rigidbody);
+		world.addRigidBody(this.rigidbody);
 		this.isOtherPlayer = isOtherPlayer;
 	}
-	delete(scene: THREE.Scene, world: any /*Ammo.btDiscreteDynamicsWorld*/) {
+	delete(scene: THREE.Scene, world: btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);
 		scene.remove(this.playerMesh);
 	}
 	applyGraphics() {
-		const pos: any /*Ammo.btVector3*/ = this.rigidbody.getOrigin();
-		this.playerMesh.position.set(pos.x, pos.y, pos.z);
+		const trans = new gAmmo.btTransform();
+		this.rigidbody.getMotionState().getWorldTransform(trans);
+		const pos = trans.getOrigin();
+		this.playerMesh.position.set(pos.x(), pos.y(), pos.z());
 		this.playerMesh.rotation.set(0, this.yaw, 0);
 	}
 	setFaceImage(stream: MediaStream) {
@@ -111,15 +114,24 @@ export class Player {
 		this.playerScreen.material = material;
 	}
 	getPosition(): THREE.Vector3 {
-		return new THREE.Vector3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
+		const trans = new gAmmo.btTransform();
+		this.rigidbody.getMotionState().getWorldTransform(trans);
+		const pos = trans.getOrigin();
+		return new THREE.Vector3(pos.x(), pos.y(), pos.z());
 	}
 	getVelocity(): THREE.Vector3 {
-		return new THREE.Vector3(this.rigidbody.velocity.x, this.rigidbody.velocity.y, this.rigidbody.velocity.z);
+		const v = this.rigidbody.getLinearVelocity();
+		return new THREE.Vector3(v.x(), v.y(), v.z());
 	}
 	warp(x: number, y: number, z: number) {
-		this.rigidbody.position = new CANNON.Vec3(x, y, z);
+		const trans = new gAmmo.btTransform();
+		const motionState = this.rigidbody.getMotionState();
+		motionState.getWorldTransform(trans);
+		trans.setOrigin(new gAmmo.btVector3(x, y, z));
+		motionState.setWorldTransform(trans);
+		this.rigidbody.setMotionState(motionState);
 	}
-	walk(vx: number, vz: number, world: CANNON.World) {
+	walk(vx: number, vz: number, world: btDiscreteDynamicsWorld) {
 		const theta = this.yaw;
 		let r = Math.sqrt(vx * vx + vz * vz);
 		r = Math.max(r, 1);
@@ -127,13 +139,20 @@ export class Player {
 		vx /= r;
 		vx *= 10;
 		vz *= 10;
+		let targetVx: number, targetVz: number;
 		if (this.isOtherPlayer) {
-			this.rigidbody.velocity.x = this.vx;
-			this.rigidbody.velocity.z = this.vz;
+			targetVx = this.vx;
+			targetVz = this.vz;
 		} else {
-			this.rigidbody.velocity.x = vx * Math.cos(-theta) + vz * Math.sin(-theta);
-			this.rigidbody.velocity.z = vx * Math.sin(-theta) - vz * Math.cos(-theta);
+			targetVx = vx * Math.cos(-theta) + vz * Math.sin(-theta);
+			targetVz = vx * Math.sin(-theta) - vz * Math.cos(-theta);
 		}
+
+		const currentV = this.rigidbody.getLinearVelocity();
+		currentV.setX(targetVx);
+		currentV.setZ(targetVz);
+		this.rigidbody.setLinearVelocity(currentV);
+
 		const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
 		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 4, this.rigidbody.position.z);
 		var result: CANNON.RaycastResult = new CANNON.RaycastResult();

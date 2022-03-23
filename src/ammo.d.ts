@@ -18,12 +18,17 @@ export declare class AmmoInstance {
     btTransform: new () => btTransform;
 
     btBoxShape: new (boxHalfExtents: btVector3) => btBoxShape;
+    btCompoundShape: new () => btCompoundShape;
+    btSphereShape: new (radius: number) => btSphereShape;
+    btConvexHullShape: new (points?: number[], numPoints?: number) => btConvexHullShape;
 
     btDefaultMotionState: new (transform: btTransform) => btDefaultMotionState;
 
     btRigidBodyConstructionInfo: new (mass: number, motionState: btMotionState, collisionShape: btCollisionShape, localInertia?: btVector3) => btRigidBodyConstructionInfo;
 
     btRigidBody: new (rbinfo: btRigidBodyConstructionInfo) => btRigidBody;
+
+
 }
 
 // export declare namespace AmmoInstsance {
@@ -50,6 +55,10 @@ export declare class btSequentialImpulseConstraintSolver {
 
 export declare class btDiscreteDynamicsWorld {
     setGravity(gravity: btVector3): void;
+
+    addRigidBody(body: btRigidBody): void;
+    addRigidBody(body: btRigidBody, group: number, mask: number): void;
+    removeRigidBody(body: btRigidBody): void;
 }
 
 export declare class btVector3 {
@@ -92,11 +101,13 @@ export declare interface btCollisionShape {
 }
 
 export declare class btDefaultMotionState implements btMotionState {
-
+    getWorldTransform(worldTrans: btTransform): void;
+    setWorldTransform(worldTrans: btTransform): void;
 }
 
 export declare interface btMotionState {
-
+    getWorldTransform(worldTrans: btTransform): void;
+    setWorldTransform(worldTrans: btTransform): void;
 }
 
 export declare class btRigidBodyConstructionInfo {
@@ -108,5 +119,30 @@ export declare interface btCollisionObject {
 }
 
 export declare class btRigidBody implements btCollisionObject {
+    setAngularFactor(angularFactor: btVector3): void;
 
+    getMotionState(): btMotionState;
+    setMotionState(motionState: btMotionState): void;
+
+    getLinearVelocity(): btVector3;
+    setLinearVelocity(lin_vel: btVector3): void;
+}
+
+export declare class btCompoundShape implements btCollisionShape {
+    calculateLocalInertia(mass: number, inertia: btVector3): void;
+    addChildShape(localTransform: btTransform, shape: btCollisionShape): void;
+    removeChildShape(shape: btCollisionShape): void;
+    removeChildShapeByIndex(childShapeIndex: number): void;
+    getChildShape(index: number): btCollisionShape;
+    updateChildTransform(childIndex: number, newChildTransform: btTransform, shouldRecalculateLocalAabb?: boolean): void;
+}
+
+export declare class btSphereShape implements btCollisionShape {
+    calculateLocalInertia(mass: number, inertia: btVector3): void;
+}
+
+export declare class btConvexHullShape implements btCollisionShape {
+    calculateLocalInertia(mass: number, inertia: btVector3): void;
+    addPoint(point: btVector3, recalculateLocalAABB?: boolean): void;
+    getNumVertices(): number;
 }

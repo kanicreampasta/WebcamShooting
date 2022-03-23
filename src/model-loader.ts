@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import * as CANNON from 'cannon';
+import { btDiscreteDynamicsWorld } from './ammo';
+import { gAmmo } from './physics';
+// import * as CANNON from 'cannon';
 
 export class ModelLoader {
 	filename: string;
@@ -34,13 +36,13 @@ export class ModelLoader {
 			}
 		);
 	}
-	async loadStage(scene: THREE.Scene, world: CANNON.World) {
+	async loadStage(scene: THREE.Scene, world: btDiscreteDynamicsWorld) {
 		const gltf: GLTF = await this.loadModel();
 		scene.add(gltf.scene);
 		console.log(gltf.scene);
-		const body: CANNON.Body = new CANNON.Body({ mass: 0 });
-		body.collisionFilterMask = 2;
-		body.collisionFilterGroup = 1;
+		const compoundShape = new gAmmo.btCompoundShape();
+		// body.collisionFilterMask = 2;
+		// body.collisionFilterGroup = 1;
 		for (const mesh of gltf.scene.children) {
 			if (mesh instanceof THREE.Mesh) {
 				console.log(mesh);
@@ -61,11 +63,18 @@ export class ModelLoader {
 				for (let i = 0; i < rawnormals.length; i++) {
 					normals.push(rawnormals[i]);
 				}
-				const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
-				const offset: CANNON.Vec3 = new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z);
-				body.addShape(shape, offset);
+				console.log('verts', verts);
+				console.log('index', index);
+				// const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
+				// const offset: CANNON.Vec3 = new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z);
+				// body.addShape(shape, offset);
+				const shape = new gAmmo.btConvexHullShape();
+
 			}
 		}
+
+		const mass = 0;
+
 		world.addBody(body);
 	}
 }
