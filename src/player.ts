@@ -24,9 +24,9 @@ function GetPlayerBody(): btRigidBody {
 	const rbInfo = new gAmmo.btRigidBodyConstructionInfo(mass, motionState, playerShape, localInertia);
 
 	const body = new gAmmo.btRigidBody(rbInfo);
+	body.setFriction(0);
+	body.setRestitution(0);
 	// let mat = new CANNON.Material('capsuleMat');
-	// mat.friction = 0;
-	// mat.restitution = 0;
 	// playerBody.material = mat;
 
 	// freeze rotation

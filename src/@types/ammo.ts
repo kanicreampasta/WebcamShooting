@@ -75,6 +75,8 @@ export declare class btVector3 {
     normalize(): void;
     dot(v: btVector3): number;
     rotate(wAxis: btVector3, angle: number): btVector3;
+
+    op_mul(x: number): btVector3;
 }
 
 export declare class btQuaternion {
@@ -115,10 +117,17 @@ export declare class btRigidBodyConstructionInfo {
 }
 
 export declare interface btCollisionObject {
-
+    setFriction(frict: number): void;
+    setRestitution(rest: number): void;
+    getFriction(): number;
+    getRestitution(): number;
 }
 
 export declare class btRigidBody implements btCollisionObject {
+    setFriction(frict: number): void;
+    setRestitution(rest: number): void;
+    getFriction(): number;
+    getRestitution(): number;
     setAngularFactor(angularFactor: btVector3): void;
 
     getMotionState(): btMotionState;

@@ -86,10 +86,10 @@ class GameManager {
 		for (const p of this.players) {
 			p.applyGraphics();
 		}
-		// const p = this.players[0].getPosition();
+		// const p = this.players[0].playerMesh.position;
 		// console.log(p.x + ',' + p.y + ',' + p.z);
-		this.rendering.setFPSCamera(this.players[0]);
-		// this.rendering.setTPSCamera(this.players[0]);
+		// this.rendering.setFPSCamera(this.players[0]);
+		this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
 	}

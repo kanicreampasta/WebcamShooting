@@ -32,7 +32,7 @@ export class PhysicsManager {
 		});
 	}
 	addCube(position: btVector3, dimention: btVector3, rotation: THREE.Euler) {
-		const shape = new this.Ammo.btBoxShape(dimention);
+		const shape = new this.Ammo.btBoxShape(dimention.op_mul(0.5));
 
 		const transform = new this.Ammo.btTransform();
 		transform.setIdentity();
