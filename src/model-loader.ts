@@ -51,30 +51,48 @@ export class ModelLoader {
 				const rawverts = geometry.attributes.position.array;
 				const rawnormals = geometry.attributes.normal.array;
 
-				const index: number[] = [];
-				const verts = [];
-				const normals = [];
-				for (let i = 0; i < rawindex.length; i++) {
-					index.push(rawindex[i]);
-				}
-				for (let i = 0; i < rawverts.length; i++) {
-					verts.push(rawverts[i]);
-				}
-				for (let i = 0; i < rawnormals.length; i++) {
-					normals.push(rawnormals[i]);
-				}
-				console.log('verts', verts);
-				console.log('index', index);
+				// const index: number[] = [];
+				// const verts = [];
+				// const normals = [];
+				// for (let i = 0; i < rawindex.length; i++) {
+				// 	index.push(rawindex[i]);
+				// }
+				// for (let i = 0; i < rawverts.length; i++) {
+				// 	verts.push(rawverts[i]);
+				// }
+				// for (let i = 0; i < rawnormals.length; i++) {
+				// 	normals.push(rawnormals[i]);
+				// }
+				// console.log('verts', verts);
+				// console.log('index', index);
 				// const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
 				// const offset: CANNON.Vec3 = new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z);
 				// body.addShape(shape, offset);
 				const shape = new gAmmo.btConvexHullShape();
+				for (let i = 0; i < rawindex.length; i++) {
+					const index = rawindex[i];
+					const x = rawverts[index * 3];
+					const y = rawverts[index * 3 + 1];
+					const z = rawverts[index * 3 + 2];
+					const v = new gAmmo.btVector3(x, y, z);
+					shape.addPoint(v);
+				}
 
+				const trans = new gAmmo.btTransform();
+				trans.setIdentity();
+				compoundShape.addChildShape(trans, shape);
 			}
 		}
 
 		const mass = 0;
+		const localInertia = new gAmmo.btVector3(0, 0, 0);
+		const trans = new gAmmo.btTransform();
+		trans.setIdentity();
+		const motionState = new gAmmo.btDefaultMotionState(trans);
+		const rbinfo = new gAmmo.btRigidBodyConstructionInfo(mass, motionState, compoundShape, localInertia);
 
-		world.addBody(body);
+		const body = new gAmmo.btRigidBody(rbinfo);
+
+		world.addRigidBody(body);
 	}
 }
