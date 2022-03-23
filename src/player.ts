@@ -26,6 +26,8 @@ function GetPlayerBody(): btRigidBody {
 	const body = new gAmmo.btRigidBody(rbInfo);
 	body.setFriction(0);
 	body.setRestitution(0);
+	// disable sleep
+	body.setSleepingThresholds(0, 0);
 	// let mat = new CANNON.Material('capsuleMat');
 	// playerBody.material = mat;
 

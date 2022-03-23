@@ -80,7 +80,7 @@ export class ModelLoader {
 
 				const trans = new gAmmo.btTransform();
 				trans.setIdentity();
-				// compoundShape.addChildShape(trans, shape);
+				compoundShape.addChildShape(trans, shape);
 			}
 		}
 

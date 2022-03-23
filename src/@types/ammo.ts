@@ -135,6 +135,8 @@ export declare class btRigidBody implements btCollisionObject {
 
     getLinearVelocity(): btVector3;
     setLinearVelocity(lin_vel: btVector3): void;
+
+    setSleepingThresholds(linear: number, angular: number): void;
 }
 
 export declare class btCompoundShape implements btCollisionShape {
