@@ -2,10 +2,24 @@ body{
 	margin:0;
 }
 
+#logArea{
+	position:absolute;
+}
+
 #log{
 	color:#fff;
-	position: absolute;
 	margin: 10px;
+	text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;  
+}
+
+#loglist{
+	color:#fff;
+	margin: 10px;
+	font-family: monospace;
 	text-shadow:
     -1px -1px 0 #000,
     1px -1px 0 #000,

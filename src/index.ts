@@ -6,6 +6,7 @@ import { gAmmo, PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
+import { appendToLog } from './utils';
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -195,15 +196,18 @@ window.onload = async function () {
 	network = new NetworkClient();
 	const state: KeyState = new KeyState();
 	// game server network
-	network.initGameServer().then(() => network.start(() => {
-		const player = manager.players[0];
-		return {
-			position: player.getPosition().toArray(),
-			velocity: player.getVelocity().toArray(),
-			yaw: player.yaw,
-			pitch: player.pitch
-		};
-	})).catch(console.error);
+	network.initGameServer().then(() => {
+		appendToLog("connected to Game Server");
+		network.start(() => {
+			const player = manager.players[0];
+			return {
+				position: player.getPosition().toArray(),
+				velocity: player.getVelocity().toArray(),
+				yaw: player.yaw,
+				pitch: player.pitch
+			};
+		})
+	}).catch(console.error);
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
 		const player = manager.getPlayerById(pid);
@@ -250,10 +254,12 @@ window.onload = async function () {
 		console.log(`got stream ${stream} for pid ${pid}`);
 		if (pid === undefined) {
 			// my video
+			appendToLog(`got my video stream`);
 			const previewVideo = document.querySelector('#previewVideo') as HTMLVideoElement;
 			previewVideo.autoplay = true;
 			previewVideo.srcObject = stream;
 		} else {
+			appendToLog(`got stream of player ${pid}`);
 			manager.getPlayerById(pid)?.setFaceImage(stream);
 		}
 	};
