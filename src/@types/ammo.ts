@@ -26,7 +26,7 @@ export declare class AmmoInstance {
 
     btRigidBody: new (rbinfo: btRigidBodyConstructionInfo) => btRigidBody;
 
-
+    ClosestRayResultCallback: new (from: btVector3, to: btVector3) => ClosestRayResultCallback;
 }
 
 // export declare namespace AmmoInstsance {
@@ -51,7 +51,17 @@ export declare class btSequentialImpulseConstraintSolver {
 
 }
 
-export declare class btDiscreteDynamicsWorld {
+export declare interface btCollisionWorld {
+    rayTest(rayFromWorld: btVector3, rayToWorld: btVector3, resultCallback: RayResultCallback): void;
+}
+
+export declare interface btDynamicsWorld extends btCollisionWorld {
+
+}
+
+export declare class btDiscreteDynamicsWorld implements btDynamicsWorld {
+    rayTest(rayFromWorld: btVector3, rayToWorld: btVector3, resultCallback: RayResultCallback): void;
+
     setGravity(gravity: btVector3): void;
 
     addRigidBody(body: btRigidBody): void;
@@ -156,4 +166,42 @@ export declare class btConvexHullShape implements btCollisionShape {
     calculateLocalInertia(mass: number, inertia: btVector3): void;
     addPoint(point: btVector3, recalculateLocalAABB?: boolean): void;
     getNumVertices(): number;
+}
+
+export declare interface RayResultCallback {
+    hasHit(): boolean;
+
+    set_m_collisionFilterGroup(v: number): void;
+    get_m_collisionFilterGroup(): number;
+
+    set_m_collisionFilterMask(v: number): void;
+    get_m_collisionFilterGroup(): number;
+
+    set_m_closestHitFraction(v: number): void;
+    get_m_closestHitFraction(): number;
+
+    get_m_collisionObject(): btCollisionObject;
+}
+
+export declare class ClosestRayResultCallback implements RayResultCallback {
+    hasHit(): boolean;
+    set_m_collisionFilterGroup(v: number): void;
+    get_m_collisionFilterGroup(): number;
+    get_m_collisionFilterGroup(): number;
+    set_m_collisionFilterMask(v: number): void;
+    set_m_closestHitFraction(v: number): void;
+    get_m_closestHitFraction(): number;
+    get_m_collisionObject(): btCollisionObject;
+
+    set_m_rayFromWorld(v: btVector3): void;
+    get_m_rayFromWorld(): btVector3;
+
+    set_m_rayToWorld(v: btVector3): void;
+    get_m_rayToWorld(): btVector3;
+
+    set_m_hitNormalWorld(v: btVector3): void;
+    get_m_hitNormalWorld(): btVector3;
+
+    set_m_hitPointWorld(v: btVector3): void;
+    get_m_hitPointWorld(): btVector3;
 }

@@ -171,36 +171,51 @@ export class Player {
 		currentV.setZ(targetVz);
 		this.rigidbody.setLinearVelocity(currentV);
 
-		// const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
-		// const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 4, this.rigidbody.position.z);
-		// var result: CANNON.RaycastResult = new CANNON.RaycastResult();
+		const p = this.getPosition();
+		const start = new gAmmo.btVector3(p.x, p.y, p.z);
+		const end = new gAmmo.btVector3(p.x, p.y - 4, p.z);
+		var result = new gAmmo.ClosestRayResultCallback(start, end);
+		result.set_m_collisionFilterGroup(2);
 		// const rayCastOptions = {
 		// 	collisionFilterMask: 1,
 		// 	skipBackfaces: true      /* ignore back faces */
 		// };
-		// if (world.raycastClosest(start, end, rayCastOptions, result)) {
-		// 	document.getElementById("log").innerText += " grounded ";
-		// 	// console.log(result.distance);
-		// 	const velocity = this.getVelocity();
-		// 	const normal = new THREE.Vector3(result.hitNormalWorld.x, result.hitNormalWorld.y, result.hitNormalWorld.z);
-		// 	if (result.distance < 1 + Math.sqrt(normal.x * normal.x + normal.z * normal.z) * 3) {
-		// 		const slopeY: number = velocity.dot(normal);//positive when going up slope
-		// 		const normalcomponent = normal.multiplyScalar(-slopeY);
-		// 		const finalvelocity = velocity.add(normalcomponent);
-		// 		this.setVelocity(finalvelocity.x, finalvelocity.y, finalvelocity.z);
-		// 		document.getElementById("log").innerText += slopeY + "";
-		// 	}
-		// 	if (result.distance < 1) {
-		// 		this.setPositionY(result.hitPointWorld.y + 1);
-		// 	}
-		// 	// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
-		// 	// const correctedVy: number = -slopeY;
-		// 	// this.rigidbody.velocity.y = correctedVy;
-		// 	/*
-		// 	if (this.rigidbody.velocity.y > correctedVy) {
-		// 		this.rigidbody.velocity.y = correctedVy;
-		// 	}*/
-		// }
-		// // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
+		world.rayTest(start, end, result);
+
+		console.log(result.hasHit());
+		if (result.hasHit()) {
+			document.getElementById("log").innerText += " grounded ";
+			// console.log(result.distance);
+			const velocity = this.getVelocity();
+			const normal = result.get_m_hitNormalWorld();
+
+			const hitPoint = result.get_m_hitPointWorld();
+			const distance = (() => {
+				const dx = start.x() - hitPoint.x();
+				const dy = start.y() - hitPoint.y();
+				const dz = start.z() - hitPoint.z();
+				return Math.sqrt(dx * dx + dy * dy + dz * dz);
+			})();
+
+			if (distance < 1 + Math.sqrt(normal.x() * normal.x() + normal.z() * normal.z()) * 3) {
+				const normalTHREE = new THREE.Vector3(normal.x(), normal.y(), normal.z());
+				const slopeY: number = velocity.dot(normalTHREE);//positive when going up slope
+				const normalcomponent = normalTHREE.multiplyScalar(-slopeY);
+				const finalvelocity = velocity.add(normalcomponent);
+				this.setVelocity(finalvelocity.x, finalvelocity.y, finalvelocity.z);
+				document.getElementById("log").innerText += slopeY + "";
+			}
+			if (distance < 1) {
+				this.setPositionY(hitPoint.y() + 1);
+			}
+			// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
+			// const correctedVy: number = -slopeY;
+			// this.rigidbody.velocity.y = correctedVy;
+			/*
+			if (this.rigidbody.velocity.y > correctedVy) {
+				this.rigidbody.velocity.y = correctedVy;
+			}*/
+		}
+		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}
 }
