@@ -250,8 +250,9 @@ window.onload = async function () {
 		console.log(`got stream ${stream} for pid ${pid}`);
 		if (pid === undefined) {
 			// my video
-			// previewVideo.srcObject = stream;
-			// previewVideo.play();
+			const previewVideo = document.querySelector('#previewVideo') as HTMLVideoElement;
+			previewVideo.autoplay = true;
+			previewVideo.srcObject = stream;
 		} else {
 			manager.getPlayerById(pid)?.setFaceImage(stream);
 		}
