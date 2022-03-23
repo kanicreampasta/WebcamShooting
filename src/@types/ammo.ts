@@ -1,5 +1,3 @@
-export declare function Ammo(): Promise<AmmoInstance>;
-
 export declare class AmmoInstance {
     btDefaultCollisionConfiguration: new () => btDefaultCollisionConfiguration;
 
@@ -32,7 +30,7 @@ export declare class AmmoInstance {
 }
 
 // export declare namespace AmmoInstsance {
-//     export class btDefaultCollisionConfiguration {
+//     export declare class btDefaultCollisionConfiguration {
 //         constructor();
 //     }
 // }
@@ -59,6 +57,8 @@ export declare class btDiscreteDynamicsWorld {
     addRigidBody(body: btRigidBody): void;
     addRigidBody(body: btRigidBody, group: number, mask: number): void;
     removeRigidBody(body: btRigidBody): void;
+
+    stepSimulation(timeStep: number, maxSubSteps?: number, fixedTimeStep?: number): number;
 }
 
 export declare class btVector3 {

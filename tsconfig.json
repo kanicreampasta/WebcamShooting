@@ -6,6 +6,7 @@
     "target": "es5",
     "allowJs": true,
     "downlevelIteration": true,
+    "baseUrl": "./src",
   },
   "files": [
     "src/index.ts"

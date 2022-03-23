@@ -1,7 +1,7 @@
 import { gAmmo } from './physics';
 // import * as CANNON from 'cannon';
 import * as THREE from 'three';
-import { btDiscreteDynamicsWorld, btRigidBody, btVector3 } from './ammo';
+import { btDiscreteDynamicsWorld, btRigidBody, btVector3 } from './@types/ammo';
 
 
 function GetPlayerBody(): any {
@@ -123,11 +123,25 @@ export class Player {
 		const v = this.rigidbody.getLinearVelocity();
 		return new THREE.Vector3(v.x(), v.y(), v.z());
 	}
+	setVelocity(x: number, y: number, z: number) {
+		const v = new gAmmo.btVector3(x, y, z);
+		this.rigidbody.setLinearVelocity(v);
+	}
 	warp(x: number, y: number, z: number) {
 		const trans = new gAmmo.btTransform();
 		const motionState = this.rigidbody.getMotionState();
 		motionState.getWorldTransform(trans);
 		trans.setOrigin(new gAmmo.btVector3(x, y, z));
+		motionState.setWorldTransform(trans);
+		this.rigidbody.setMotionState(motionState);
+	}
+	setPositionY(y: number) {
+		const trans = new gAmmo.btTransform();
+		const motionState = this.rigidbody.getMotionState();
+		motionState.getWorldTransform(trans);
+		const origin = trans.getOrigin();
+		origin.setY(y);
+		trans.setOrigin(origin);
 		motionState.setWorldTransform(trans);
 		this.rigidbody.setMotionState(motionState);
 	}
@@ -153,36 +167,36 @@ export class Player {
 		currentV.setZ(targetVz);
 		this.rigidbody.setLinearVelocity(currentV);
 
-		const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
-		const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 4, this.rigidbody.position.z);
-		var result: CANNON.RaycastResult = new CANNON.RaycastResult();
-		const rayCastOptions = {
-			collisionFilterMask: 1,
-			skipBackfaces: true      /* ignore back faces */
-		};
-		if (world.raycastClosest(start, end, rayCastOptions, result)) {
-			document.getElementById("log").innerText += " grounded ";
-			// console.log(result.distance);
-			const velocity = new THREE.Vector3(this.rigidbody.velocity.x, this.rigidbody.velocity.y, this.rigidbody.velocity.z);
-			const normal = new THREE.Vector3(result.hitNormalWorld.x, result.hitNormalWorld.y, result.hitNormalWorld.z);
-			if (result.distance < 1 + Math.sqrt(normal.x * normal.x + normal.z * normal.z) * 3) {
-				const slopeY: number = velocity.dot(normal);//positive when going up slope
-				const normalcomponent = normal.multiplyScalar(-slopeY);
-				const finalvelocity = velocity.add(normalcomponent);
-				this.rigidbody.velocity = new CANNON.Vec3(finalvelocity.x, finalvelocity.y, finalvelocity.z);
-				document.getElementById("log").innerText += slopeY + "";
-			}
-			if (result.distance < 1) {
-				this.rigidbody.position.y = result.hitPointWorld.y + 1;
-			}
-			// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
-			// const correctedVy: number = -slopeY;
-			// this.rigidbody.velocity.y = correctedVy;
-			/*
-			if (this.rigidbody.velocity.y > correctedVy) {
-				this.rigidbody.velocity.y = correctedVy;
-			}*/
-		}
-		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
+		// const start = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y, this.rigidbody.position.z);
+		// const end = new CANNON.Vec3(this.rigidbody.position.x, this.rigidbody.position.y - 4, this.rigidbody.position.z);
+		// var result: CANNON.RaycastResult = new CANNON.RaycastResult();
+		// const rayCastOptions = {
+		// 	collisionFilterMask: 1,
+		// 	skipBackfaces: true      /* ignore back faces */
+		// };
+		// if (world.raycastClosest(start, end, rayCastOptions, result)) {
+		// 	document.getElementById("log").innerText += " grounded ";
+		// 	// console.log(result.distance);
+		// 	const velocity = this.getVelocity();
+		// 	const normal = new THREE.Vector3(result.hitNormalWorld.x, result.hitNormalWorld.y, result.hitNormalWorld.z);
+		// 	if (result.distance < 1 + Math.sqrt(normal.x * normal.x + normal.z * normal.z) * 3) {
+		// 		const slopeY: number = velocity.dot(normal);//positive when going up slope
+		// 		const normalcomponent = normal.multiplyScalar(-slopeY);
+		// 		const finalvelocity = velocity.add(normalcomponent);
+		// 		this.setVelocity(finalvelocity.x, finalvelocity.y, finalvelocity.z);
+		// 		document.getElementById("log").innerText += slopeY + "";
+		// 	}
+		// 	if (result.distance < 1) {
+		// 		this.setPositionY(result.hitPointWorld.y + 1);
+		// 	}
+		// 	// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
+		// 	// const correctedVy: number = -slopeY;
+		// 	// this.rigidbody.velocity.y = correctedVy;
+		// 	/*
+		// 	if (this.rigidbody.velocity.y > correctedVy) {
+		// 		this.rigidbody.velocity.y = correctedVy;
+		// 	}*/
+		// }
+		// // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}
 }

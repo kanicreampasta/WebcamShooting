@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { btDiscreteDynamicsWorld } from './ammo';
+import { btDiscreteDynamicsWorld } from './@types/ammo';
 import { gAmmo } from './physics';
 // import * as CANNON from 'cannon';
 

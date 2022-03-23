@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 
-import { Ammo, AmmoInstance, btVector3 } from './ammo';
+import { AmmoInstance, btDiscreteDynamicsWorld, btVector3 } from './@types/ammo';
 
 export let gAmmo: AmmoInstance;
 
+declare var Ammo: () => Promise<AmmoInstance>;
+
 export class PhysicsManager {
-	world: any;
+	world: btDiscreteDynamicsWorld;
 	Ammo: AmmoInstance;
 	constructor() {
 		this.world = null;

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import * as CANNON from 'cannon';
+// import * as CANNON from 'cannon';
 import "./index.css";
 import { RenderingManager } from "./renderer";
-import { PhysicsManager } from "./physics";
+import { gAmmo, PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
@@ -36,7 +36,7 @@ class GameManager {
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
-		this.players[0].rigidbody.position.y = 20;
+		this.players[0].warp(0, 20, 0);
 	}
 	async loadGame() {
 		{
@@ -54,7 +54,7 @@ class GameManager {
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		this.rendering.addCube(position, dimention, rotation, color);
-		this.physics.addCube(new CANNON.Vec3(position.x, position.y, position.z), new CANNON.Vec3(dimention.x, dimention.y, dimention.z), rotation);
+		this.physics.addCube(new gAmmo.btVector3(position.x, position.y, position.z), new gAmmo.btVector3(dimention.x, dimention.y, dimention.z), rotation);
 	}
 	step() {
 		const currentFrame: Date = new Date();
@@ -81,7 +81,7 @@ class GameManager {
 
 
 		this.addThrust();
-		this.physics.world.step(dt);
+		this.physics.world.stepSimulation(dt);
 
 		for (var p of this.players) {
 			p.applyGraphics();
