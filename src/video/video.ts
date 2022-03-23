@@ -153,6 +153,15 @@ function startVideoRoom(janus: Janus, username: string) {
         },
         webrtcState: function (on: boolean) {
             console.log('webrtcState is ' + on);
+            if (on) {
+                pHandle.send({
+                    message: {
+                        request: "configure",
+                        bitrate: 64 // limit to 64kbits
+                    }
+                });
+                console.log('send a request to limit bandwidth to 64kbits');
+            }
         },
         iceState: function (state: any) {
             console.log('iceState changed to ' + state);
