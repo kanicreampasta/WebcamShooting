@@ -13,7 +13,7 @@ export class RenderingManager {
 		this.camera.position.set(0, 1, 10);
 		this.camera.fov = 90;
 		this.camera.aspect = window.innerWidth / window.innerHeight;
-
+		this.camera.updateProjectionMatrix();
 
 		const directionalLight: THREE.DirectionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 		directionalLight.position.set(0, 1, 1);
