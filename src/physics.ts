@@ -49,7 +49,9 @@ export class PhysicsManager {
 		const rbInfo = new this.Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
 		const body = new this.Ammo.btRigidBody(rbInfo);
 
-		this.world.addRigidBody(body);
+		const collisionFilterMask = 2;
+		const collisionFilterGroup = 1;
+		this.world.addRigidBody(body, collisionFilterGroup, collisionFilterMask);
 		// const cubeBody: CANNON.Body = new CANNON.Body({ mass: 0 });
 		// cubeBody.addShape(new CANNON.Box(new CANNON.Vec3(dimention.x, dimention.y, dimention.z).mult(0.5)));
 		// cubeBody.position = position;

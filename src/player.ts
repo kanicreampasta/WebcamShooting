@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { btDiscreteDynamicsWorld, btRigidBody, btVector3 } from './@types/ammo';
 
 
-function GetPlayerBody(): any {
+function GetPlayerBody(): btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
 	for (let i = -1; i <= 1; i++) {
 		const shape = new gAmmo.btSphereShape(0.5);
@@ -91,7 +91,9 @@ export class Player {
 			this.playerScreen = mesh[1];
 		}
 		scene.add(this.playerMesh);
-		world.addRigidBody(this.rigidbody);
+		const collisionFilterMask = 1;
+		const collisionFilterGroup = 2;
+		world.addRigidBody(this.rigidbody, collisionFilterGroup, collisionFilterMask);
 		this.isOtherPlayer = isOtherPlayer;
 	}
 	delete(scene: THREE.Scene, world: btDiscreteDynamicsWorld) {
