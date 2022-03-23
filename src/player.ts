@@ -1,10 +1,9 @@
 import { gAmmo } from './physics';
 // import * as CANNON from 'cannon';
 import * as THREE from 'three';
-import { btDiscreteDynamicsWorld, btRigidBody, btVector3 } from './@types/ammo';
+import Ammo from './@types/ammo';
 
-
-function GetPlayerBody(): btRigidBody {
+function GetPlayerBody(): Ammo.btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
 	for (let i = -1; i <= 1; i++) {
 		const shape = new gAmmo.btSphereShape(0.5);
@@ -70,7 +69,7 @@ function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 }
 
 export class Player {
-	rigidbody: btRigidBody
+	rigidbody: Ammo.btRigidBody;
 	playerMesh: THREE.Object3D;
 	playerScreen: THREE.Mesh
 	yaw: number = 0;
@@ -81,7 +80,7 @@ export class Player {
 	vx: number = 0;
 	vz: number = 0;
 
-	constructor(scene: THREE.Scene, world: btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
+	constructor(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
 			const mesh = GetOtherPlayerMesh();
@@ -98,7 +97,7 @@ export class Player {
 		world.addRigidBody(this.rigidbody, collisionFilterGroup, collisionFilterMask);
 		this.isOtherPlayer = isOtherPlayer;
 	}
-	delete(scene: THREE.Scene, world: btDiscreteDynamicsWorld) {
+	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);
 		scene.remove(this.playerMesh);
 	}
@@ -149,7 +148,7 @@ export class Player {
 		motionState.setWorldTransform(trans);
 		this.rigidbody.setMotionState(motionState);
 	}
-	walk(vx: number, vz: number, world: btDiscreteDynamicsWorld) {
+	walk(vx: number, vz: number, world: Ammo.btDiscreteDynamicsWorld) {
 		const theta = this.yaw;
 		let r = Math.sqrt(vx * vx + vz * vz);
 		r = Math.max(r, 1);
