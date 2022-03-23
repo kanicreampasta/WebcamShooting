@@ -179,8 +179,9 @@ class KeyState {
 	A: boolean = false;
 	S: boolean = false;
 	D: boolean = false;
+	leftClick: boolean = false;
 	toString(): string {
-		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "");
+		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + " " + (this.leftClick ? "M1" : "");
 	}
 }
 let manager: GameManager = null;
@@ -304,6 +305,18 @@ window.onload = async function () {
 		}
 		manager.setKey(state);
 	};
+	window.onmousedown = function (e) {
+		if (e.button === 0) {
+			state.leftClick = true;
+		}
+		manager.setKey(state);
+	}
+	window.onmouseup = function (e) {
+		if (e.button === 0) {
+			state.leftClick = false;
+		}
+		manager.setKey(state);
+	}
 
 	manager.loadGame();
 };
