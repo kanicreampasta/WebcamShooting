@@ -5,10 +5,11 @@ Every player in this game has his/her face from the webcam.
 
 You can enjoy pulling the trigger at your friends' face!
 
-This repository contains client-side codes.
 
 
 # How to compile
+
+This repository contains client-side codes.
 
 This project has been created using **webpack-cli**, you can now run
 
