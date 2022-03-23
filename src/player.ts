@@ -1,22 +1,42 @@
-import * as CANNON from 'cannon';
+import { gAmmo } from './physics';
+// import * as CANNON from 'cannon';
 import * as THREE from 'three';
 
 
-function GetPlayerBody(): CANNON.Body {
-	const playerBody: CANNON.Body = new CANNON.Body({ mass: 1 });
-	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0, 0));
-	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, 0.5, 0));
-	playerBody.addShape(new CANNON.Sphere(0.5), new CANNON.Vec3(0, -0.5, 0));
-	let mat = new CANNON.Material('capsuleMat');
-	mat.friction = 0;
-	mat.restitution = 0;
-	playerBody.material = mat;
-	playerBody.fixedRotation = true;
-	playerBody.collisionFilterMask = 1;
-	playerBody.collisionFilterGroup = 2;
-	playerBody.updateMassProperties();
+function GetPlayerBody(): any {
+	const playerShape = new gAmmo.btCompoundShape();
+	for (let i = -1; i <= 1; i++) {
+		const shape = new gAmmo.btSphereShape(0.5);
+		const position = new gAmmo.btVector3(0, 0.5 * i, 0);
+		const transform = new gAmmo.btTransform();
+		transform.setIdentity();
+		transform.setOrigin(position);
+		playerShape.addChildShape(transform, shape);
+	}
+	const mass = 1;
+	const localInertia = new gAmmo.btVector3(0, 0, 0);
+	playerShape.calculateLocalInertia(mass, localInertia);
 
-	return playerBody;
+	const transform = new gAmmo.btTransform();
+	transform.setIdentity();
+	const motionState = new gAmmo.btDefaultMotionState(transform);
+	const rbInfo = new gAmmo.btRigidBodyConstructionInfo(mass, motionState, playerShape, localInertia);
+
+	const body = new gAmmo.btRigidBody(rbInfo);
+	// let mat = new CANNON.Material('capsuleMat');
+	// mat.friction = 0;
+	// mat.restitution = 0;
+	// playerBody.material = mat;
+
+	// freeze rotation
+	const angularFactor = new gAmmo.btVector3(0, 0, 0);
+	body.setAngularFactor(angularFactor);
+
+	// playerBody.collisionFilterMask = 1;
+	// playerBody.collisionFilterGroup = 2;
+	// playerBody.updateMassProperties();
+
+	return body;
 }
 
 function GetPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
@@ -47,7 +67,7 @@ function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 }
 
 export class Player {
-	rigidbody: CANNON.Body;
+	rigidbody: any; // Ammo.btRigidBody
 	playerMesh: THREE.Object3D;
 	playerScreen: THREE.Mesh
 	yaw: number = 0;
@@ -58,7 +78,7 @@ export class Player {
 	vx: number = 0;
 	vz: number = 0;
 
-	constructor(scene: THREE.Scene, world: CANNON.World, isOtherPlayer?: boolean) {
+	constructor(scene: THREE.Scene, world: any /*Ammo.btDiscreteDynamicsWorld*/, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
 			const mesh = GetOtherPlayerMesh();
@@ -73,12 +93,12 @@ export class Player {
 		world.addBody(this.rigidbody);
 		this.isOtherPlayer = isOtherPlayer;
 	}
-	delete(scene: THREE.Scene, world: CANNON.World) {
-		world.removeBody(this.rigidbody);
+	delete(scene: THREE.Scene, world: any /*Ammo.btDiscreteDynamicsWorld*/) {
+		world.removeRigidBody(this.rigidbody);
 		scene.remove(this.playerMesh);
 	}
 	applyGraphics() {
-		const pos: CANNON.Vec3 = this.rigidbody.position;
+		const pos: any /*Ammo.btVector3*/ = this.rigidbody.getOrigin();
 		this.playerMesh.position.set(pos.x, pos.y, pos.z);
 		this.playerMesh.rotation.set(0, this.yaw, 0);
 	}

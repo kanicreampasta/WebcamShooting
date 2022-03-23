@@ -21,6 +21,13 @@ class GameManager {
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
+		this.onload = onload;
+	}
+	async init() {
+		await this.physics.init();
+		this.initPlayer();
+	}
+	private initPlayer() {
 		this.players = [];
 		this.playerIdMap = new Map();
 		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
@@ -29,7 +36,6 @@ class GameManager {
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
-		this.onload = onload;
 		this.players[0].rigidbody.position.y = 20;
 	}
 	async loadGame() {
@@ -176,13 +182,14 @@ class KeyState {
 }
 let manager: GameManager = null;
 let network: NetworkClient = null;
-window.onload = function () {
+window.onload = async function () {
 	function loop() {
 		document.getElementById("log").innerText = state.toString();
 		manager.step();
 		requestAnimationFrame(loop);
 	}
 	manager = new GameManager(loop);
+	await manager.init();
 	network = new NetworkClient();
 	const state: KeyState = new KeyState();
 	// game server network
