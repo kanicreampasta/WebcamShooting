@@ -8,6 +8,7 @@
     "build": "webpack --mode=production --node-env=production",
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",
+    "ammo:generate": "npx webidl2ts -i node_modules/ammo.js/ammo.idl -n Ammo -e -d true -o src/@types/ammo.ts",
     "watch": "webpack --watch",
     "serve": "webpack serve"
   },

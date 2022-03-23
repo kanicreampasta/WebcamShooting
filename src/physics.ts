@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 
-import { AmmoInstance, btDiscreteDynamicsWorld, btVector3 } from './@types/ammo';
+import Ammo from './@types/ammo';
 
-export let gAmmo: AmmoInstance;
+export let gAmmo: typeof Ammo;
 
-declare var Ammo: () => Promise<AmmoInstance>;
+// declare var Ammo: () => Promise<AmmoInstance>;
 
 export class PhysicsManager {
-	world: btDiscreteDynamicsWorld;
-	Ammo: AmmoInstance;
+	world: Ammo.btDiscreteDynamicsWorld;
+	Ammo: typeof Ammo;
 	constructor() {
 		this.world = null;
 		// (this.world.solver as CANNON.GSSolver).iterations = 1;
@@ -22,7 +22,7 @@ export class PhysicsManager {
 				const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
 				const overlappingPairCache = new Ammo.btDbvtBroadphase();
 				const solver = new Ammo.btSequentialImpulseConstraintSolver();
-				const dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+				const dynamicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache as any, solver, collisionConfiguration); // <- as any? bug?
 				dynamicsWorld.setGravity(new Ammo.btVector3(0, -9.82, 0));
 				this.world = dynamicsWorld;
 				this.Ammo = Ammo;
@@ -31,13 +31,13 @@ export class PhysicsManager {
 			});
 		});
 	}
-	addCube(position: btVector3, dimention: btVector3, rotation: THREE.Euler) {
+	addCube(position: Ammo.btVector3, dimention: Ammo.btVector3, rotation: THREE.Euler) {
 		const shape = new this.Ammo.btBoxShape(dimention.op_mul(0.5));
 
 		const transform = new this.Ammo.btTransform();
 		transform.setIdentity();
 		transform.setOrigin(position);
-		const quat = new this.Ammo.btQuaternion();
+		const quat = new this.Ammo.btQuaternion(0, 0, 0, 0);
 		quat.setEulerZYX(rotation.z, rotation.y, rotation.x);
 		transform.setRotation(quat);
 

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { btDiscreteDynamicsWorld } from './@types/ammo';
 import { gAmmo } from './physics';
+import Ammo from './@types/ammo';
 // import * as CANNON from 'cannon';
 
 export class ModelLoader {
@@ -36,7 +36,7 @@ export class ModelLoader {
 			}
 		);
 	}
-	async loadStage(scene: THREE.Scene, world: btDiscreteDynamicsWorld) {
+	async loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		const gltf: GLTF = await this.loadModel();
 		scene.add(gltf.scene);
 		console.log(gltf.scene);
