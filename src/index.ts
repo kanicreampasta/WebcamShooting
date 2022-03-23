@@ -83,9 +83,11 @@ class GameManager {
 		this.addThrust();
 		this.physics.world.stepSimulation(dt);
 
-		for (var p of this.players) {
+		for (const p of this.players) {
 			p.applyGraphics();
 		}
+		// const p = this.players[0].getPosition();
+		// console.log(p.x + ',' + p.y + ',' + p.z);
 		this.rendering.setFPSCamera(this.players[0]);
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
