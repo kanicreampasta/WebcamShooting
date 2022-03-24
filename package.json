@@ -29,6 +29,7 @@
     "ammo.js": "github:kripken/ammo.js",
     "cannon": "^0.6.2",
     "copy-webpack-plugin": "^10.2.4",
+    "lodash": "^4.17.21",
     "socket.io-client": "^4.4.1",
     "three": "^0.138.3"
   },
