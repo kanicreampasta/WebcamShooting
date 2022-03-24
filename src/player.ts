@@ -3,6 +3,7 @@ import { gAmmo } from './physics';
 import * as THREE from 'three';
 import Ammo from './@types/ammo';
 import { Gun } from './gun';
+import { PlayerHealth } from "./health";
 import { ModelLoader } from "./model-loader";
 
 function GetPlayerBody(): Ammo.btRigidBody {
@@ -89,6 +90,8 @@ export class Player {
 	private triggered: boolean = false;
 	private reloadTimer: number = -1;
 
+	health: PlayerHealth;
+
 	constructor(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
@@ -111,6 +114,9 @@ export class Player {
 			rate: 6
 		}, 3);
 		this.gun.outOfMagazine = 100;
+
+		this.health = new PlayerHealth(1);
+		console.log("Player Health", this.health.remainingHealth);
 	}
 	loadHuman(ld: ModelLoader, world: Ammo.btDiscreteDynamicsWorld): void {
 		if (this.isOtherPlayer) {
@@ -331,6 +337,14 @@ export class Player {
 			this.gun.completeReload();
 			this.gun.isReloading = false;
 			console.log('reload completed');
+		}
+	}
+
+	gotDamage(damage: number) {
+		const isAlive = this.health.receiveDamage(damage);
+		if (!isAlive) {
+			console.warn("you are dead :>");
+			this.health.heal("flesh");
 		}
 	}
 }

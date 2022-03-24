@@ -53,14 +53,14 @@ export class Gun {
             Math.cos(this.pitch) * Math.cos(this.yaw));
         direction.setValue(direction.x() * range, direction.y() * range, direction.z() * range);
         end = end.op_add(direction);
-        console.log(start.x() + "," + start.y() + "," + start.z());
-        console.log(end.x() + "," + end.y() + "," + end.z());
+        // console.log(start.x() + "," + start.y() + "," + start.z());
+        // console.log(end.x() + "," + end.y() + "," + end.z());
         var result = new gAmmo.ClosestRayResultCallback(start, end); // TODO: reuse callback object
         result.set_m_collisionFilterGroup(1);
         // result.set_m_collisionFilterGroup(4);
         world.rayTest(start, end, result);
         if (result.hasHit()) {
-            console.log("hit");
+            // console.log("hit");
         }
         // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
     }
