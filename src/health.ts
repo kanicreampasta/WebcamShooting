@@ -46,6 +46,18 @@ export class PlayerHealth {
     return isHealed;
   }
 
+  receiveDamage(damage: number): boolean {
+    let isAlive = true;
+    // TODO: Consider armour health
+    const newHealth = this.remainingHealth.flesh - damage;
+    if (newHealth <= 0) {
+      isAlive = false
+    } else {
+      this.remainingHealth.flesh = newHealth;
+    }
+    return isAlive;
+  }
+
   setArmour(armourLevel: number): boolean {
     let isArmourSet = false;
     if (armourLevel > this.armourLevel) {
@@ -56,9 +68,13 @@ export class PlayerHealth {
     return isArmourSet;
   }
 
-  private getMaxArmourValue(armourLevel: number): number {
+  getMaxArmourValue(armourLevel: number): number {
     const armour = MAX_ARMOUR_HEALTH.find(e => e.level === armourLevel);
     if (armour == undefined) return 0
     return armour.value;
+  }
+
+  getMaxFleshValue(): number {
+    return MAX_FLESH_HEALTH;
   }
 }
