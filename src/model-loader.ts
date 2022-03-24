@@ -11,6 +11,9 @@ export class ModelLoader {
 		this.filename = filename;
 	}
 	getScene(): THREE.Group {
+		if(!this.gltf){
+			throw "async loadModel() must be finished before calling getScene().";
+		}
 		return this.gltf.scene.clone();
 	}
 	//load model from gltf
@@ -40,46 +43,25 @@ export class ModelLoader {
 			}
 		);
 	}
-	async loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
-		if (!this.gltf) {
-			await this.loadModel();
+	getCollider(): Ammo.btCompoundShape {
+		if(!this.gltf){
+			throw "async loadModel() must be finished before calling getCollider().";
 		}
-		const model = this.getScene();
-		scene.add(model);
-		console.log(model);
 		const compoundShape = new gAmmo.btCompoundShape();
-		const collisionFilterMask = 2;
-		const collisionFilterGroup = 1;
 		for (const mesh of this.gltf.scene.children) {
 			if (mesh instanceof THREE.Mesh) {
 				console.log(mesh);
 				const geometry: THREE.BufferGeometry = mesh.geometry;
 				const rawindex = geometry.index.array;
 				const rawverts = geometry.attributes.position.array;
-				const rawnormals = geometry.attributes.normal.array;
 
-				// const index: number[] = [];
-				// const verts = [];
-				// const normals = [];
-				// for (let i = 0; i < rawindex.length; i++) {
-				// 	index.push(rawindex[i]);
-				// }
-				// for (let i = 0; i < rawverts.length; i++) {
-				// 	verts.push(rawverts[i]);
-				// }
-				// for (let i = 0; i < rawnormals.length; i++) {
-				// 	normals.push(rawnormals[i]);
-				// }
-				// console.log('verts', verts);
-				// console.log('index', index);
-				// const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
 				const offset = new gAmmo.btVector3(mesh.position.x, mesh.position.y, mesh.position.z);
 				const rotation: Ammo.btQuaternion = (() => {
 					const q = new gAmmo.btQuaternion(0, 0, 0, 1);
 					q.setEulerZYX(mesh.rotation.z, mesh.rotation.y, mesh.rotation.x);
 					return q;
 				})();
-				// body.addShape(shape, offset);
+
 				// https://stackoverflow.com/questions/59665854/ammo-js-custom-mesh-collision-with-sphere
 				const v = rawverts;
 				const trimesh = new gAmmo.btTriangleMesh(true, true);
@@ -109,6 +91,18 @@ export class ModelLoader {
 				compoundShape.addChildShape(trans, shape);
 			}
 		}
+		return compoundShape;
+	}
+	loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld): void {
+		if(!this.gltf){
+			throw "async loadModel() must be finished before calling loadStage().";
+		}
+		const model = this.getScene();
+		scene.add(model);
+		console.log(model);
+		const compoundShape = this.getCollider();
+		const collisionFilterMask = 2;
+		const collisionFilterGroup = 1;
 
 		const mass = 0;
 		const localInertia = new gAmmo.btVector3(0, 0, 0);

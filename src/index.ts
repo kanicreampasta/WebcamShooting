@@ -47,10 +47,13 @@ class GameManager {
 	}
 	async loadGame() {
 		{
-			const promises = this.stageLoaders.map((ld) => {
-				return ld.loadStage(this.rendering.scene, this.physics.world);
+			const promises: Promise<any>[] = this.stageLoaders.map((ld) => {
+				return ld.loadModel();
 			});
 			await Promise.all(promises);
+		}
+		for (const ld of this.stageLoaders) {
+			ld.loadStage(this.rendering.scene, this.physics.world);
 		}
 		this.onload();
 	}
