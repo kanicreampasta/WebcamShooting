@@ -6,12 +6,16 @@ import Ammo from './@types/ammo';
 
 export class ModelLoader {
 	filename: string;
+	private gltf: GLTF;
 	constructor(filename: string) {
 		this.filename = filename;
 	}
+	getScene(): THREE.Group {
+		return this.gltf.scene.clone();
+	}
 	//load model from gltf
-	async loadModel(): Promise<GLTF> {
-		return new Promise<GLTF>(
+	async loadModel(): Promise<void> {
+		return new Promise<void>(
 			(resolve, reject) => {
 				const loader = new GLTFLoader();
 				// Load a glTF resource
@@ -19,8 +23,9 @@ export class ModelLoader {
 					// resource URL
 					this.filename,
 					// called when the resource is loaded
-					function (gltf: GLTF) {
-						resolve(gltf);
+					(gltf: GLTF) => {
+						this.gltf = gltf;
+						resolve();
 					},
 					// called while loading is progressing
 					function (xhr) {
@@ -28,22 +33,24 @@ export class ModelLoader {
 					},
 					// called when loading has errors
 					function (error) {
-
 						console.log('An error happened');
-
+						reject();
 					}
 				);
 			}
 		);
 	}
 	async loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
-		const gltf: GLTF = await this.loadModel();
-		scene.add(gltf.scene);
-		console.log(gltf.scene);
+		if (!this.gltf) {
+			await this.loadModel();
+		}
+		const model = this.getScene();
+		scene.add(model);
+		console.log(model);
 		const compoundShape = new gAmmo.btCompoundShape();
 		const collisionFilterMask = 2;
 		const collisionFilterGroup = 1;
-		for (const mesh of gltf.scene.children) {
+		for (const mesh of this.gltf.scene.children) {
 			if (mesh instanceof THREE.Mesh) {
 				console.log(mesh);
 				const geometry: THREE.BufferGeometry = mesh.geometry;
@@ -67,6 +74,11 @@ export class ModelLoader {
 				// console.log('index', index);
 				// const shape: CANNON.Trimesh = new CANNON.Trimesh(verts, index);
 				const offset = new gAmmo.btVector3(mesh.position.x, mesh.position.y, mesh.position.z);
+				const rotation: Ammo.btQuaternion = (() => {
+					const q = new gAmmo.btQuaternion(0, 0, 0, 1);
+					q.setEulerZYX(mesh.rotation.z, mesh.rotation.y, mesh.rotation.x);
+					return q;
+				})();
 				// body.addShape(shape, offset);
 				// https://stackoverflow.com/questions/59665854/ammo-js-custom-mesh-collision-with-sphere
 				const v = rawverts;
@@ -93,6 +105,7 @@ export class ModelLoader {
 				const trans = new gAmmo.btTransform();
 				trans.setIdentity();
 				trans.setOrigin(offset);
+				trans.setRotation(rotation);
 				compoundShape.addChildShape(trans, shape);
 			}
 		}
