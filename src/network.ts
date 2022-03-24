@@ -31,6 +31,10 @@ export class NetworkClient {
 
     onmypid: undefined | ((pid: string) => void);
 
+    setVideoStream(stream: MediaStream) {
+        video.setVideoStream(stream);
+    }
+
     constructor() {
         this.socket = null;
         this.pid = null;
@@ -47,9 +51,13 @@ export class NetworkClient {
     async initVideoServer(): Promise<void> {
         video.setOnVideoStream((stream, pid) => this.onvideostream(stream, pid));
         await video.initJanus();
-        this.onmypid = (pid) => {
-            video.initiateSession(VIDEO_SERVER, pid);
-        };
+        if (this.pid !== undefined) {
+            video.initiateSession(VIDEO_SERVER, this.pid);
+        } else {
+            this.onmypid = (pid) => {
+                video.initiateSession(VIDEO_SERVER, pid);
+            };
+        }
     }
 
     start(getPlayer: PlayerGetter) {

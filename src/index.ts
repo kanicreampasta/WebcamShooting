@@ -7,6 +7,9 @@ import { Player } from "./player";
 import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from './utils';
+import { FaceDetector } from './face-detection/facedetection';
+import * as _ from "lodash";
+
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -15,10 +18,13 @@ class GameManager {
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
+	previousKeyState: KeyState = new KeyState();
 	startFrame: Date;
 	onload: () => void;
-	loaders: ModelLoader[] = [];
+	loaders: { [key: string]: ModelLoader } = {};
 	stageLoaders: ModelLoader[] = [];
+
+	view: number = 0;//0:fps 1:tps
 
 	private inMagazine: HTMLElement;
 	private outOfMagazine: HTMLElement;
@@ -35,16 +41,12 @@ class GameManager {
 		this.outOfMagazine = document.querySelector('#outOfMagazine');
 		this.fleshHealthBar = document.querySelector('#flesh-health');
 		this.fleshRemainingBar = document.querySelector('#flesh-remaining');
-	}
-	async init() {
-		await this.physics.init();
-		this.initPlayer();
+		this.startLoadingModels();
 	}
 	private initPlayer() {
 		this.players = [];
 		this.playerIdMap = new Map();
 		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
-		this.generateWorld();
 		this.lastFrame = new Date();
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
@@ -56,17 +58,22 @@ class GameManager {
 			const promises: Promise<any>[] = this.stageLoaders.map((ld) => {
 				return ld.loadModel();
 			});
+			for (const key in this.loaders) {
+				promises.push(this.loaders[key].loadModel());
+			}
 			await Promise.all(promises);
 		}
+		await this.physics.init();
 		for (const ld of this.stageLoaders) {
 			ld.loadStage(this.rendering.scene, this.physics.world);
 		}
+		this.initPlayer();
+
 		this.onload();
 	}
-	generateWorld() {
-		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
-		this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0), "#fff");
+	startLoadingModels() {
 		this.stageLoaders.push(new ModelLoader("demostage.glb"));
+		this.loaders["human"] = new ModelLoader("human.glb");
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		this.rendering.addCube(position, dimention, rotation, color);
@@ -94,7 +101,9 @@ class GameManager {
 		// 		this.players[1].warp(1, 0, 0);
 		// 	}
 		// }
-
+		if (this.keyState.C && (!this.previousKeyState.C)) {
+			this.view = (this.view + 1) % 2;
+		}
 
 		this.addThrust();
 		this.processGun();
@@ -103,19 +112,31 @@ class GameManager {
 
 		for (const p of this.players) {
 			p.applyGraphics();
+			p.applyHitTestBody();
 		}
 		// const p = this.players[0].playerMesh.position;
 		// console.log(p.x + ',' + p.y + ',' + p.z);
-		this.rendering.setFPSCamera(this.players[0]);
+		switch (this.view) {
+			case 0:
+				this.rendering.setFPSCamera(this.players[0]);
+				break;
+			case 1:
+				this.rendering.setTPSCamera(this.players[0]);
+				break;
+		}
+		this.players[0].applyGun();
+		this.players[0].gun.test(100, this.physics.world);
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
+		this.previousKeyState = _.cloneDeep(this.keyState);
 	}
 	addPlayer(player: Player, id?: string): void {
 		this.players.push(player);
 		if (id !== undefined) {
 			this.playerIdMap.set(id, player);
 		}
+		player.loadHuman(this.loaders["human"], this.physics.world);
 	}
 	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): Player {
 		console.log('createNewPlayer id: ' + id);
@@ -224,36 +245,87 @@ class KeyState {
 	S: boolean = false;
 	D: boolean = false;
 	R: boolean = false;
+	C: boolean = false;
 	leftClick: boolean = false;
 	toString(): string {
-		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + " " + (this.leftClick ? "M1" : "");
+		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + (this.C ? "C" : "") + " " + (this.leftClick ? "M1" : "");
 	}
 }
 let manager: GameManager = null;
 let network: NetworkClient = null;
+
+let internalMyVideo: HTMLVideoElement;
+let faceDetector: FaceDetector;
+let cameraOffscreen: HTMLCanvasElement;
+let cameraOffscreenCtx: CanvasRenderingContext2D;
+let previewVideo: HTMLCanvasElement;
+let previewVideoCtx: CanvasRenderingContext2D;
+let cameraIsOn = false;
+let faceRect: null | [number, number, number, number] = null;
+
+async function getCamera() {
+	let stream = null;
+
+	try {
+		stream = await navigator.mediaDevices.getUserMedia({
+			audio: false,
+			video: true
+		});
+		/* ストリームを使用 */
+		return stream;
+	} catch (err) {
+		/* エラーを処理 */
+		console.error('erro in getMedia');
+		throw err;
+	}
+}
+
 window.onload = async function () {
+	previewVideo = document.querySelector('#previewVideo');
 	function loop() {
-		document.getElementById("log").innerText = state.toString();
+		document.getElementById("log").innerText = pressState.toString();
 		manager.step();
+
+		if (cameraIsOn && faceDetector.isReady) {
+			// 1. draw my camera on offscreen canvas
+			cameraOffscreenCtx.drawImage(internalMyVideo, 0, 0, internalMyVideo.width, internalMyVideo.height);
+
+			// 2. get ImageData from offscreen canvas
+			const imageData = cameraOffscreenCtx.getImageData(0, 0, cameraOffscreen.width, cameraOffscreen.height);
+
+			// 3. send ImageData to worker
+			faceDetector.processImageIfReady(imageData);
+		}
+		if (cameraIsOn) {
+			// 4. extract the face part from offscreen canvas and draw it on previewVideo
+			if (faceRect !== null) {
+				// clear canvas
+				previewVideoCtx.clearRect(0, 0, previewVideo.width, previewVideo.height);
+				// extract and draw
+				previewVideoCtx.drawImage(cameraOffscreen, faceRect[0], faceRect[1], faceRect[2], faceRect[3], 0, 0, previewVideo.width, previewVideo.height);
+			}
+		}
+
 		requestAnimationFrame(loop);
 	}
 	manager = new GameManager(loop);
-	await manager.init();
 	network = new NetworkClient();
-	const state: KeyState = new KeyState();
+	const pressState: KeyState = new KeyState();
 	// game server network
-	network.initGameServer().then(() => {
-		appendToLog("connected to Game Server");
-		network.start(() => {
-			const player = manager.players[0];
-			return {
-				position: player.getPosition().toArray(),
-				velocity: player.getVelocity().toArray(),
-				yaw: player.yaw,
-				pitch: player.pitch
-			};
-		})
-	}).catch(console.error);
+	manager.loadGame().then(() => {
+		network.initGameServer().then(() => {
+			appendToLog("connected to Game Server");
+			network.start(() => {
+				const player = manager.players[0];
+				return {
+					position: player.getPosition().toArray(),
+					velocity: player.getVelocity().toArray(),
+					yaw: player.yaw,
+					pitch: player.pitch
+				};
+			})
+		}).catch(console.error);
+	});
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) return;
 		const player = manager.getPlayerById(pid);
@@ -299,17 +371,48 @@ window.onload = async function () {
 	network.onvideostream = (stream, pid) => {
 		console.log(`got stream ${stream} for pid ${pid}`);
 		if (pid === undefined) {
-			// my video
-			appendToLog(`got my video stream`);
-			const previewVideo = document.querySelector('#previewVideo') as HTMLVideoElement;
-			previewVideo.autoplay = true;
-			previewVideo.srcObject = stream;
+			appendToLog(`local stream connected`);
 		} else {
 			appendToLog(`got stream of player ${pid}`);
 			manager.getPlayerById(pid)?.setFaceImage(stream);
 		}
 	};
-	network.initVideoServer();
+	getCamera()
+		.then((stream) => {
+			// my video
+			appendToLog(`got my video stream`);
+			if (faceDetector === undefined) {
+				faceDetector = new FaceDetector();
+				faceDetector.init();
+				faceDetector.onfacedetection = (rect) => {
+					faceRect = rect === undefined ? null : rect;
+				};
+			}
+			internalMyVideo = document.createElement('video');
+			// internalMyVideo = document.querySelector('#rawVideo');
+			internalMyVideo.autoplay = true;
+			internalMyVideo.srcObject = stream;
+			internalMyVideo.width = 300;
+			internalMyVideo.height = 200;
+
+			cameraOffscreen = document.createElement('canvas');
+			// cameraOffscreen = document.querySelector('#offscreen');
+			cameraOffscreenCtx = cameraOffscreen.getContext('2d');
+			cameraOffscreen.width = internalMyVideo.width;
+			cameraOffscreen.height = internalMyVideo.height;
+
+			previewVideo.width = internalMyVideo.width;
+			previewVideo.height = internalMyVideo.height;
+			previewVideoCtx = previewVideo.getContext('2d');
+
+			cameraIsOn = true;
+			return previewVideo.captureStream();
+		})
+		.then(async (stream) => {
+			console.log('initializing video server');
+			network.setVideoStream(stream);
+			await network.initVideoServer();
+		});
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;
@@ -319,55 +422,59 @@ window.onload = async function () {
 			manager.mouseMove(mouseMoveX, mouseMoveY);
 		};
 	}
-	manager.setKey(state);
+	manager.setKey(pressState);
 	window.onkeydown = function (e: KeyboardEvent) {
 		if (e.code == "KeyW") {
-			state.W = true;
+			pressState.W = true;
 		}
 		if (e.code == "KeyA") {
-			state.A = true;
+			pressState.A = true;
 		}
 		if (e.code == "KeyS") {
-			state.S = true;
+			pressState.S = true;
 		}
 		if (e.code == "KeyD") {
-			state.D = true;
+			pressState.D = true;
 		}
 		if (e.code == 'KeyR') {
-			state.R = true;
+			pressState.R = true;
 		}
-		manager.setKey(state);
+		if (e.code == 'KeyC') {
+			pressState.C = true;
+		}
+		manager.setKey(pressState);
 	};
 	window.onkeyup = function (e: KeyboardEvent) {
 		if (e.code == "KeyW") {
-			state.W = false;
+			pressState.W = false;
 		}
 		if (e.code == "KeyA") {
-			state.A = false;
+			pressState.A = false;
 		}
 		if (e.code == "KeyS") {
-			state.S = false;
+			pressState.S = false;
 		}
 		if (e.code == "KeyD") {
-			state.D = false;
+			pressState.D = false;
 		}
 		if (e.code == 'KeyR') {
-			state.R = false;
+			pressState.R = false;
 		}
-		manager.setKey(state);
+		if (e.code == 'KeyC') {
+			pressState.C = false;
+		}
+		manager.setKey(pressState);
 	};
 	window.onmousedown = function (e) {
 		if (e.button === 0) {
-			state.leftClick = true;
+			pressState.leftClick = true;
 		}
-		manager.setKey(state);
+		manager.setKey(pressState);
 	}
 	window.onmouseup = function (e) {
 		if (e.button === 0) {
-			state.leftClick = false;
+			pressState.leftClick = false;
 		}
-		manager.setKey(state);
+		manager.setKey(pressState);
 	}
-
-	manager.loadGame();
 };

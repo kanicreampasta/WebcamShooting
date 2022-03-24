@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import Ammo from './@types/ammo';
 import { Gun } from './gun';
 import { PlayerHealth } from "./health";
+import { ModelLoader } from "./model-loader";
 
 function GetPlayerBody(): Ammo.btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
@@ -43,10 +44,11 @@ function GetPlayerBody(): Ammo.btRigidBody {
 	return body;
 }
 
+const collisionSphereMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00, transparent: true, opacity: 0.1, wireframe: true });
 function GetPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
 	for (let i: number = -1; i <= -1; i++) {
-		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), collisionSphereMaterial);
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
@@ -59,7 +61,7 @@ function GetPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
 	for (let i: number = -1; i <= 1; i++) {
-		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), collisionSphereMaterial);
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
@@ -74,6 +76,7 @@ export class Player {
 	rigidbody: Ammo.btRigidBody;
 	playerMesh: THREE.Object3D;
 	playerScreen: THREE.Mesh;
+	hitTestBody: Ammo.btRigidBody;
 	yaw: number = 0;
 	pitch: number = 0;
 	isOtherPlayer: boolean = false;
@@ -96,7 +99,7 @@ export class Player {
 			this.playerMesh = mesh[0];
 			this.playerScreen = mesh[1];
 		} else {
-			const mesh = GetOtherPlayerMesh();
+			const mesh = GetPlayerMesh();
 			this.playerMesh = mesh[0];
 			this.playerScreen = mesh[1];
 		}
@@ -114,6 +117,26 @@ export class Player {
 
 		this.health = new PlayerHealth(1);
 		console.log("Player Health", this.health.remainingHealth);
+	}
+	loadHuman(ld: ModelLoader, world: Ammo.btDiscreteDynamicsWorld): void {
+		if (this.isOtherPlayer) {
+			this.playerMesh.add(ld.getScene());
+			const transform = new gAmmo.btTransform();
+			transform.setIdentity();
+			const motionState = new gAmmo.btDefaultMotionState(transform);
+
+			const localInertia = new gAmmo.btVector3(1, 1, 1);
+			const rbInfo = new gAmmo.btRigidBodyConstructionInfo(0, motionState, ld.getCollider(), localInertia);
+			const body = new gAmmo.btRigidBody(rbInfo);
+			body.setFriction(0);
+			body.setRestitution(0);
+			// disable sleep
+			body.setSleepingThresholds(0, 0);
+			this.hitTestBody = body;
+			const collisionFilterMask = 2;
+			const collisionFilterGroup = 4;
+			world.addRigidBody(this.hitTestBody, collisionFilterGroup, collisionFilterMask);
+		}
 	}
 	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);
@@ -165,6 +188,28 @@ export class Player {
 		trans.setOrigin(origin);
 		motionState.setWorldTransform(trans);
 		this.rigidbody.setMotionState(motionState);
+	}
+	applyHitTestBody(): void {
+		if (!this.isOtherPlayer) return;
+		const trans = new gAmmo.btTransform();
+		{
+			const player = new gAmmo.btTransform();
+			this.rigidbody.getMotionState().getWorldTransform(player);
+			trans.setOrigin(player.getOrigin());
+			const quaternion = new gAmmo.btQuaternion(0, 0, 0, 1);
+			quaternion.setEulerZYX(0, this.yaw, 0);
+			trans.setRotation(quaternion);
+		}
+		const motionState = this.hitTestBody.getMotionState();
+		motionState.setWorldTransform(trans);
+		this.hitTestBody.setMotionState(motionState);
+	}
+	applyGun() {
+		if (!this.gun) return;
+		const position = this.getPosition();
+		this.gun.yaw = this.yaw;
+		this.gun.pitch = this.pitch;
+		this.gun.point = new gAmmo.btVector3(position.x, position.y, position.z);
 	}
 	walk(sideways: number, forward: number, world: Ammo.btDiscreteDynamicsWorld) {
 		const theta = this.yaw;

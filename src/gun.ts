@@ -1,3 +1,8 @@
+import { gAmmo } from './physics';
+import Ammo from './@types/ammo';
+import { removeExtmapAllowMixed } from 'video/adapter';
+
+
 type GunRate = {
     type: 'semi',
     minInterval: number
@@ -34,5 +39,29 @@ export class Gun {
         }
         this.remainingBulletsInMagazine -= 1;
         return true;
+    }
+    point: Ammo.btVector3;
+    yaw: number;
+    pitch: number;
+
+    test(range: number, world: Ammo.btDiscreteDynamicsWorld) {
+        const start = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
+        let end = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
+        const direction = new gAmmo.btVector3(
+            Math.cos(this.pitch) * Math.sin(this.yaw),
+            Math.sin(this.pitch),
+            Math.cos(this.pitch) * Math.cos(this.yaw));
+        direction.setValue(direction.x() * range, direction.y() * range, direction.z() * range);
+        end = end.op_add(direction);
+        // console.log(start.x() + "," + start.y() + "," + start.z());
+        // console.log(end.x() + "," + end.y() + "," + end.z());
+        var result = new gAmmo.ClosestRayResultCallback(start, end); // TODO: reuse callback object
+        result.set_m_collisionFilterGroup(1);
+        // result.set_m_collisionFilterGroup(4);
+        world.rayTest(start, end, result);
+        if (result.hasHit()) {
+            // console.log("hit");
+        }
+        // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
     }
 }

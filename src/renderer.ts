@@ -39,7 +39,7 @@ export class RenderingManager {
 		const m = new THREE.Quaternion().multiplyQuaternions(y, p);
 		this.camera.setRotationFromQuaternion(m);
 		const position = player.getPosition();
-		position.y += 0.5;
+		position.y += 0.75;
 		this.camera.position.set(position.x, position.y, position.z);
 	}
 	setTPSCamera(player: PLAYER.Player) {
@@ -48,7 +48,7 @@ export class RenderingManager {
 		const m = new THREE.Quaternion().multiplyQuaternions(y, p);
 		this.camera.setRotationFromQuaternion(m);
 		const position = player.getPosition();
-		position.y += 0.5;
+		position.y += 0.75;
 		const offset = new THREE.Vector3(0, 0, 10);
 		offset.applyQuaternion(m);
 		position.add(offset);
