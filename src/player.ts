@@ -294,4 +294,12 @@ export class Player {
 			console.log('reload completed');
 		}
 	}
+
+	gotDamage(damage: number) {
+		const isAlive = this.health.receiveDamage(damage);
+		if (!isAlive) {
+			console.warn("you are dead :>");
+			this.health.heal("flesh");
+		}
+	}
 }
