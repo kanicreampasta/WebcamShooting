@@ -7,6 +7,7 @@ import { Player } from "./player";
 import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from './utils';
+import { FaceDetector } from './face-detection/facedetection';
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -214,10 +215,44 @@ class KeyState {
 }
 let manager: GameManager = null;
 let network: NetworkClient = null;
+
+let internalMyVideo: HTMLVideoElement;
+let faceDetector: FaceDetector;
+let cameraOffscreen: HTMLCanvasElement;
+let cameraOffscreenCtx: CanvasRenderingContext2D;
+let previewVideo: HTMLCanvasElement;
+let previewVideoCtx: CanvasRenderingContext2D;
+let cameraIsOn = false;
+let faceRect: null | [number, number, number, number] = null;
+
 window.onload = async function () {
+	previewVideo = document.querySelector('#previewVideo');
 	function loop() {
 		document.getElementById("log").innerText = state.toString();
 		manager.step();
+
+		if (cameraIsOn && faceDetector.isReady) {
+			// 1. draw my camera on offscreen canvas
+			cameraOffscreenCtx.drawImage(internalMyVideo, 0, 0, internalMyVideo.width, internalMyVideo.height);
+
+			// 2. get ImageData from offscreen canvas
+			const imageData = cameraOffscreenCtx.getImageData(0, 0, cameraOffscreen.width, cameraOffscreen.height);
+
+			// 3. send ImageData to worker
+			faceDetector.processImageIfReady(imageData);
+		}
+		if (cameraIsOn) {
+			// 4. extract the face part from offscreen canvas and draw it on previewVideo
+			if (faceRect !== null) {
+				// clear canvas
+				previewVideoCtx.clearRect(0, 0, previewVideo.width, previewVideo.height);
+				// extract
+				const imageData = cameraOffscreenCtx.getImageData(faceRect[0], faceRect[1], faceRect[2], faceRect[3]);
+				// draw
+				previewVideoCtx.putImageData(imageData, 0, 0, 0, 0, imageData.width, imageData.height);
+			}
+		}
+
 		requestAnimationFrame(loop);
 	}
 	manager = new GameManager(loop);
@@ -284,9 +319,31 @@ window.onload = async function () {
 		if (pid === undefined) {
 			// my video
 			appendToLog(`got my video stream`);
-			const previewVideo = document.querySelector('#previewVideo') as HTMLVideoElement;
-			previewVideo.autoplay = true;
-			previewVideo.srcObject = stream;
+			if (faceDetector === undefined) {
+				faceDetector = new FaceDetector();
+				faceDetector.init();
+				faceDetector.onfacedetection = (rect) => {
+					faceRect = rect === undefined ? null : rect;
+				};
+			}
+			internalMyVideo = document.createElement('video');
+			// internalMyVideo = document.querySelector('#rawVideo');
+			internalMyVideo.autoplay = true;
+			internalMyVideo.srcObject = stream;
+			internalMyVideo.width = 300;
+			internalMyVideo.height = 200;
+
+			cameraOffscreen = document.createElement('canvas');
+			// cameraOffscreen = document.querySelector('#offscreen');
+			cameraOffscreenCtx = cameraOffscreen.getContext('2d');
+			cameraOffscreen.width = internalMyVideo.width;
+			cameraOffscreen.height = internalMyVideo.height;
+
+			previewVideo.width = internalMyVideo.width;
+			previewVideo.height = internalMyVideo.height;
+			previewVideoCtx = previewVideo.getContext('2d');
+
+			cameraIsOn = true;
 		} else {
 			appendToLog(`got stream of player ${pid}`);
 			manager.getPlayerById(pid)?.setFaceImage(stream);
