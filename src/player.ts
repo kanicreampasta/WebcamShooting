@@ -113,6 +113,7 @@ export class Player {
 		this.gun.outOfMagazine = 100;
 
 		this.health = new PlayerHealth(1);
+		console.log("Player Health", this.health.remainingHealth);
 	}
 	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);

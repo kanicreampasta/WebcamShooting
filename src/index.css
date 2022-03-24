@@ -46,6 +46,50 @@ body{
 	color:white;
 }
 
+#healthStatus{
+	position:absolute;
+	left:10px;
+	bottom:10px;
+	color:white;
+}
+
+.health-bar {
+	position: relative;
+	margin-bottom: 5px;
+	box-sizing: border-box;
+	width: 150px;
+	height: 20px;
+	padding: 5px;
+	background: #c2c2c2;
+	border-radius: 8px;
+}
+
+.armour-bar {
+	position: relative;
+	background: #5066ff;
+	width: 100%;
+	height: 10px;
+	transition: width .5s linear;
+}
+
+.flesh-bar {
+	position: relative;
+	background: #d35746;
+	width: 100%;
+	height: 10px;
+	transition: width .5s linear;
+}
+
+.hit {
+	background: rgba(255,255,255,0.6);
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 0;
+	transition: width .5s linear;
+}
+
 #crosshair{
 	position:absolute;
 	bottom:50%;
