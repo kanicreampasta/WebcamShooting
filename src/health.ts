@@ -5,7 +5,7 @@ const MAX_ARMOUR_HEALTH = [
   {level: 1, value: 20},
   {level: 2, value: 50},
 ];
-const MAX_FLESH_HEALTH = 50;
+const MAX_FLESH_HEALTH = 51;
 
 export class PlayerHealth {
   armourLevel: number;

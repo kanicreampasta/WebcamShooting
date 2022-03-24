@@ -22,6 +22,10 @@ class GameManager {
 
 	private inMagazine: HTMLElement;
 	private outOfMagazine: HTMLElement;
+
+	private fleshHealthBar: HTMLElement;
+	private fleshRemainingBar: HTMLElement;
+
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
@@ -29,6 +33,8 @@ class GameManager {
 
 		this.inMagazine = document.querySelector('#inMagazine');
 		this.outOfMagazine = document.querySelector('#outOfMagazine');
+		this.fleshHealthBar = document.querySelector('#flesh-health');
+		this.fleshRemainingBar = document.querySelector('#flesh-remaining');
 	}
 	async init() {
 		await this.physics.init();
@@ -186,6 +192,7 @@ class GameManager {
 		if (this.keyState.leftClick) {
 			if (player.triggerGun()) {
 				console.log("gun");
+				this.updateHealth(10);
 			}
 		} else {
 			player.releaseTrigger();
@@ -197,6 +204,16 @@ class GameManager {
 		this.inMagazine.textContent = gun.remainingBulletsInMagazine.toString();
 		this.outOfMagazine.textContent = gun.outOfMagazine.toString();
 	}
+
+	private updateHealth(damage: number) {
+		const player = this.getMyPlayer();
+		player.gotDamage(damage);
+		const maxFleshHealth = player.health.getMaxFleshValue();
+		const currentFleshHealth = player.health.remainingHealth.flesh;
+
+		this.fleshRemainingBar.style.width = (currentFleshHealth / maxFleshHealth) * 100 + "%";
+	}
+
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();
 	}
