@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/kanicreampasta/cannonJsFpsTest#readme",
   "dependencies": {
+    "@tensorflow-models/blazeface": "^0.0.7",
+    "@tensorflow/tfjs-backend-webgl": "^3.15.0",
     "@types/three": "^0.138.0",
     "ammo.js": "github:kripken/ammo.js",
     "cannon": "^0.6.2",
