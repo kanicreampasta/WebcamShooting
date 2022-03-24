@@ -43,10 +43,11 @@ function GetPlayerBody(): Ammo.btRigidBody {
 	return body;
 }
 
+const collisionSphereMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00, transparent: true, opacity: 0.1, wireframe: true });
 function GetPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
 	for (let i: number = -1; i <= -1; i++) {
-		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), collisionSphereMaterial);
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}
@@ -59,7 +60,7 @@ function GetPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	const playerMesh: THREE.Object3D = new THREE.Object3D();
 	for (let i: number = -1; i <= 1; i++) {
-		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+		const sphere: THREE.Mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), collisionSphereMaterial);
 		sphere.position.set(0, i * 0.5, 0);
 		playerMesh.add(sphere);
 	}

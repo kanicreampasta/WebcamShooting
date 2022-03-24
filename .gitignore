@@ -20,4 +20,4 @@
 .cache
 .eslintcache
 /dist
-.blend1
+*.blend1

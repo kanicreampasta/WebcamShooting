@@ -7,6 +7,7 @@ import { Player } from "./player";
 import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from './utils';
+import * as _ from "lodash";
 
 class GameManager {
 	rendering: RenderingManager;
@@ -93,7 +94,7 @@ class GameManager {
 		// 		this.players[1].warp(1, 0, 0);
 		// 	}
 		// }
-		if (this.downState.C) {
+		if (this.keyState.C && (!this.previousKeyState.C)) {
 			this.view = (this.view + 1) % 2;
 		}
 
@@ -118,7 +119,7 @@ class GameManager {
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
-		this.previousKeyState = this.keyState;
+		this.previousKeyState = _.cloneDeep(this.keyState);
 	}
 	addPlayer(player: Player, id?: string): void {
 		this.players.push(player);
