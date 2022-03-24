@@ -81,7 +81,10 @@ export class Player {
 	vx: number = 0;
 	vz: number = 0;
 
-	gun: Gun
+	gun: Gun | null;
+	private lastShotTime: number = 0;
+	private triggered: boolean = false;
+	private reloadTimer: number = -1;
 
 	constructor(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
@@ -100,7 +103,11 @@ export class Player {
 		world.addRigidBody(this.rigidbody, collisionFilterGroup, collisionFilterMask);
 		this.isOtherPlayer = isOtherPlayer;
 
-		this.gun = new Gun(30);
+		this.gun = new Gun(30, {
+			type: 'auto',
+			rate: 6
+		}, 3);
+		this.gun.outOfMagazine = 100;
 	}
 	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);
@@ -226,5 +233,59 @@ export class Player {
 			}*/
 		}
 		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
+	}
+	triggerGun(): boolean {
+		if (this.gun === null) return;
+		let lastTriggerState = this.triggered;
+		this.triggered = true;
+		const time = Date.now();
+
+		if (this.reloadTimer >= 0) {
+			// リロード中なので撃てない
+			return;
+		}
+
+		let allowed: boolean;
+		switch (this.gun.rate.type) {
+			case 'semi':
+				if (lastTriggerState) {
+					allowed = false;
+				} else {
+					allowed = (time - this.lastShotTime) / 1000 >= this.gun.rate.minInterval;
+				}
+				break;
+			case 'auto':
+				allowed = (time - this.lastShotTime) / 1000 >= (1.0 / this.gun.rate.rate);
+				break;
+		}
+
+		if (allowed) {
+			if (this.gun.shootNow()) {
+				// 撃てた
+				this.lastShotTime = time;
+				return true;
+			} else {
+				// 弾切れ or このステップではまだ撃てない
+				return false;
+			}
+		}
+	}
+	releaseTrigger() {
+		this.lastShotTime = 0;
+		this.triggered = false;
+	}
+	requestReload() {
+		if (this.gun === null) return;
+		this.reloadTimer = this.gun.reloadTime;
+		this.gun.isReloading = true;
+		console.log('start reloading');
+	}
+	step(dt: number) {
+		this.reloadTimer -= dt;
+		if (this.gun !== null && this.gun.isReloading && this.reloadTimer < 0) {
+			this.gun.completeReload();
+			this.gun.isReloading = false;
+			console.log('reload completed');
+		}
 	}
 }

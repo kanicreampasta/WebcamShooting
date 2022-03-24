@@ -19,10 +19,16 @@ class GameManager {
 	onload: () => void;
 	loaders: ModelLoader[] = [];
 	stageLoaders: ModelLoader[] = [];
+
+	private inMagazine: HTMLElement;
+	private outOfMagazine: HTMLElement;
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
 		this.onload = onload;
+
+		this.inMagazine = document.querySelector('#inMagazine');
+		this.outOfMagazine = document.querySelector('#outOfMagazine');
 	}
 	async init() {
 		await this.physics.init();
@@ -82,6 +88,8 @@ class GameManager {
 
 
 		this.addThrust();
+		this.processGun();
+		this.getMyPlayer().step(dt);
 		this.physics.world.stepSimulation(dt);
 
 		for (const p of this.players) {
@@ -170,6 +178,22 @@ class GameManager {
 			}
 		}
 	}
+	private processGun() {
+		const player = this.getMyPlayer();
+		if (this.keyState.leftClick) {
+			if (player.triggerGun()) {
+				console.log("gun");
+			}
+		} else {
+			player.releaseTrigger();
+			if (this.keyState.R) {
+				player.requestReload();
+			}
+		}
+		const gun = this.getMyPlayer().gun;
+		this.inMagazine.textContent = gun.remainingBulletsInMagazine.toString();
+		this.outOfMagazine.textContent = gun.outOfMagazine.toString();
+	}
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();
 	}
@@ -179,6 +203,7 @@ class KeyState {
 	A: boolean = false;
 	S: boolean = false;
 	D: boolean = false;
+	R: boolean = false;
 	leftClick: boolean = false;
 	toString(): string {
 		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + " " + (this.leftClick ? "M1" : "");
@@ -288,6 +313,9 @@ window.onload = async function () {
 		if (e.code == "KeyD") {
 			state.D = true;
 		}
+		if (e.code == 'KeyR') {
+			state.R = true;
+		}
 		manager.setKey(state);
 	};
 	window.onkeyup = function (e: KeyboardEvent) {
@@ -302,6 +330,9 @@ window.onload = async function () {
 		}
 		if (e.code == "KeyD") {
 			state.D = false;
+		}
+		if (e.code == 'KeyR') {
+			state.R = false;
 		}
 		manager.setKey(state);
 	};

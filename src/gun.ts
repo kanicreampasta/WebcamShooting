@@ -1,29 +1,38 @@
-export class Gun {
-    private remainingBulletsInMagazine: number;
-    private totalBullets: number;
+type GunRate = {
+    type: 'semi',
+    minInterval: number
+} | {
+    type: 'auto',
+    rate: number
+};
 
-    constructor(private magazineSize: number) {
+export class Gun {
+    remainingBulletsInMagazine: number;
+    outOfMagazine: number;
+    isReloading = false;
+
+    constructor(private magazineSize: number, public rate: GunRate, public reloadTime: number) {
         this.remainingBulletsInMagazine = magazineSize;
     }
 
-    reload() {
-        if (this.totalBullets < this.magazineSize) {
-            this.remainingBulletsInMagazine = this.totalBullets;
+    completeReload() {
+        if (this.outOfMagazine < this.magazineSize) {
+            this.remainingBulletsInMagazine = this.outOfMagazine;
         } else {
             this.remainingBulletsInMagazine = this.magazineSize;
         }
+        this.outOfMagazine = Math.max(0, this.outOfMagazine - this.remainingBulletsInMagazine);
     }
 
     setTotalBullets(n: number) {
-        this.totalBullets = n;
+        this.outOfMagazine = n;
     }
 
-    shoot(): boolean {
+    shootNow(): boolean {
         if (this.remainingBulletsInMagazine <= 0) {
             return false;
         }
         this.remainingBulletsInMagazine -= 1;
-        this.totalBullets -= 1;
         return true;
     }
 }
