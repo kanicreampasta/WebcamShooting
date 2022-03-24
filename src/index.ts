@@ -225,6 +225,23 @@ let previewVideoCtx: CanvasRenderingContext2D;
 let cameraIsOn = false;
 let faceRect: null | [number, number, number, number] = null;
 
+async function getCamera() {
+	let stream = null;
+
+	try {
+		stream = await navigator.mediaDevices.getUserMedia({
+			audio: false,
+			video: true
+		});
+		/* ストリームを使用 */
+		return stream;
+	} catch (err) {
+		/* エラーを処理 */
+		console.error('erro in getMedia');
+		throw err;
+	}
+}
+
 window.onload = async function () {
 	previewVideo = document.querySelector('#previewVideo');
 	function loop() {
@@ -315,6 +332,14 @@ window.onload = async function () {
 	network.onvideostream = (stream, pid) => {
 		console.log(`got stream ${stream} for pid ${pid}`);
 		if (pid === undefined) {
+			appendToLog(`local stream connected`);
+		} else {
+			appendToLog(`got stream of player ${pid}`);
+			manager.getPlayerById(pid)?.setFaceImage(stream);
+		}
+	};
+	getCamera()
+		.then((stream) => {
 			// my video
 			appendToLog(`got my video stream`);
 			if (faceDetector === undefined) {
@@ -342,12 +367,13 @@ window.onload = async function () {
 			previewVideoCtx = previewVideo.getContext('2d');
 
 			cameraIsOn = true;
-		} else {
-			appendToLog(`got stream of player ${pid}`);
-			manager.getPlayerById(pid)?.setFaceImage(stream);
-		}
-	};
-	network.initVideoServer();
+			return previewVideo.captureStream();
+		})
+		.then(async (stream) => {
+			console.log('initializing video server');
+			network.setVideoStream(stream);
+			await network.initVideoServer();
+		});
 	{
 		let mouseMoveX = 0;
 		let mouseMoveY = 0;

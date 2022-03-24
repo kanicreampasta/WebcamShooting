@@ -2,11 +2,16 @@ import Janus from './janus.es';
 import adapter from './adapter';
 
 const roomName = 1234;
+let myStream: MediaStream;
 
 export type VideoSetter = (stream: MediaStream | null, pid?: string) => void;
 let onvideostream: VideoSetter;
 export function setOnVideoStream(callback: (stream: MediaStream, pid?: string) => void) {
     onvideostream = callback;
+}
+
+export function setVideoStream(stream: MediaStream) {
+    myStream = stream;
 }
 
 export function initJanus(): Promise<void> {
@@ -230,6 +235,7 @@ function publishOwnFeed(handle: any) {
             audioSend: false,
             videoSend: true
         },
+        stream: myStream,
         simulcast: false,
         success: function (jsep: any) {
             console.log('got publisher sdp', jsep);
