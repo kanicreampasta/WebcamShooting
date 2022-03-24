@@ -80,16 +80,6 @@ body{
 	transition: width .5s linear;
 }
 
-.hit {
-	background: rgba(255,255,255,0.6);
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	width: 0;
-	transition: width .5s linear;
-}
-
 #crosshair{
 	position:absolute;
 	bottom:50%;
