@@ -46,7 +46,7 @@ export class PlayerHealth {
     return isHealed;
   }
 
-  private getMaxArmourValue(armourLevel): number {
+  private getMaxArmourValue(armourLevel: number): number {
     const armour = MAX_ARMOUR_HEALTH.find(e => e.level === armourLevel);
     if (armour == undefined) return 0
     return armour.value;

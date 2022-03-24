@@ -3,6 +3,7 @@ import { gAmmo } from './physics';
 import * as THREE from 'three';
 import Ammo from './@types/ammo';
 import { Gun } from './gun';
+import { PlayerHealth } from "./health";
 
 function GetPlayerBody(): Ammo.btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
@@ -86,6 +87,8 @@ export class Player {
 	private triggered: boolean = false;
 	private reloadTimer: number = -1;
 
+	health: PlayerHealth;
+
 	constructor(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
@@ -108,6 +111,8 @@ export class Player {
 			rate: 6
 		}, 3);
 		this.gun.outOfMagazine = 100;
+
+		this.health = new PlayerHealth(1);
 	}
 	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);
