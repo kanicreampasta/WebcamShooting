@@ -46,6 +46,16 @@ export class PlayerHealth {
     return isHealed;
   }
 
+  setArmour(armourLevel: number): boolean {
+    let isArmourSet = false;
+    if (armourLevel > this.armourLevel) {
+      this.armourLevel = armourLevel;
+      this.remainingHealth.armour = this.getMaxArmourValue(armourLevel);
+      isArmourSet = true;
+    }
+    return isArmourSet;
+  }
+
   private getMaxArmourValue(armourLevel: number): number {
     const armour = MAX_ARMOUR_HEALTH.find(e => e.level === armourLevel);
     if (armour == undefined) return 0
