@@ -3,6 +3,7 @@ import { gAmmo } from './physics';
 import * as THREE from 'three';
 import Ammo from './@types/ammo';
 import { Gun } from './gun';
+import { ModelLoader } from "./model-loader";
 
 function GetPlayerBody(): Ammo.btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
@@ -108,6 +109,9 @@ export class Player {
 			rate: 6
 		}, 3);
 		this.gun.outOfMagazine = 100;
+	}
+	loadHuman(ld: ModelLoader): void {
+		this.playerMesh.add(ld.getScene());
 	}
 	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);

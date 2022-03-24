@@ -7,6 +7,7 @@ import { Player } from "./player";
 import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from './utils';
+
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -15,10 +16,13 @@ class GameManager {
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
+	previousKeyState: KeyState = new KeyState();
 	startFrame: Date;
 	onload: () => void;
-	loaders: ModelLoader[] = [];
+	loaders: { [key: string]: ModelLoader } = {};
 	stageLoaders: ModelLoader[] = [];
+
+	view: number = 0;//0:fps 1:tps
 
 	private inMagazine: HTMLElement;
 	private outOfMagazine: HTMLElement;
@@ -29,16 +33,12 @@ class GameManager {
 
 		this.inMagazine = document.querySelector('#inMagazine');
 		this.outOfMagazine = document.querySelector('#outOfMagazine');
-	}
-	async init() {
-		await this.physics.init();
-		this.initPlayer();
+		this.startLoadingModels();
 	}
 	private initPlayer() {
 		this.players = [];
 		this.playerIdMap = new Map();
 		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
-		this.generateWorld();
 		this.lastFrame = new Date();
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
@@ -50,17 +50,22 @@ class GameManager {
 			const promises: Promise<any>[] = this.stageLoaders.map((ld) => {
 				return ld.loadModel();
 			});
+			for (const key in this.loaders) {
+				promises.push(this.loaders[key].loadModel());
+			}
 			await Promise.all(promises);
 		}
+		await this.physics.init();
 		for (const ld of this.stageLoaders) {
 			ld.loadStage(this.rendering.scene, this.physics.world);
 		}
+		this.initPlayer();
+
 		this.onload();
 	}
-	generateWorld() {
-		this.addCube(new THREE.Vector3(0, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(0, 0, 0), "#f00");
-		this.addCube(new THREE.Vector3(5, -5, 0), new THREE.Vector3(10, 1, 10), new THREE.Euler(45, 0, 0), "#fff");
+	startLoadingModels() {
 		this.stageLoaders.push(new ModelLoader("demostage.glb"));
+		this.loaders["human"] = new ModelLoader("human.glb");
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
 		this.rendering.addCube(position, dimention, rotation, color);
@@ -88,7 +93,9 @@ class GameManager {
 		// 		this.players[1].warp(1, 0, 0);
 		// 	}
 		// }
-
+		if (this.downState.C) {
+			this.view = (this.view + 1) % 2;
+		}
 
 		this.addThrust();
 		this.processGun();
@@ -100,16 +107,25 @@ class GameManager {
 		}
 		// const p = this.players[0].playerMesh.position;
 		// console.log(p.x + ',' + p.y + ',' + p.z);
-		this.rendering.setFPSCamera(this.players[0]);
+		switch (this.view) {
+			case 0:
+				this.rendering.setFPSCamera(this.players[0]);
+				break;
+			case 1:
+				this.rendering.setTPSCamera(this.players[0]);
+				break;
+		}
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
+		this.previousKeyState = this.keyState;
 	}
 	addPlayer(player: Player, id?: string): void {
 		this.players.push(player);
 		if (id !== undefined) {
 			this.playerIdMap.set(id, player);
 		}
+		player.loadHuman(this.loaders["human"]);
 	}
 	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): Player {
 		console.log('createNewPlayer id: ' + id);
@@ -207,23 +223,23 @@ class KeyState {
 	S: boolean = false;
 	D: boolean = false;
 	R: boolean = false;
+	C: boolean = false;
 	leftClick: boolean = false;
 	toString(): string {
-		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + " " + (this.leftClick ? "M1" : "");
+		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + (this.C ? "C" : "") + " " + (this.leftClick ? "M1" : "");
 	}
 }
 let manager: GameManager = null;
 let network: NetworkClient = null;
 window.onload = async function () {
 	function loop() {
-		document.getElementById("log").innerText = state.toString();
+		document.getElementById("log").innerText = pressState.toString();
 		manager.step();
 		requestAnimationFrame(loop);
 	}
 	manager = new GameManager(loop);
-	await manager.init();
 	network = new NetworkClient();
-	const state: KeyState = new KeyState();
+	const pressState: KeyState = new KeyState();
 	// game server network
 	network.initGameServer().then(() => {
 		appendToLog("connected to Game Server");
@@ -302,54 +318,60 @@ window.onload = async function () {
 			manager.mouseMove(mouseMoveX, mouseMoveY);
 		};
 	}
-	manager.setKey(state);
+	manager.setKey(pressState);
 	window.onkeydown = function (e: KeyboardEvent) {
 		if (e.code == "KeyW") {
-			state.W = true;
+			pressState.W = true;
 		}
 		if (e.code == "KeyA") {
-			state.A = true;
+			pressState.A = true;
 		}
 		if (e.code == "KeyS") {
-			state.S = true;
+			pressState.S = true;
 		}
 		if (e.code == "KeyD") {
-			state.D = true;
+			pressState.D = true;
 		}
 		if (e.code == 'KeyR') {
-			state.R = true;
+			pressState.R = true;
 		}
-		manager.setKey(state);
+		if (e.code == 'KeyC') {
+			pressState.C = true;
+		}
+		manager.setKey(pressState);
 	};
 	window.onkeyup = function (e: KeyboardEvent) {
 		if (e.code == "KeyW") {
-			state.W = false;
+			pressState.W = false;
 		}
 		if (e.code == "KeyA") {
-			state.A = false;
+			pressState.A = false;
 		}
 		if (e.code == "KeyS") {
-			state.S = false;
+			pressState.S = false;
 		}
 		if (e.code == "KeyD") {
-			state.D = false;
+			pressState.D = false;
 		}
 		if (e.code == 'KeyR') {
-			state.R = false;
+			pressState.R = false;
 		}
-		manager.setKey(state);
+		if (e.code == 'KeyC') {
+			pressState.C = false;
+		}
+		manager.setKey(pressState);
 	};
 	window.onmousedown = function (e) {
 		if (e.button === 0) {
-			state.leftClick = true;
+			pressState.leftClick = true;
 		}
-		manager.setKey(state);
+		manager.setKey(pressState);
 	}
 	window.onmouseup = function (e) {
 		if (e.button === 0) {
-			state.leftClick = false;
+			pressState.leftClick = false;
 		}
-		manager.setKey(state);
+		manager.setKey(pressState);
 	}
 
 	manager.loadGame();
