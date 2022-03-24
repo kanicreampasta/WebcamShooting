@@ -246,10 +246,8 @@ window.onload = async function () {
 			if (faceRect !== null) {
 				// clear canvas
 				previewVideoCtx.clearRect(0, 0, previewVideo.width, previewVideo.height);
-				// extract
-				const imageData = cameraOffscreenCtx.getImageData(faceRect[0], faceRect[1], faceRect[2], faceRect[3]);
-				// draw
-				previewVideoCtx.putImageData(imageData, 0, 0, 0, 0, imageData.width, imageData.height);
+				// extract and draw
+				previewVideoCtx.drawImage(cameraOffscreen, faceRect[0], faceRect[1], faceRect[2], faceRect[3], 0, 0, previewVideo.width, previewVideo.height);
 			}
 		}
 
