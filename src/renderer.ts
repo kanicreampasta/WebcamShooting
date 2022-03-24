@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as PLAYER from "./player";
+
 export class RenderingManager {
 	renderer: THREE.WebGLRenderer;
 	scene: THREE.Scene;
