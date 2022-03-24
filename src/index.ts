@@ -105,6 +105,7 @@ class GameManager {
 
 		for (const p of this.players) {
 			p.applyGraphics();
+			p.applyHitTestBody();
 		}
 		// const p = this.players[0].playerMesh.position;
 		// console.log(p.x + ',' + p.y + ',' + p.z);
@@ -116,6 +117,8 @@ class GameManager {
 				this.rendering.setTPSCamera(this.players[0]);
 				break;
 		}
+		this.players[0].applyGun();
+		this.players[0].gun.test(100,this.physics.world);
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
@@ -126,7 +129,7 @@ class GameManager {
 		if (id !== undefined) {
 			this.playerIdMap.set(id, player);
 		}
-		player.loadHuman(this.loaders["human"]);
+		player.loadHuman(this.loaders["human"], this.physics.world);
 	}
 	createNewPlayer(id: string, position: [number, number, number], velocity: [number, number]): Player {
 		console.log('createNewPlayer id: ' + id);
