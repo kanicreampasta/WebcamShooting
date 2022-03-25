@@ -60,8 +60,8 @@ export class Gun {
         // console.log(start.x() + "," + start.y() + "," + start.z());
         // console.log(end.x() + "," + end.y() + "," + end.z());
         var result = new gAmmo.ClosestRayResultCallback(start, end); // TODO: reuse callback object
-        result.set_m_collisionFilterGroup(2);
-        // result.set_m_collisionFilterMask(2);
+        result.set_m_collisionFilterGroup(-1);
+        result.set_m_collisionFilterMask(4);
         world.rayTest(start, end, result);
         if (result.hasHit()) {
             const hitPoint = result.get_m_hitPointWorld();
