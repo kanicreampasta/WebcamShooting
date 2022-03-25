@@ -325,11 +325,17 @@ export class Player {
 		this.lastShotTime = 0;
 		this.triggered = false;
 	}
-	requestReload() {
-		if (this.gun === null) return;
-		this.reloadTimer = this.gun.reloadTime;
-		this.gun.isReloading = true;
-		console.log('start reloading');
+	requestReload(): boolean {
+		if (this.gun === null) {
+			return false;
+		}
+		if (this.reloadTimer < 0) {
+			this.reloadTimer = this.gun.reloadTime;
+			this.gun.isReloading = true;
+			console.log('start reloading');
+			return true;
+		}
+		return false;
 	}
 	step(dt: number) {
 		this.reloadTimer -= dt;
