@@ -383,6 +383,9 @@ window.onload = async function () {
 			if (update.pitch !== undefined) {
 				player.pitch = update.pitch;
 			}
+			if (update.fired !== undefined && update.fired) {
+				audioMgr.playSound('gunshot');
+			}
 		}
 	};
 	network.onplayerdelete = (pid) => {

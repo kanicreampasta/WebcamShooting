@@ -23,10 +23,9 @@ export class NetworkClient {
         position?: Position,
         velocity?: Velocity,
         yaw?: number,
-        pitch?: number
+        pitch?: number,
+        fired?: boolean
     }) => void);
-
-    onplayerfire: undefined | ((pid: string) => void);
 
     onplayerdelete: undefined | ((pid: string) => void);
 
@@ -143,19 +142,6 @@ export class NetworkClient {
                 this.onplayerdelete(pid);
                 break;
             }
-            case 'fire': {
-                if (this.onplayerfire === undefined) {
-                    console.warn('onplayerfire not set');
-                    return;
-                }
-                const pid = data['pid'];
-                if (pid === undefined || typeof (pid) !== 'string') {
-                    console.warn('invalid message');
-                    return;
-                }
-                this.onplayerfire(pid);
-                break;
-            }
         }
     }
 
@@ -182,7 +168,8 @@ export class NetworkClient {
             position?: Position,
             velocity?: Velocity,
             yaw?: number,
-            pitch?: number
+            pitch?: number,
+            fired?: boolean
         } = {};
 
         const position = playerData['position'];
@@ -203,6 +190,11 @@ export class NetworkClient {
         const pitch = playerData['pitch'];
         if (pitch !== undefined) {
             updateData.pitch = pitch;
+        }
+
+        const fired = playerData['fired'];
+        if (fired !== undefined) {
+            updateData.fired = fired;
         }
 
         this.onplayerupdate(pid, updateData);
