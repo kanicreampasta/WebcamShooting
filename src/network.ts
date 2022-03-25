@@ -17,6 +17,7 @@ export class NetworkClient {
     private socket: WebSocket;
     private loopKey: NodeJS.Timer;
     private pid: string | null;
+    private fired: boolean = false;
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
@@ -24,6 +25,8 @@ export class NetworkClient {
         yaw?: number,
         pitch?: number
     }) => void);
+
+    onplayerfire: undefined | ((pid: string) => void);
 
     onplayerdelete: undefined | ((pid: string) => void);
 
@@ -78,14 +81,20 @@ export class NetworkClient {
     private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
         const pl = getPlayer();
-        this.socket.send(JSON.stringify({
+        const payload: any = {
             type: 'position',
             pid: this.pid,
             position: pl.position,
             velocity: pl.velocity,
             yaw: pl.yaw,
             pitch: pl.pitch
-        }));
+        };
+        if (this.fired) {
+            payload['fired'] = this.fired;
+            this.fired = false;
+            // console.log('fire');
+        }
+        this.socket.send(JSON.stringify(payload));
     }
 
     private onmessage(ev: MessageEvent<any>) {
@@ -134,7 +143,27 @@ export class NetworkClient {
                 this.onplayerdelete(pid);
                 break;
             }
+            case 'fire': {
+                if (this.onplayerfire === undefined) {
+                    console.warn('onplayerfire not set');
+                    return;
+                }
+                const pid = data['pid'];
+                if (pid === undefined || typeof (pid) !== 'string') {
+                    console.warn('invalid message');
+                    return;
+                }
+                this.onplayerfire(pid);
+                break;
+            }
         }
+    }
+
+    queueFired() {
+        if (this.socket === undefined || this.pid === undefined) {
+            return;
+        }
+        this.fired = true;
     }
 
     private processPlayer(playerData: any) {

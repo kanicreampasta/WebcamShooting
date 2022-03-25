@@ -217,6 +217,7 @@ class GameManager {
 				console.log("gun");
 				this.updateHealth(10);
 				this.audio.playSound('gunshot');
+				network.queueFired();
 			}
 		} else {
 			player.releaseTrigger();
