@@ -8,6 +8,7 @@ import { NetworkClient } from './network';
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from './utils';
 import { FaceDetector } from './face-detection/facedetection';
+import { AudioManager } from './audio';
 import * as _ from "lodash";
 
 class GameManager {
@@ -23,6 +24,7 @@ class GameManager {
 	onload: () => void;
 	loaders: { [key: string]: ModelLoader } = {};
 	stageLoaders: ModelLoader[] = [];
+	audio: AudioManager;
 
 	view: number = 0;//0:fps 1:tps
 
@@ -214,11 +216,14 @@ class GameManager {
 			if (player.triggerGun()) {
 				console.log("gun");
 				this.updateHealth(10);
+				this.audio.playSound('gunshot');
 			}
 		} else {
 			player.releaseTrigger();
 			if (this.keyState.R) {
-				player.requestReload();
+				if (player.requestReload()) {
+					this.audio.playSound('reload');
+				}
 			}
 		}
 		const gun = this.getMyPlayer().gun;
@@ -253,6 +258,7 @@ class KeyState {
 }
 let manager: GameManager = null;
 let network: NetworkClient = null;
+let audioMgr: AudioManager = null;
 
 let internalMyVideo: HTMLVideoElement;
 let faceDetector: FaceDetector;
@@ -262,6 +268,11 @@ let previewVideo: HTMLCanvasElement;
 let previewVideoCtx: CanvasRenderingContext2D;
 let cameraIsOn = false;
 let faceRect: null | [number, number, number, number] = null;
+
+const soundsToLoad: { [key: string]: string } = {
+	gunshot: 'gunshot.ogg',
+	reload: 'reload.ogg',
+};
 
 async function getCamera() {
 	let stream = null;
@@ -310,7 +321,17 @@ window.onload = async function () {
 	}
 	manager = new GameManager(loop);
 	network = new NetworkClient();
+	audioMgr = new AudioManager();
+	manager.audio = audioMgr;
 	const pressState: KeyState = new KeyState();
+	// initialize audio
+	for (const name in soundsToLoad) {
+		try {
+			await audioMgr.fetchSound(name, soundsToLoad[name]);
+		} catch (e) {
+			console.warn(e);
+		}
+	}
 	// game server network
 	manager.loadGame().then(() => {
 		network.initGameServer().then(() => {
