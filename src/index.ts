@@ -384,7 +384,9 @@ window.onload = async function () {
 				player.pitch = update.pitch;
 			}
 			if (update.fired !== undefined && update.fired) {
-				audioMgr.playSound('gunshot');
+				const relpos = player.getPosition();
+				relpos.sub(manager.getMyPlayer().getPosition());
+				audioMgr.playSound3D('gunshot', relpos.toArray());
 			}
 		}
 	};
