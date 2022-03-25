@@ -17,12 +17,14 @@ export class NetworkClient {
     private socket: WebSocket;
     private loopKey: NodeJS.Timer;
     private pid: string | null;
+    private fired: boolean = false;
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
         velocity?: Velocity,
         yaw?: number,
-        pitch?: number
+        pitch?: number,
+        fired?: boolean
     }) => void);
 
     onplayerdelete: undefined | ((pid: string) => void);
@@ -78,14 +80,20 @@ export class NetworkClient {
     private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
         const pl = getPlayer();
-        this.socket.send(JSON.stringify({
+        const payload: any = {
             type: 'position',
             pid: this.pid,
             position: pl.position,
             velocity: pl.velocity,
             yaw: pl.yaw,
             pitch: pl.pitch
-        }));
+        };
+        if (this.fired) {
+            payload['fired'] = this.fired;
+            this.fired = false;
+            // console.log('fire');
+        }
+        this.socket.send(JSON.stringify(payload));
     }
 
     private onmessage(ev: MessageEvent<any>) {
@@ -137,6 +145,13 @@ export class NetworkClient {
         }
     }
 
+    queueFired() {
+        if (this.socket === undefined || this.pid === undefined) {
+            return;
+        }
+        this.fired = true;
+    }
+
     private processPlayer(playerData: any) {
         if (this.onplayerupdate === undefined) {
             console.warn('onplayerupdate not set');
@@ -153,7 +168,8 @@ export class NetworkClient {
             position?: Position,
             velocity?: Velocity,
             yaw?: number,
-            pitch?: number
+            pitch?: number,
+            fired?: boolean
         } = {};
 
         const position = playerData['position'];
@@ -174,6 +190,11 @@ export class NetworkClient {
         const pitch = playerData['pitch'];
         if (pitch !== undefined) {
             updateData.pitch = pitch;
+        }
+
+        const fired = playerData['fired'];
+        if (fired !== undefined) {
+            updateData.fired = fired;
         }
 
         this.onplayerupdate(pid, updateData);

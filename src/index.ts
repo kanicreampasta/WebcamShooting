@@ -217,6 +217,7 @@ class GameManager {
 				console.log("gun");
 				this.updateHealth(10);
 				this.audio.playSound('gunshot');
+				network.queueFired();
 			}
 		} else {
 			player.releaseTrigger();
@@ -381,6 +382,11 @@ window.onload = async function () {
 			}
 			if (update.pitch !== undefined) {
 				player.pitch = update.pitch;
+			}
+			if (update.fired !== undefined && update.fired) {
+				const relpos = player.getPosition();
+				relpos.sub(manager.getMyPlayer().getPosition());
+				audioMgr.playSound3D('gunshot', relpos.toArray());
 			}
 		}
 	};
