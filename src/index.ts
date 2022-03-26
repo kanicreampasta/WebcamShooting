@@ -110,6 +110,8 @@ class GameManager {
 		this.addThrust();
 		this.processGun();
 		this.getMyPlayer().step(dt);
+		// const pl = this.getMyPlayer().getPosition();
+		// console.log('pl ' + pl.x + ',' + pl.y + ',' + pl.z);
 		this.physics.world.stepSimulation(dt);
 
 		for (const p of this.players) {
