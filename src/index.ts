@@ -138,6 +138,8 @@ class GameManager {
 			hitPlayer.gotDamage(5);
 		}
 
+		this.updateHealth();
+
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
@@ -241,9 +243,8 @@ class GameManager {
 		this.outOfMagazine.textContent = gun.outOfMagazine.toString();
 	}
 
-	private updateHealth(damage: number) {
+	private updateHealth() {
 		const player = this.getMyPlayer();
-		player.gotDamage(damage);
 		const maxFleshHealth = player.health.getMaxFleshValue();
 		const currentFleshHealth = player.health.remainingHealth.flesh;
 
