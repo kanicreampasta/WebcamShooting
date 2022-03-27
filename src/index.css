@@ -85,8 +85,8 @@ body{
 
 #crosshair{
 	position:absolute;
-	top:calc(50%-20pt);
-	left:calc(50%-20pt);
+	top:calc(50% - 20pt);
+	left:calc(50% - 20pt); /* space is required */
 	width: 40pt;
 	height: 40pt;
 	background:url("assets/crosshairs.png");
