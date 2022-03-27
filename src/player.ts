@@ -119,7 +119,7 @@ export class Player {
 		}, 3);
 		this.gun.outOfMagazine = 100;
 
-		this.health = new PlayerHealth(1);
+		this.health = new PlayerHealth();
 		console.log("Player Health", this.health.remainingHealth);
 	}
 	loadHuman(ld: ModelLoader, world: Ammo.btDiscreteDynamicsWorld): void {
@@ -351,11 +351,15 @@ export class Player {
 		}
 	}
 
-	gotDamage(damage: number) {
-		const isAlive = this.health.receiveDamage(damage);
+	gotHeal(healAmount: number) {
+		const isHealed = this.health.heal(healAmount);
+	}
+
+	gotDamage(damageAmount: number) {
+		const isAlive = this.health.damage(damageAmount);
 		if (!isAlive) {
 			console.warn("you are dead :>");
-			this.health.heal("flesh");
+			this.health.heal(100);
 		}
 	}
 }
