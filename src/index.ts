@@ -225,7 +225,6 @@ class GameManager {
 		if (this.keyState.leftClick) {
 			if (player.triggerGun()) {
 				console.log("gun");
-				this.updateHealth(10);
 				this.audio.playSound('gunshot');
 				network.queueFired();
 			}
