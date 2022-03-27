@@ -3,8 +3,8 @@ import Ammo from './@types/ammo';
 import { removeExtmapAllowMixed } from 'video/adapter';
 import * as THREE from 'three';
 import { gScene } from './renderer';
-import { Player } from 'player';
-import { gPlayers } from 'index';
+import { Player } from './player';
+import { gPlayers } from './index';
 
 
 type GunRate = {

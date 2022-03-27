@@ -1,3 +1,4 @@
+import { Player } from './player';
 import * as video from './video/video';
 
 type Position = [number, number, number];
@@ -150,6 +151,10 @@ export class NetworkClient {
             return;
         }
         this.fired = true;
+    }
+
+    queueDamageOther(playerToHurt: Player, damage: number, afterHP: number) {
+
     }
 
     private processPlayer(playerData: any) {
