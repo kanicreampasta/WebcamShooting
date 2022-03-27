@@ -377,6 +377,7 @@ window.onload = async function () {
 			if (update.pitch !== undefined) {
 				newPlayer.pitch = update.pitch;
 			}
+			newPlayer.pid = pid;
 		} else {
 			// move existing player
 			if (update.velocity !== undefined) {
