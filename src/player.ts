@@ -118,7 +118,7 @@ export class Player {
 			type: 'auto',
 			rate: 6
 		}, 3);
-		this.gun.outOfMagazine = 100;
+		this.gun.outOfMagazine = Infinity;
 
 		this.health = new PlayerHealth();
 		console.log("Player Health", this.health.remainingHealth);
