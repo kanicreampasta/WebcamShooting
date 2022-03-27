@@ -67,6 +67,7 @@ export class Gun {
             const collisionObject = result.get_m_collisionObject();
             return this.testPlayer(collisionObject);
         }
+        return null;
         // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
     }
 

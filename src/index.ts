@@ -359,7 +359,14 @@ window.onload = async function () {
 		}).catch(console.error);
 	});
 	network.onplayerupdate = (pid, update) => {
-		if (pid === network.myPid) return;
+		if (pid === network.myPid) {
+			// 自分自身の場合はHPのみupdate
+			const player = manager.getMyPlayer();
+			if (update.hp !== undefined) {
+				player.health.remainingHealth.flesh = update.hp;
+			}
+			return;
+		}
 		const player = manager.getPlayerById(pid);
 		if (player === undefined) {
 			// create new player

@@ -32,7 +32,8 @@ export class NetworkClient {
         velocity?: Velocity,
         yaw?: number,
         pitch?: number,
-        fired?: boolean
+        fired?: boolean,
+        hp?: number
     }) => void);
 
     onplayerdelete: undefined | ((pid: string) => void);
@@ -214,7 +215,8 @@ export class NetworkClient {
             velocity?: Velocity,
             yaw?: number,
             pitch?: number,
-            fired?: boolean
+            fired?: boolean,
+            hp?: number
         } = {};
 
         const position = playerData['position'];
@@ -240,6 +242,11 @@ export class NetworkClient {
         const fired = playerData['fired'];
         if (fired !== undefined) {
             updateData.fired = fired;
+        }
+
+        const hp = playerData['hp'];
+        if (hp !== undefined) {
+            updateData.hp = hp;
         }
 
         this.onplayerupdate(pid, updateData);
