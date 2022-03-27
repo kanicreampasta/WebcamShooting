@@ -215,7 +215,7 @@ export class Player {
 		const position = this.getPosition();
 		this.gun.yaw = this.yaw;
 		this.gun.pitch = this.pitch;
-		this.gun.point = new gAmmo.btVector3(position.x, position.y, position.z);
+		this.gun.point = new gAmmo.btVector3(position.x, position.y + 0.75, position.z);
 	}
 	walk(sideways: number, forward: number, world: Ammo.btDiscreteDynamicsWorld) {
 		const theta = this.yaw;
