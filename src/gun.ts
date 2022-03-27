@@ -1,6 +1,10 @@
 import { gAmmo } from './physics';
 import Ammo from './@types/ammo';
 import { removeExtmapAllowMixed } from 'video/adapter';
+import * as THREE from 'three';
+import { gScene } from './renderer';
+import { Player } from './player';
+import { gPlayers } from './index';
 
 
 type GunRate = {
@@ -44,24 +48,49 @@ export class Gun {
     yaw: number;
     pitch: number;
 
-    test(range: number, world: Ammo.btDiscreteDynamicsWorld) {
+    private first = true;
+    private hitobj: THREE.Object3D;
+    test(range: number, world: Ammo.btDiscreteDynamicsWorld): Player | null {
         const start = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
         let end = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
-        const direction = new gAmmo.btVector3(
-            Math.cos(this.pitch) * Math.sin(this.yaw),
+        let direction = new gAmmo.btVector3(
+            -Math.cos(this.pitch) * Math.sin(this.yaw),
             Math.sin(this.pitch),
-            Math.cos(this.pitch) * Math.cos(this.yaw));
-        direction.setValue(direction.x() * range, direction.y() * range, direction.z() * range);
+            -Math.cos(this.pitch) * Math.cos(this.yaw));
+        direction.op_mul(range);
         end = end.op_add(direction);
         // console.log(start.x() + "," + start.y() + "," + start.z());
         // console.log(end.x() + "," + end.y() + "," + end.z());
         var result = new gAmmo.ClosestRayResultCallback(start, end); // TODO: reuse callback object
-        result.set_m_collisionFilterGroup(1);
-        // result.set_m_collisionFilterGroup(4);
+        result.set_m_collisionFilterGroup(-1);
+        result.set_m_collisionFilterMask(4);
         world.rayTest(start, end, result);
         if (result.hasHit()) {
-            // console.log("hit");
+            const hitPoint = result.get_m_hitPointWorld();
+            if (this.first) {
+                this.first = false;
+                this.hitobj = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.1, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                );
+                gScene.add(this.hitobj);
+            }
+            this.hitobj.position.set(hitPoint.x(), hitPoint.y(), hitPoint.z());
+
+            const collisionObject = result.get_m_collisionObject();
+            return this.testPlayer(collisionObject);
         }
+
+        return null;
         // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
+    }
+
+    private testPlayer(obj: Ammo.btCollisionObject): Player | null {
+        for (const pl of gPlayers) {
+            if (pl.hitTestBody?.getUserIndex() === obj.getUserIndex()) {
+                return pl;
+            }
+        }
+        return null;
     }
 }

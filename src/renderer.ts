@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import * as PLAYER from "./player";
 
+export let gScene: THREE.Scene;
+
 export class RenderingManager {
 	renderer: THREE.WebGLRenderer;
 	scene: THREE.Scene;
@@ -9,6 +11,7 @@ export class RenderingManager {
 		this.renderer = new THREE.WebGLRenderer();
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		this.scene = new THREE.Scene();
+		gScene = this.scene;
 
 		this.camera = new THREE.PerspectiveCamera();
 		this.camera.position.set(0, 1, 10);

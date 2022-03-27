@@ -1,3 +1,4 @@
+import { Player } from './player';
 import * as video from './video/video';
 
 type Position = [number, number, number];
@@ -7,7 +8,14 @@ type PlayerGetter = () => {
     position: Position,
     velocity: Velocity,
     yaw: number,
-    pitch: number
+    pitch: number,
+    hp: number,
+};
+
+type DamageInfo = {
+    pid: string,
+    damage: number,
+    afterHP: number
 };
 
 const GAME_SERVER = "ws://localhost:3000";
@@ -17,12 +25,17 @@ export class NetworkClient {
     private socket: WebSocket;
     private loopKey: NodeJS.Timer;
     private pid: string | null;
+    private fired: boolean = false;
+    private damageQueue: Map<string, DamageInfo> = new Map();
+    private hpSent: boolean = false;
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
         velocity?: Velocity,
         yaw?: number,
-        pitch?: number
+        pitch?: number,
+        fired?: boolean,
+        hp?: number
     }) => void);
 
     onplayerdelete: undefined | ((pid: string) => void);
@@ -33,6 +46,10 @@ export class NetworkClient {
 
     setVideoStream(stream: MediaStream) {
         video.setVideoStream(stream);
+    }
+
+    sendHPInNextUpdate() {
+        this.hpSent = false;
     }
 
     constructor() {
@@ -78,14 +95,43 @@ export class NetworkClient {
     private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
         const pl = getPlayer();
-        this.socket.send(JSON.stringify({
+        const payload: {
+            type: 'position',
+            pid: string,
+            position: [number, number, number],
+            velocity: [number, number, number],
+            yaw: number,
+            pitch: number,
+            fired?: boolean,
+            damages?: {
+                pid: string,
+                damage: number,
+                afterHP: number
+            }[],
+            hp?: number,
+        } = {
             type: 'position',
             pid: this.pid,
             position: pl.position,
             velocity: pl.velocity,
             yaw: pl.yaw,
-            pitch: pl.pitch
-        }));
+            pitch: pl.pitch,
+            damages: []
+        };
+        if (this.fired) {
+            payload['fired'] = this.fired;
+            this.fired = false;
+            // console.log('fire');
+        }
+        for (const damage of this.damageQueue.values()) {
+            payload.damages.push(damage);
+        }
+        this.damageQueue.clear();
+        if (!this.hpSent) {
+            payload.hp = pl.hp;
+            this.hpSent = true;
+        }
+        this.socket.send(JSON.stringify(payload));
     }
 
     private onmessage(ev: MessageEvent<any>) {
@@ -137,6 +183,32 @@ export class NetworkClient {
         }
     }
 
+    queueFired() {
+        if (this.socket === undefined || this.pid === undefined) {
+            return;
+        }
+        this.fired = true;
+    }
+
+    queueDamageOther(playerToHurt: Player, damage: number, afterHP: number) {
+        const enemyPID = playerToHurt.pid;
+        if (enemyPID === undefined) {
+            console.warn('enemy has undefined PID');
+            return;
+        }
+        if (!this.damageQueue.has(playerToHurt.pid)) {
+            this.damageQueue.set(playerToHurt.pid, {
+                pid: playerToHurt.pid,
+                damage,
+                afterHP
+            });
+        } else {
+            const info = this.damageQueue.get(playerToHurt.pid);
+            info.damage += damage;
+            info.afterHP = afterHP;
+        }
+    }
+
     private processPlayer(playerData: any) {
         if (this.onplayerupdate === undefined) {
             console.warn('onplayerupdate not set');
@@ -153,7 +225,9 @@ export class NetworkClient {
             position?: Position,
             velocity?: Velocity,
             yaw?: number,
-            pitch?: number
+            pitch?: number,
+            fired?: boolean,
+            hp?: number
         } = {};
 
         const position = playerData['position'];
@@ -174,6 +248,16 @@ export class NetworkClient {
         const pitch = playerData['pitch'];
         if (pitch !== undefined) {
             updateData.pitch = pitch;
+        }
+
+        const fired = playerData['fired'];
+        if (fired !== undefined) {
+            updateData.fired = fired;
+        }
+
+        const hp = playerData['hp'];
+        if (hp !== undefined) {
+            updateData.hp = hp;
         }
 
         this.onplayerupdate(pid, updateData);

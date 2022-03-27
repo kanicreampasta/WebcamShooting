@@ -5,6 +5,7 @@ import Ammo from './@types/ammo';
 import { Gun } from './gun';
 import { PlayerHealth } from "./health";
 import { ModelLoader } from "./model-loader";
+import { network } from './index';
 
 function GetPlayerBody(): Ammo.btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
@@ -72,6 +73,8 @@ function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	return [playerMesh, screen];
 }
 
+let gCollisionTestBodyIndex = 1;
+
 export class Player {
 	rigidbody: Ammo.btRigidBody;
 	playerMesh: THREE.Object3D;
@@ -84,6 +87,8 @@ export class Player {
 	//global coordinate
 	vx: number = 0;
 	vz: number = 0;
+
+	pid: string | undefined;
 
 	gun: Gun | null;
 	private lastShotTime: number = 0;
@@ -115,7 +120,7 @@ export class Player {
 		}, 3);
 		this.gun.outOfMagazine = 100;
 
-		this.health = new PlayerHealth(1);
+		this.health = new PlayerHealth();
 		console.log("Player Health", this.health.remainingHealth);
 	}
 	loadHuman(ld: ModelLoader, world: Ammo.btDiscreteDynamicsWorld): void {
@@ -130,6 +135,7 @@ export class Player {
 			const body = new gAmmo.btRigidBody(rbInfo);
 			body.setFriction(0);
 			body.setRestitution(0);
+			body.setUserIndex(gCollisionTestBodyIndex++);
 			// disable sleep
 			body.setSleepingThresholds(0, 0);
 			this.hitTestBody = body;
@@ -346,11 +352,16 @@ export class Player {
 		}
 	}
 
-	gotDamage(damage: number) {
-		const isAlive = this.health.receiveDamage(damage);
+	gotHeal(healAmount: number) {
+		const isHealed = this.health.heal(healAmount);
+	}
+
+	gotDamage(damageAmount: number) {
+		const isAlive = this.health.damage(damageAmount);
 		if (!isAlive) {
 			console.warn("you are dead :>");
-			this.health.heal("flesh");
+			this.health.heal(100);
+			network.sendHPInNextUpdate();
 		}
 	}
 }

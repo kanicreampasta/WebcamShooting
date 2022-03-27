@@ -11,11 +11,14 @@ import { FaceDetector } from './face-detection/facedetection';
 import { AudioManager } from './audio';
 import * as _ from "lodash";
 
+export let gPlayers: Player[];
+
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
 	players: Player[];
 	playerIdMap: Map<string, Player>;
+	private currentHitPlayer: Player | undefined;
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
@@ -33,6 +36,7 @@ class GameManager {
 
 	private fleshHealthBar: HTMLElement;
 	private fleshRemainingBar: HTMLElement;
+	private fleshRemainingNumber: HTMLElement;
 
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
@@ -42,11 +46,13 @@ class GameManager {
 		this.inMagazine = document.querySelector('#inMagazine');
 		this.outOfMagazine = document.querySelector('#outOfMagazine');
 		this.fleshHealthBar = document.querySelector('#flesh-health');
-		this.fleshRemainingBar = document.querySelector('#flesh-remaining');
+		this.fleshRemainingBar = document.querySelector('#flesh-remaining-bar');
+		this.fleshRemainingNumber = document.querySelector('#flesh-remaining');
 		this.startLoadingModels();
 	}
 	private initPlayer() {
 		this.players = [];
+		gPlayers = this.players;
 		this.playerIdMap = new Map();
 		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
 		this.lastFrame = new Date();
@@ -109,7 +115,10 @@ class GameManager {
 
 		this.addThrust();
 		this.processGun();
+		this.updateHealth();
 		this.getMyPlayer().step(dt);
+		// const pl = this.getMyPlayer().getPosition();
+		// console.log('pl ' + pl.x + ',' + pl.y + ',' + pl.z);
 		this.physics.world.stepSimulation(dt);
 
 		for (const p of this.players) {
@@ -127,7 +136,16 @@ class GameManager {
 				break;
 		}
 		this.players[0].applyGun();
-		this.players[0].gun.test(100, this.physics.world);
+
+		const hitPlayer = this.players[0].gun.test(100, this.physics.world);
+		if (hitPlayer !== null) {
+			this.currentHitPlayer = hitPlayer;
+		} else {
+			this.currentHitPlayer = undefined;
+		}
+
+		this.updateHealth();
+
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
@@ -215,8 +233,18 @@ class GameManager {
 		if (this.keyState.leftClick) {
 			if (player.triggerGun()) {
 				console.log("gun");
-				this.updateHealth(10);
 				this.audio.playSound('gunshot');
+				network.queueFired();
+
+				if (this.currentHitPlayer !== undefined) {
+					const damage = 5;
+					this.currentHitPlayer.gotDamage(damage);
+					network.queueDamageOther(
+						this.currentHitPlayer,
+						damage,
+						this.currentHitPlayer.health.remainingHealth
+					);
+				}
 			}
 		} else {
 			player.releaseTrigger();
@@ -231,13 +259,16 @@ class GameManager {
 		this.outOfMagazine.textContent = gun.outOfMagazine.toString();
 	}
 
-	private updateHealth(damage: number) {
+	private updateHealth(damageAmount = 0, healAmount = 0) {
 		const player = this.getMyPlayer();
-		player.gotDamage(damage);
-		const maxFleshHealth = player.health.getMaxFleshValue();
-		const currentFleshHealth = player.health.remainingHealth.flesh;
+		player.gotDamage(damageAmount);
+		player.gotHeal(healAmount);
 
+		// Calculate for health bar
+		const maxFleshHealth = player.health.getMaxHealthValue();
+		const currentFleshHealth = player.health.remainingHealth;
 		this.fleshRemainingBar.style.width = (currentFleshHealth / maxFleshHealth) * 100 + "%";
+		this.fleshRemainingNumber.innerText = currentFleshHealth + "/" + maxFleshHealth;
 	}
 
 	getCanvas(): HTMLCanvasElement {
@@ -257,7 +288,7 @@ class KeyState {
 	}
 }
 let manager: GameManager = null;
-let network: NetworkClient = null;
+export let network: NetworkClient = null;
 let audioMgr: AudioManager = null;
 
 let internalMyVideo: HTMLVideoElement;
@@ -342,13 +373,21 @@ window.onload = async function () {
 					position: player.getPosition().toArray(),
 					velocity: player.getVelocity().toArray(),
 					yaw: player.yaw,
-					pitch: player.pitch
+					pitch: player.pitch,
+					hp: player.health.remainingHealth,
 				};
 			})
 		}).catch(console.error);
 	});
 	network.onplayerupdate = (pid, update) => {
-		if (pid === network.myPid) return;
+		if (pid === network.myPid) {
+			// 自分自身の場合はHPのみupdate
+			const player = manager.getMyPlayer();
+			if (update.hp !== undefined) {
+				player.health.remainingHealth = update.hp;
+			}
+			return;
+		}
 		const player = manager.getPlayerById(pid);
 		if (player === undefined) {
 			// create new player
@@ -366,6 +405,7 @@ window.onload = async function () {
 			if (update.pitch !== undefined) {
 				newPlayer.pitch = update.pitch;
 			}
+			newPlayer.pid = pid;
 		} else {
 			// move existing player
 			if (update.velocity !== undefined) {
@@ -381,6 +421,11 @@ window.onload = async function () {
 			}
 			if (update.pitch !== undefined) {
 				player.pitch = update.pitch;
+			}
+			if (update.fired !== undefined && update.fired) {
+				const relpos = player.getPosition();
+				relpos.sub(manager.getMyPlayer().getPosition());
+				audioMgr.playSound3D('gunshot', relpos.toArray());
 			}
 		}
 	};
