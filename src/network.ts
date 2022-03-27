@@ -11,6 +11,12 @@ type PlayerGetter = () => {
     pitch: number
 };
 
+type DamageInfo = {
+    pid: string,
+    damage: number,
+    afterHP: number
+};
+
 const GAME_SERVER = "ws://localhost:3000";
 const VIDEO_SERVER = "http://192.168.1.15:8088/janus";
 
@@ -19,6 +25,7 @@ export class NetworkClient {
     private loopKey: NodeJS.Timer;
     private pid: string | null;
     private fired: boolean = false;
+    private damageQueue: Map<string, DamageInfo> = new Map();
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
@@ -81,19 +88,37 @@ export class NetworkClient {
     private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
         const pl = getPlayer();
-        const payload: any = {
+        const payload: {
+            type: 'position',
+            pid: string,
+            position: [number, number, number],
+            velocity: [number, number, number],
+            yaw: number,
+            pitch: number,
+            fired?: boolean,
+            damages?: {
+                pid: string,
+                damage: number,
+                afterHP: number
+            }[]
+        } = {
             type: 'position',
             pid: this.pid,
             position: pl.position,
             velocity: pl.velocity,
             yaw: pl.yaw,
-            pitch: pl.pitch
+            pitch: pl.pitch,
+            damages: []
         };
         if (this.fired) {
             payload['fired'] = this.fired;
             this.fired = false;
             // console.log('fire');
         }
+        for (const damage of this.damageQueue.values()) {
+            payload.damages.push(damage);
+        }
+        this.damageQueue.clear();
         this.socket.send(JSON.stringify(payload));
     }
 
@@ -154,7 +179,22 @@ export class NetworkClient {
     }
 
     queueDamageOther(playerToHurt: Player, damage: number, afterHP: number) {
-
+        const enemyPID = playerToHurt.pid;
+        if (enemyPID === undefined) {
+            console.warn('enemy has undefined PID');
+            return;
+        }
+        if (!this.damageQueue.has(playerToHurt.pid)) {
+            this.damageQueue.set(playerToHurt.pid, {
+                pid: playerToHurt.pid,
+                damage,
+                afterHP
+            });
+        } else {
+            const info = this.damageQueue.get(playerToHurt.pid);
+            info.damage += damage;
+            info.afterHP = afterHP;
+        }
     }
 
     private processPlayer(playerData: any) {

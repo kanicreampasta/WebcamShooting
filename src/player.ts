@@ -85,6 +85,8 @@ export class Player {
 	vx: number = 0;
 	vz: number = 0;
 
+	pid: string | undefined;
+
 	gun: Gun | null;
 	private lastShotTime: number = 0;
 	private triggered: boolean = false;
