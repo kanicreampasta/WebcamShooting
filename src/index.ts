@@ -33,6 +33,7 @@ class GameManager {
 
 	private fleshHealthBar: HTMLElement;
 	private fleshRemainingBar: HTMLElement;
+	private fleshRemainingNumber: HTMLElement;
 
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
@@ -42,7 +43,8 @@ class GameManager {
 		this.inMagazine = document.querySelector('#inMagazine');
 		this.outOfMagazine = document.querySelector('#outOfMagazine');
 		this.fleshHealthBar = document.querySelector('#flesh-health');
-		this.fleshRemainingBar = document.querySelector('#flesh-remaining');
+		this.fleshRemainingBar = document.querySelector('#flesh-remaining-bar');
+		this.fleshRemainingNumber = document.querySelector('#flesh-remaining');
 		this.startLoadingModels();
 	}
 	private initPlayer() {
@@ -109,6 +111,7 @@ class GameManager {
 
 		this.addThrust();
 		this.processGun();
+		this.updateHealth();
 		this.getMyPlayer().step(dt);
 		// const pl = this.getMyPlayer().getPosition();
 		// console.log('pl ' + pl.x + ',' + pl.y + ',' + pl.z);
@@ -234,13 +237,16 @@ class GameManager {
 		this.outOfMagazine.textContent = gun.outOfMagazine.toString();
 	}
 
-	private updateHealth(damage: number) {
+	private updateHealth(damageAmount=0, healAmount=0) {
 		const player = this.getMyPlayer();
-		player.gotDamage(damage);
-		const maxFleshHealth = player.health.getMaxFleshValue();
-		const currentFleshHealth = player.health.remainingHealth.flesh;
+		player.gotDamage(damageAmount);
+		player.gotHeal(healAmount);
 
+		// Calculate for health bar
+		const maxFleshHealth = player.health.getMaxHealthValue();
+		const currentFleshHealth = player.health.remainingHealth;
 		this.fleshRemainingBar.style.width = (currentFleshHealth / maxFleshHealth) * 100 + "%";
+		this.fleshRemainingNumber.innerText = currentFleshHealth + "/" + maxFleshHealth;
 	}
 
 	getCanvas(): HTMLCanvasElement {

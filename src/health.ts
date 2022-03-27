@@ -1,80 +1,36 @@
-type HealthType = "armour" | "flesh";
-
-const MAX_ARMOUR_HEALTH = [
-  {level: 0, value: 10},
-  {level: 1, value: 20},
-  {level: 2, value: 50},
-];
-const MAX_FLESH_HEALTH = 51;
+const MAX_HEALTH = 51;
 
 export class PlayerHealth {
-  armourLevel: number;
-  remainingHealth : {
-    armour: number,
-    flesh: number
-  };
+  remainingHealth : number;
   isHealing : {
     status: boolean,
-    healTarget? : HealthType
   };
 
-  constructor(armourLevel: number) {
-    this.armourLevel = armourLevel;
-    this.remainingHealth = {
-      armour: this.getMaxArmourValue(armourLevel),
-      flesh: MAX_FLESH_HEALTH
-    }
+  constructor() {
+    this.remainingHealth = MAX_HEALTH
   }
 
-  heal(healthType: HealthType): boolean {
+  heal(healAmount: number): boolean {
     let isHealed = false;
-    switch (healthType) {
-      case "armour":
-        const maxArmourValue = this.getMaxArmourValue(this.armourLevel);
-        if (this.remainingHealth.armour < maxArmourValue) {
-          this.remainingHealth.armour = maxArmourValue;
-          isHealed = true;
-        }
-        break;
-      case "flesh":
-        if (this.remainingHealth.flesh < MAX_FLESH_HEALTH) {
-          this.remainingHealth.flesh = MAX_FLESH_HEALTH;
-          isHealed = true;
-        }
-        break;
+    if (this.remainingHealth < MAX_HEALTH) {
+      this.remainingHealth = Math.min(this.remainingHealth+healAmount, MAX_HEALTH)
+      isHealed = true;
     }
     return isHealed;
   }
 
-  receiveDamage(damage: number): boolean {
+  damage(damageAmount: number): boolean {
     let isAlive = true;
-    // TODO: Consider armour health
-    const newHealth = this.remainingHealth.flesh - damage;
+    const newHealth = this.remainingHealth - damageAmount;
     if (newHealth <= 0) {
       isAlive = false
     } else {
-      this.remainingHealth.flesh = newHealth;
+      this.remainingHealth = newHealth;
     }
     return isAlive;
   }
 
-  setArmour(armourLevel: number): boolean {
-    let isArmourSet = false;
-    if (armourLevel > this.armourLevel) {
-      this.armourLevel = armourLevel;
-      this.remainingHealth.armour = this.getMaxArmourValue(armourLevel);
-      isArmourSet = true;
-    }
-    return isArmourSet;
-  }
-
-  getMaxArmourValue(armourLevel: number): number {
-    const armour = MAX_ARMOUR_HEALTH.find(e => e.level === armourLevel);
-    if (armour == undefined) return 0
-    return armour.value;
-  }
-
-  getMaxFleshValue(): number {
-    return MAX_FLESH_HEALTH;
+  getMaxHealthValue(): number {
+    return MAX_HEALTH;
   }
 }
