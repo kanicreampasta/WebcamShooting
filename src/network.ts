@@ -8,7 +8,8 @@ type PlayerGetter = () => {
     position: Position,
     velocity: Velocity,
     yaw: number,
-    pitch: number
+    pitch: number,
+    hp: number,
 };
 
 type DamageInfo = {
@@ -26,6 +27,7 @@ export class NetworkClient {
     private pid: string | null;
     private fired: boolean = false;
     private damageQueue: Map<string, DamageInfo> = new Map();
+    private hpSent: boolean = false;
 
     onplayerupdate: undefined | ((pid: string, update: {
         position?: Position,
@@ -101,7 +103,8 @@ export class NetworkClient {
                 pid: string,
                 damage: number,
                 afterHP: number
-            }[]
+            }[],
+            hp?: number,
         } = {
             type: 'position',
             pid: this.pid,
@@ -120,6 +123,10 @@ export class NetworkClient {
             payload.damages.push(damage);
         }
         this.damageQueue.clear();
+        if (!this.hpSent) {
+            payload.hp = pl.hp;
+            this.hpSent = true;
+        }
         this.socket.send(JSON.stringify(payload));
     }
 

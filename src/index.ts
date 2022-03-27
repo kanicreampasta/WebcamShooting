@@ -353,7 +353,8 @@ window.onload = async function () {
 					position: player.getPosition().toArray(),
 					velocity: player.getVelocity().toArray(),
 					yaw: player.yaw,
-					pitch: player.pitch
+					pitch: player.pitch,
+					hp: player.health.remainingHealth.flesh,
 				};
 			})
 		}).catch(console.error);
