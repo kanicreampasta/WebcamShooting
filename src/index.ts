@@ -11,6 +11,8 @@ import { FaceDetector } from './face-detection/facedetection';
 import { AudioManager } from './audio';
 import * as _ from "lodash";
 
+export let gPlayers: Player[];
+
 class GameManager {
 	rendering: RenderingManager;
 	physics: PhysicsManager;
@@ -47,6 +49,7 @@ class GameManager {
 	}
 	private initPlayer() {
 		this.players = [];
+		gPlayers = this.players;
 		this.playerIdMap = new Map();
 		this.addPlayer(new Player(this.rendering.scene, this.physics.world));
 		this.lastFrame = new Date();
@@ -129,7 +132,12 @@ class GameManager {
 				break;
 		}
 		this.players[0].applyGun();
-		this.players[0].gun.test(100, this.physics.world);
+
+		const hitPlayer = this.players[0].gun.test(100, this.physics.world);
+		if (hitPlayer !== null) {
+			hitPlayer.gotDamage(5);
+		}
+
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
