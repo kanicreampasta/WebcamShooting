@@ -48,6 +48,10 @@ export class NetworkClient {
         video.setVideoStream(stream);
     }
 
+    sendHPInNextUpdate() {
+        this.hpSent = false;
+    }
+
     constructor() {
         this.socket = null;
         this.pid = null;

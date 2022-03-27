@@ -5,6 +5,7 @@ import Ammo from './@types/ammo';
 import { Gun } from './gun';
 import { PlayerHealth } from "./health";
 import { ModelLoader } from "./model-loader";
+import { network } from './index';
 
 function GetPlayerBody(): Ammo.btRigidBody {
 	const playerShape = new gAmmo.btCompoundShape();
@@ -360,6 +361,7 @@ export class Player {
 		if (!isAlive) {
 			console.warn("you are dead :>");
 			this.health.heal(100);
+			network.sendHPInNextUpdate();
 		}
 	}
 }

@@ -288,7 +288,7 @@ class KeyState {
 	}
 }
 let manager: GameManager = null;
-let network: NetworkClient = null;
+export let network: NetworkClient = null;
 let audioMgr: AudioManager = null;
 
 let internalMyVideo: HTMLVideoElement;
