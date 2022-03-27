@@ -347,7 +347,7 @@ export class Player {
 	}
 
 	gotDamage(damage: number) {
-		const isAlive = this.health.receiveDamage(damage);
+		const isAlive = this.health.damage(damage);
 		if (!isAlive) {
 			console.warn("you are dead :>");
 			this.health.heal("flesh");

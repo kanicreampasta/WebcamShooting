@@ -237,7 +237,7 @@ class GameManager {
 	private updateHealth(damage: number) {
 		const player = this.getMyPlayer();
 		player.gotDamage(damage);
-		const maxFleshHealth = player.health.getMaxFleshValue();
+		const maxFleshHealth = player.health.getMaxHealthValue();
 		const currentFleshHealth = player.health.remainingHealth.flesh;
 
 		this.fleshRemainingBar.style.width = (currentFleshHealth / maxFleshHealth) * 100 + "%";
