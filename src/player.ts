@@ -72,6 +72,8 @@ function GetOtherPlayerMesh(): [THREE.Object3D, THREE.Mesh] {
 	return [playerMesh, screen];
 }
 
+let gCollisionTestBodyIndex = 1;
+
 export class Player {
 	rigidbody: Ammo.btRigidBody;
 	playerMesh: THREE.Object3D;
@@ -132,6 +134,7 @@ export class Player {
 			const body = new gAmmo.btRigidBody(rbInfo);
 			body.setFriction(0);
 			body.setRestitution(0);
+			body.setUserIndex(gCollisionTestBodyIndex++);
 			// disable sleep
 			body.setSleepingThresholds(0, 0);
 			this.hitTestBody = body;

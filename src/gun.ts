@@ -48,6 +48,8 @@ export class Gun {
     yaw: number;
     pitch: number;
 
+    // private first = true;
+    // private hitobj: THREE.Object3D;
     test(range: number, world: Ammo.btDiscreteDynamicsWorld): Player | null {
         const start = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
         let end = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
@@ -64,16 +66,28 @@ export class Gun {
         result.set_m_collisionFilterMask(4);
         world.rayTest(start, end, result);
         if (result.hasHit()) {
+            // const hitPoint = result.get_m_hitPointWorld();
+            // if (this.first) {
+            //     this.first = false;
+            //     this.hitobj = new THREE.Mesh(
+            //         new THREE.SphereGeometry(0.1, 8, 8),
+            //         new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            //     );
+            //     gScene.add(this.hitobj);
+            // }
+            // this.hitobj.position.set(hitPoint.x(), hitPoint.y(), hitPoint.z());
+
             const collisionObject = result.get_m_collisionObject();
             return this.testPlayer(collisionObject);
         }
+
         return null;
         // this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
     }
 
     private testPlayer(obj: Ammo.btCollisionObject): Player | null {
         for (const pl of gPlayers) {
-            if (pl.hitTestBody === obj) {
+            if (pl.hitTestBody?.getUserIndex() === obj.getUserIndex()) {
                 return pl;
             }
         }

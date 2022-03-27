@@ -18,6 +18,7 @@ class GameManager {
 	physics: PhysicsManager;
 	players: Player[];
 	playerIdMap: Map<string, Player>;
+	private currentHitPlayer: Player | undefined;
 	frametime: number = 0;
 	lastFrame: Date;
 	keyState: KeyState = new KeyState();
@@ -135,7 +136,9 @@ class GameManager {
 
 		const hitPlayer = this.players[0].gun.test(100, this.physics.world);
 		if (hitPlayer !== null) {
-			hitPlayer.gotDamage(5);
+			this.currentHitPlayer = hitPlayer;
+		} else {
+			this.currentHitPlayer = undefined;
 		}
 
 		this.updateHealth();
@@ -229,6 +232,16 @@ class GameManager {
 				console.log("gun");
 				this.audio.playSound('gunshot');
 				network.queueFired();
+
+				if (this.currentHitPlayer !== undefined) {
+					const damage = 5;
+					this.currentHitPlayer.gotDamage(damage);
+					network.queueDamageOther(
+						this.currentHitPlayer,
+						damage,
+						this.currentHitPlayer.health.remainingHealth.flesh
+					);
+				}
 			}
 		} else {
 			player.releaseTrigger();

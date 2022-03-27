@@ -121,6 +121,7 @@ export class NetworkClient {
         }
         for (const damage of this.damageQueue.values()) {
             payload.damages.push(damage);
+            console.log('send damage', damage);
         }
         this.damageQueue.clear();
         if (!this.hpSent) {
