@@ -13,7 +13,7 @@ export class PlayerHealth {
   heal(healAmount: number): boolean {
     let isHealed = false;
     if (this.remainingHealth < MAX_HEALTH) {
-      this.remainingHealth = Math.max(this.remainingHealth+healAmount, MAX_HEALTH)
+      this.remainingHealth = Math.min(this.remainingHealth+healAmount, MAX_HEALTH)
       isHealed = true;
     }
     return isHealed;
