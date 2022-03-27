@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as PLAYER from "./player";
 
 export let gScene: THREE.Scene;
+export const cameraYOffset = 0.75;
 
 export class RenderingManager {
 	renderer: THREE.WebGLRenderer;
@@ -42,7 +43,7 @@ export class RenderingManager {
 		const m = new THREE.Quaternion().multiplyQuaternions(y, p);
 		this.camera.setRotationFromQuaternion(m);
 		const position = player.getPosition();
-		position.y += 0.75;
+		position.y += cameraYOffset;
 		this.camera.position.set(position.x, position.y, position.z);
 	}
 	setTPSCamera(player: PLAYER.Player) {
@@ -51,7 +52,7 @@ export class RenderingManager {
 		const m = new THREE.Quaternion().multiplyQuaternions(y, p);
 		this.camera.setRotationFromQuaternion(m);
 		const position = player.getPosition();
-		position.y += 0.75;
+		position.y += cameraYOffset;
 		const offset = new THREE.Vector3(0, 0, 10);
 		offset.applyQuaternion(m);
 		position.add(offset);
