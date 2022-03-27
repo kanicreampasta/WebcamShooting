@@ -94,3 +94,19 @@ body{
 	background-size: 100% 100%;
 	font-size:50px;
 }
+/* TODO: rewrite using var https://stackoverflow.com/questions/57218443/how-to-animate-a-radial-gradient-using-css */
+@keyframes damage-effect {
+	from {background: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0.3));}
+	to {background: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0));;}
+}
+
+#damage-effect{
+	position:absolute;
+	animation-name: damage-effect;
+	top:0;
+	left:0;
+	bottom:0;
+	right:0;
+	background-color: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,0.3));
+	animation-duration: 4s;
+}
