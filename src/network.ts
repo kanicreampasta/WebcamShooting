@@ -18,6 +18,18 @@ type DamageInfo = {
     afterHP: number
 };
 
+type PlayerUpdate = {
+    position?: Position,
+    velocity?: Velocity,
+    yaw?: number,
+    pitch?: number,
+    fired?: boolean,
+    damages?: {
+        byPid: string,
+        amount: number
+    }[],
+};
+
 const GAME_SERVER = "ws://localhost:3000";
 const VIDEO_SERVER = "http://192.168.1.15:8088/janus";
 
@@ -29,14 +41,7 @@ export class NetworkClient {
     private damageQueue: Map<string, DamageInfo> = new Map();
     private hpSent: boolean = false;
 
-    onplayerupdate: undefined | ((pid: string, update: {
-        position?: Position,
-        velocity?: Velocity,
-        yaw?: number,
-        pitch?: number,
-        fired?: boolean,
-        hp?: number
-    }) => void);
+    onplayerupdate: undefined | ((pid: string, update: PlayerUpdate) => void);
 
     onplayerdelete: undefined | ((pid: string) => void);
 
@@ -221,14 +226,7 @@ export class NetworkClient {
             return;
         }
 
-        const updateData: {
-            position?: Position,
-            velocity?: Velocity,
-            yaw?: number,
-            pitch?: number,
-            fired?: boolean,
-            hp?: number
-        } = {};
+        const updateData: PlayerUpdate = {};
 
         const position = playerData['position'];
         if (position !== undefined) {
@@ -255,9 +253,9 @@ export class NetworkClient {
             updateData.fired = fired;
         }
 
-        const hp = playerData['hp'];
-        if (hp !== undefined) {
-            updateData.hp = hp;
+        const damages = playerData['damages'];
+        if (damages !== undefined) {
+            updateData.damages = damages;
         }
 
         this.onplayerupdate(pid, updateData);

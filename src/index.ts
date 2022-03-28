@@ -394,10 +394,14 @@ window.onload = async function () {
 	});
 	network.onplayerupdate = (pid, update) => {
 		if (pid === network.myPid) {
-			// 自分自身の場合はHPのみupdate
+			// 自分自身の場合はdamageのみ取得
 			const player = manager.getMyPlayer();
-			if (update.hp !== undefined) {
-				player.health.remainingHealth = update.hp;
+			if (update !== undefined) {
+				let totalDamage = 0;
+				update.damages.forEach(d => totalDamage += d.amount);
+				if (totalDamage !== 0) {
+					player.health.damage(totalDamage);
+				}
 			}
 			return;
 		}
