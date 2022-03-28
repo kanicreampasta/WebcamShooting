@@ -38,6 +38,9 @@ class GameManager {
 	private fleshRemainingBar: HTMLElement;
 	private fleshRemainingNumber: HTMLElement;
 
+	private hitIndicatorTimer = -1;
+	private hitIndicatorDuration = 0.3;
+
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
@@ -146,6 +149,11 @@ class GameManager {
 
 		this.updateHealth();
 
+		this.hitIndicatorTimer -= dt;
+		if (this.hitIndicatorTimer < 0) {
+			hitIndicator.style.display = 'none';
+		}
+
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
 		this.lastFrame = currentFrame;
@@ -244,6 +252,8 @@ class GameManager {
 						damage,
 						this.currentHitPlayer.health.remainingHealth
 					);
+					hitIndicator.style.display = 'block';
+					this.hitIndicatorTimer = this.hitIndicatorDuration;
 				}
 			}
 		} else {
@@ -300,6 +310,8 @@ let previewVideoCtx: CanvasRenderingContext2D;
 let cameraIsOn = false;
 let faceRect: null | [number, number, number, number] = null;
 
+let hitIndicator: HTMLDivElement;
+
 const soundsToLoad: { [key: string]: string } = {
 	gunshot: 'gunshot.ogg',
 	reload: 'reload.ogg',
@@ -324,6 +336,7 @@ async function getCamera() {
 
 window.onload = async function () {
 	previewVideo = document.querySelector('#previewVideo');
+	hitIndicator = document.querySelector('#hitIndicator');
 	function loop() {
 		document.getElementById("log").innerText = pressState.toString();
 		manager.step();

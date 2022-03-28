@@ -94,3 +94,16 @@ body{
 	background-size: 100% 100%;
 	font-size:50px;
 }
+
+#hitIndicator{
+	display:none;
+	position:absolute;
+	top:calc(50% - 20pt);
+	left:calc(50% - 20pt); /* space is required */
+	width: 40pt;
+	height: 40pt;
+	background:url("assets/hit-indicator.png");
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	font-size:50px;
+}
