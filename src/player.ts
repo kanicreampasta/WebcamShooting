@@ -361,7 +361,6 @@ export class Player {
 		if (!isAlive) {
 			console.warn("you are dead :>");
 			this.health.heal(100);
-			network.sendHPInNextUpdate();
 		}
 	}
 }
