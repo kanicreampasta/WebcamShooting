@@ -118,7 +118,7 @@ class GameManager {
 
 		this.addThrust();
 		this.processGun();
-		this.updateHealth();
+		// this.updateHealth();
 		this.getMyPlayer().step(dt);
 		// const pl = this.getMyPlayer().getPosition();
 		// console.log('pl ' + pl.x + ',' + pl.y + ',' + pl.z);
@@ -147,7 +147,8 @@ class GameManager {
 			this.currentHitPlayer = undefined;
 		}
 
-		this.updateHealth();
+		this.updateHealth(this.damageInNextStep);
+		this.damageInNextStep = 0;
 
 		this.hitIndicatorTimer -= dt;
 		if (this.hitIndicatorTimer < 0) {
@@ -267,6 +268,11 @@ class GameManager {
 		const gun = this.getMyPlayer().gun;
 		this.inMagazine.textContent = gun.remainingBulletsInMagazine.toString();
 		this.outOfMagazine.textContent = gun.outOfMagazine.toString();
+	}
+
+	private damageInNextStep: number = 0;
+	hurtPlayer(damage: number) {
+		this.damageInNextStep += damage;
 	}
 
 	private updateHealth(damageAmount = 0, healAmount = 0) {
@@ -400,7 +406,7 @@ window.onload = async function () {
 				let totalDamage = 0;
 				update.damages.forEach(d => totalDamage += d.amount);
 				if (totalDamage !== 0) {
-					player.gotDamage(totalDamage);
+					manager.hurtPlayer(totalDamage);
 				}
 			}
 			return;
