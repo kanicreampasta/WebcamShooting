@@ -356,12 +356,20 @@ export class Player {
 		const isHealed = this.health.heal(healAmount);
 	}
 
-	gotDamage(damageAmount: number) {
+	gotDamage(damageAmount: number, showEffect: boolean = false) {
 		const isAlive = this.health.damage(damageAmount);
 		if (!isAlive) {
 			console.warn("you are dead :>");
 			this.health.heal(100);
 			network.sendHPInNextUpdate();
+		}
+		if (showEffect && damageAmount > 0) {
+			alert("hit");
+			var el = document.getElementById('damage-effect');
+			el.style.display = "block";
+			el.style.animation = 'none';
+			el.offsetHeight; /* trigger reflow */
+			el.style.animation = null;
 		}
 	}
 }

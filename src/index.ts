@@ -261,7 +261,7 @@ class GameManager {
 
 	private updateHealth(damageAmount = 0, healAmount = 0) {
 		const player = this.getMyPlayer();
-		player.gotDamage(damageAmount);
+		player.gotDamage(damageAmount, true);
 		player.gotHeal(healAmount);
 
 		// Calculate for health bar
