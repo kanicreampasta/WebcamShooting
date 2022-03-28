@@ -31,7 +31,9 @@ export class RenderingManager {
 		const canvas = this.renderer.domElement;
 		canvas.requestPointerLock = canvas.requestPointerLock || (canvas as any).mozRequestPointerLock;
 		canvas.addEventListener('click', () => {
-			canvas.requestPointerLock();
+			(canvas as any).requestPointerLock({
+				unadjustedMovement: true,
+			});
 		});
 	}
 	render() {

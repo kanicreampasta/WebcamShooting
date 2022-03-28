@@ -118,7 +118,7 @@ export class Player {
 			type: 'auto',
 			rate: 6
 		}, 3);
-		this.gun.outOfMagazine = 100;
+		this.gun.outOfMagazine = Infinity;
 
 		this.health = new PlayerHealth();
 		console.log("Player Health", this.health.remainingHealth);
@@ -363,8 +363,8 @@ export class Player {
 			this.health.heal(100);
 			network.sendHPInNextUpdate();
 		}
-		if (showEffect && damageAmount > 0) {
-			alert("hit");
+		document.getElementById("log").innerText+="damage:"+damageAmount;
+		if (showEffect && damageAmount > 0) 
 			var el = document.getElementById('damage-effect');
 			el.style.display = "block";
 			el.style.animation = 'none';

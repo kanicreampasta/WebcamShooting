@@ -94,6 +94,7 @@ body{
 	background-size: 100% 100%;
 	font-size:50px;
 }
+
 /* TODO: rewrite using var https://stackoverflow.com/questions/57218443/how-to-animate-a-radial-gradient-using-css */
 @keyframes colorChange {
   0% {
@@ -141,4 +142,17 @@ body{
 	background: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,var(--x)));
 	animation-duration: 0.2s;
 	display: none;
+}
+#hitIndicator{
+	display:none;
+	position:absolute;
+	top:calc(50% - 20pt);
+	left:calc(50% - 20pt); /* space is required */
+	width: 40pt;
+	height: 40pt;
+	background:url("assets/hit-indicator.png");
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	font-size:50px;
+
 }
