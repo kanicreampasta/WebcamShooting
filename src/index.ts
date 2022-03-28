@@ -400,7 +400,7 @@ window.onload = async function () {
 				let totalDamage = 0;
 				update.damages.forEach(d => totalDamage += d.amount);
 				if (totalDamage !== 0) {
-					player.health.damage(totalDamage);
+					player.gotDamage(totalDamage);
 				}
 			}
 			return;
