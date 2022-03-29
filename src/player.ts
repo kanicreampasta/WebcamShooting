@@ -363,12 +363,5 @@ export class Player {
 			this.health.heal(100);
 		}
 		document.getElementById("log").innerText += "damage:" + damageAmount;
-		if (showEffect && damageAmount > 0) {
-			var el = document.getElementById('damage-effect');
-			el.style.display = "block";
-			el.style.animation = 'none';
-			el.offsetHeight; /* trigger reflow */
-			el.style.animation = null;
-		}
 	}
 }

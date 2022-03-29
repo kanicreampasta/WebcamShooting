@@ -270,7 +270,6 @@ class GameManager {
 	private processGun() {
 		const player = this.getMyPlayer();
 		if (this.keyState.leftClick) {
-			this.startDamageEffect();
 			if (player.triggerGun()) {
 				console.log("gun");
 				this.audio.playSound('gunshot');
@@ -304,6 +303,7 @@ class GameManager {
 	private damageInNextStep: number = 0;
 	hurtPlayer(damage: number) {
 		this.damageInNextStep += damage;
+		this.startDamageEffect();
 	}
 
 	private updateHealth(damageAmount = 0, healAmount = 0) {
