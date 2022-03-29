@@ -95,41 +95,8 @@ body{
 	font-size:50px;
 }
 
-/* TODO: rewrite using var https://stackoverflow.com/questions/57218443/how-to-animate-a-radial-gradient-using-css */
-@keyframes colorChange {
-  0% {
-    --x:1;
-  }
-  10%{
-	--x:0.9;
-  }
-  20%{
-	--x:0.8;
-  }
-  30%{
-	--x:0.7;
-  }
-  40%{
-	--x:0.6;
-  }
-  50%{
-	--x:0.5;
-  }
-  60%{
-	--x:0.4;
-  }
-  70%{
-	--x:0.3;
-  }
-  80%{
-	--x:0.2;
-  }
-  90%{
-	--x:0.1;
-  }
-  100% {
-    --x:0.0;
-  }
+/* :root{
+	--x: 0;
 }
 
 #damage-effect{
@@ -138,11 +105,8 @@ body{
 	bottom:0;
 	right:0;
 	position:absolute;
-	animation-name: colorChange;
 	background: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,var(--x)));
-	animation-duration: 0.2s;
-	display: none;
-}
+} */
 #hitIndicator{
 	display:none;
 	position:absolute;
@@ -154,5 +118,13 @@ body{
 	background-repeat: no-repeat;
 	background-size: 100% 100%;
 	font-size:50px;
+}
 
+#effectCanvas{
+	position:absolute;
+	top:0;
+	left:0;
+	bottom:0;
+	right:0;
+	z-index:100;
 }

@@ -41,6 +41,12 @@ class GameManager {
 	private hitIndicatorTimer = -1;
 	private hitIndicatorDuration = 0.3;
 
+	private damageEffectTimer = -1;
+	private damageEffectDuration = 0.2;
+
+	private effectCanvas: HTMLCanvasElement;
+	private effectCanvasCtx: CanvasRenderingContext2D;
+
 	constructor(onload: () => void) {
 		this.rendering = new RenderingManager();
 		this.physics = new PhysicsManager();
@@ -51,7 +57,13 @@ class GameManager {
 		this.fleshHealthBar = document.querySelector('#flesh-health');
 		this.fleshRemainingBar = document.querySelector('#flesh-remaining-bar');
 		this.fleshRemainingNumber = document.querySelector('#flesh-remaining');
+		this.effectCanvas = document.querySelector('#effectCanvas');
+		this.effectCanvasCtx = this.effectCanvas.getContext('2d');
 		this.startLoadingModels();
+
+		const mainCanvas = this.getCanvas();
+		this.effectCanvas.width = mainCanvas.width;
+		this.effectCanvas.height = mainCanvas.height;
 	}
 	private initPlayer() {
 		this.players = [];
@@ -157,8 +169,26 @@ class GameManager {
 
 		// this.rendering.setTPSCamera(this.players[0]);
 		this.rendering.render();
+
+		this.drawDamageEffect(dt);
+
 		this.lastFrame = currentFrame;
 		this.previousKeyState = _.cloneDeep(this.keyState);
+	}
+	private drawDamageEffect(dt: number) {
+		this.effectCanvasCtx.clearRect(0, 0, this.effectCanvas.width, this.effectCanvas.height);
+		if (this.damageEffectTimer > 0) {
+			const alpha = (this.damageEffectTimer / this.damageEffectDuration);
+			const grad = this.effectCanvasCtx.createRadialGradient(
+				this.effectCanvas.width / 2, this.effectCanvas.height / 2, this.effectCanvas.width / 5,
+				this.effectCanvas.width / 2, this.effectCanvas.height / 2, this.effectCanvas.width / 2);
+			grad.addColorStop(0, 'rgba(255,0,0,0)');
+			grad.addColorStop(1, 'rgba(255,0,0,' + alpha + ')');
+
+			this.effectCanvasCtx.fillStyle = grad;
+			this.effectCanvasCtx.fillRect(0, 0, this.effectCanvas.width, this.effectCanvas.height);
+			this.damageEffectTimer -= dt;
+		}
 	}
 	addPlayer(player: Player, id?: string): void {
 		this.players.push(player);
@@ -240,6 +270,7 @@ class GameManager {
 	private processGun() {
 		const player = this.getMyPlayer();
 		if (this.keyState.leftClick) {
+			this.startDamageEffect();
 			if (player.triggerGun()) {
 				console.log("gun");
 				this.audio.playSound('gunshot');
@@ -289,6 +320,10 @@ class GameManager {
 
 	getCanvas(): HTMLCanvasElement {
 		return this.rendering.getCanvas();
+	}
+
+	private startDamageEffect() {
+		this.damageEffectTimer = this.damageEffectDuration;
 	}
 }
 class KeyState {
