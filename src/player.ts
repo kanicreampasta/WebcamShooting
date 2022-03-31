@@ -97,6 +97,9 @@ export class Player {
 
 	health: PlayerHealth;
 
+	private jumpCooldown: number = 0;//less than 0.5sec
+	jumping: boolean = false;
+
 	constructor(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld, isOtherPlayer?: boolean) {
 		this.rigidbody = GetPlayerBody();
 		if (isOtherPlayer) {
@@ -276,20 +279,18 @@ export class Player {
 				const velocity: Ammo.btVector3 = this.rigidbody.getLinearVelocity();
 				velocity.setX(vx1);
 				velocity.setZ(vz1);
-				if (velocity.y() > vy1) {
+				if (velocity.y() > vy1 && this.jumpCooldown <= 0) {
 					velocity.setY(vy1);
 				}
 				this.rigidbody.setLinearVelocity(velocity);
+				if (this.jumpCooldown <= 0 && this.jumping && distance < 1.2) {
+					const velocity: Ammo.btVector3 = this.rigidbody.getLinearVelocity();
+					velocity.setY(vy1 + 4);
+					this.rigidbody.setLinearVelocity(velocity);
+					this.jumpCooldown = 0.5;
+				}
 			}
-			// this.rigidbody.position.y = this.rigidbody.position.y - result.distance + 1 + 0.5 / normal.y - 0.5;
-			// const correctedVy: number = -slopeY;
-			// this.rigidbody.velocity.y = correctedVy;
-			/*
-			if (this.rigidbody.velocity.y > correctedVy) {
-				this.rigidbody.velocity.y = correctedVy;
-			}*/
 		}
-		// this.rigidbody.applyForce(new CANNON.Vec3(vx * Math.cos(theta) - vz * Math.sin(theta), 0, vx * Math.sin(theta) + vz * Math.cos(theta)), this.rigidbody.position);
 	}
 	triggerGun(): boolean {
 		if (this.gun === null) return;
@@ -350,6 +351,7 @@ export class Player {
 			this.gun.isReloading = false;
 			console.log('reload completed');
 		}
+		this.jumpCooldown -= dt;
 	}
 
 	gotHeal(healAmount: number) {
