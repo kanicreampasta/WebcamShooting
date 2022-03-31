@@ -5,7 +5,7 @@ import { RenderingManager } from "./renderer";
 import { gAmmo, PhysicsManager } from "./physics";
 import { Player } from "./player";
 import { NetworkClient } from './network';
-import { ModelLoader } from "./model-loader";
+import { Mapdata, ModelLoader, SpawnPoint } from "./model-loader";
 import { appendToLog } from './utils';
 import { FaceDetector } from './face-detection/facedetection';
 import { AudioManager } from './audio';
@@ -28,6 +28,7 @@ class GameManager {
 	loaders: { [key: string]: ModelLoader } = {};
 	stageLoaders: ModelLoader[] = [];
 	audio: AudioManager;
+	mapdata: Mapdata;
 
 	view: number = 0;//0:fps 1:tps
 
@@ -74,7 +75,8 @@ class GameManager {
 		//add test online player
 		// this.addPlayer(new Player(this.rendering.scene, this.physics.world, true));
 		this.startFrame = new Date();
-		this.players[0].warp(0, 20, 0);
+		const sp: SpawnPoint = this.mapdata.findFFAspawn();
+		this.players[0].warp(sp.x, sp.y, sp.z);
 	}
 	async loadGame() {
 		{
@@ -87,8 +89,9 @@ class GameManager {
 			await Promise.all(promises);
 		}
 		await this.physics.init();
+		this.mapdata = new Mapdata();
 		for (const ld of this.stageLoaders) {
-			ld.loadStage(this.rendering.scene, this.physics.world);
+			ld.loadStage(this.rendering.scene, this.physics.world, this.mapdata);
 		}
 		this.initPlayer();
 

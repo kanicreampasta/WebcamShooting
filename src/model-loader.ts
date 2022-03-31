@@ -99,7 +99,7 @@ export class ModelLoader {
 		}
 		return compoundShape;
 	}
-	loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld): void {
+	loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld, mapdata: Mapdata): void {
 		if (!this.gltf) {
 			throw "async loadModel() must be finished before calling loadStage().";
 		}
@@ -120,5 +120,46 @@ export class ModelLoader {
 		const body = new gAmmo.btRigidBody(rbinfo);
 
 		world.addRigidBody(body, collisionFilterGroup, collisionFilterMask);
+
+		for (const mesh of model.children) {
+			if (mesh.name.startsWith("respawnA")) {
+				mapdata.spawns.push(new SpawnPoint(mesh.position.x, mesh.position.y, mesh.position.z, 0));
+			}
+			if (mesh.name.startsWith("respawnB")) {
+				mapdata.spawns.push(new SpawnPoint(mesh.position.x, mesh.position.y, mesh.position.z, 0));
+			}
+		}
+	}
+}
+
+export class Mapdata {
+	spawns: SpawnPoint[] = [];
+	//weapons;
+
+	//find spawns for free-for-all mode
+	private lastChoice: number = 0;
+	findFFAspawn(): SpawnPoint {
+		const choice: number = (this.lastChoice + 1) % this.spawns.length;
+		this.lastChoice = choice;
+		return this.spawns[choice];
+	}
+}
+
+export class SpawnPoint {
+	team: number = 0;//0:teamA 1:teamB
+	x: number;
+	y: number;
+	z: number;
+	constructor(x: number, y: number, z: number, team: number) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.team = 0;
+	}
+	getTHREE() {
+		return new THREE.Vector3(this.x, this.y, this.z);
+	}
+	getAmmo() {
+		return new gAmmo.btVector3(this.x, this.y, this.z);
 	}
 }
