@@ -11,7 +11,7 @@ export class ModelLoader {
 		this.filename = filename;
 	}
 	getScene(): THREE.Group {
-		if(!this.gltf){
+		if (!this.gltf) {
 			throw "async loadModel() must be finished before calling getScene().";
 		}
 		return this.gltf.scene.clone();
@@ -44,10 +44,11 @@ export class ModelLoader {
 		);
 	}
 	getCollider(): Ammo.btCompoundShape {
-		if(!this.gltf){
+		if (!this.gltf) {
 			throw "async loadModel() must be finished before calling getCollider().";
 		}
 		const compoundShape = new gAmmo.btCompoundShape();
+		console.log('scene children: ' + this.gltf.scene.children.length);
 		for (const mesh of this.gltf.scene.children) {
 			if (mesh instanceof THREE.Mesh) {
 				console.log(mesh);
@@ -60,6 +61,10 @@ export class ModelLoader {
 					const q = new gAmmo.btQuaternion(0, 0, 0, 1);
 					q.setEulerZYX(mesh.rotation.z, mesh.rotation.y, mesh.rotation.x);
 					return q;
+				})();
+				const scale = (() => {
+					const v = mesh.scale;
+					return new gAmmo.btVector3(v.x, v.y, v.z);
 				})();
 
 				// https://stackoverflow.com/questions/59665854/ammo-js-custom-mesh-collision-with-sphere
@@ -84,6 +89,7 @@ export class ModelLoader {
 				}
 
 				const shape = new gAmmo.btBvhTriangleMeshShape(trimesh, false);
+				shape.setLocalScaling(scale);
 				const trans = new gAmmo.btTransform();
 				trans.setIdentity();
 				trans.setOrigin(offset);
@@ -94,7 +100,7 @@ export class ModelLoader {
 		return compoundShape;
 	}
 	loadStage(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld): void {
-		if(!this.gltf){
+		if (!this.gltf) {
 			throw "async loadModel() must be finished before calling loadStage().";
 		}
 		const model = this.getScene();

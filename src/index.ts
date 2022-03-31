@@ -95,7 +95,7 @@ class GameManager {
 		this.onload();
 	}
 	startLoadingModels() {
-		this.stageLoaders.push(new ModelLoader("demostage.glb"));
+		this.stageLoaders.push(new ModelLoader("texturetest.glb"));
 		this.loaders["human"] = new ModelLoader("human.glb");
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
@@ -131,6 +131,7 @@ class GameManager {
 		this.addThrust();
 		this.processGun();
 		// this.updateHealth();
+		this.getMyPlayer().jumping = this.keyState.Space;
 		this.getMyPlayer().step(dt);
 		// const pl = this.getMyPlayer().getPosition();
 		// console.log('pl ' + pl.x + ',' + pl.y + ',' + pl.z);
@@ -333,9 +334,25 @@ class KeyState {
 	D: boolean = false;
 	R: boolean = false;
 	C: boolean = false;
+	Space: boolean = false;
 	leftClick: boolean = false;
 	toString(): string {
-		return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + (this.C ? "C" : "") + " " + (this.leftClick ? "M1" : "");
+		let result: string = "";
+		const alias: { [key: string]: string } = {
+			leftClick: "M1"
+		};
+		for (const key in this) {
+			if (key == "toString") {
+				continue;
+			}
+			let name: string = key;
+			if (key in alias) {
+				name = alias[key];
+			}
+			result += this[key] ? name : "";
+		}
+		return result;
+		// return (this.W ? "W" : "") + (this.A ? "A" : "") + (this.S ? "S" : "") + (this.D ? "D" : "") + (this.C ? "C" : "") + " " + (this.leftClick ? "M1" : "");
 	}
 }
 let manager: GameManager = null;
@@ -566,6 +583,9 @@ window.onload = async function () {
 		if (e.code == 'KeyC') {
 			pressState.C = true;
 		}
+		if (e.code == "Space") {
+			pressState.Space = true;
+		}
 		manager.setKey(pressState);
 	};
 	window.onkeyup = function (e: KeyboardEvent) {
@@ -586,6 +606,9 @@ window.onload = async function () {
 		}
 		if (e.code == 'KeyC') {
 			pressState.C = false;
+		}
+		if (e.code == "Space") {
+			pressState.Space = false;
 		}
 		manager.setKey(pressState);
 	};
