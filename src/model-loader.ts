@@ -126,7 +126,7 @@ export class ModelLoader {
 				mapdata.spawns.push(new SpawnPoint(mesh.position.x, mesh.position.y, mesh.position.z, 0));
 			}
 			if (mesh.name.startsWith("respawnB")) {
-				mapdata.spawns.push(new SpawnPoint(mesh.position.x, mesh.position.y, mesh.position.z, 0));
+				mapdata.spawns.push(new SpawnPoint(mesh.position.x, mesh.position.y, mesh.position.z, 1));
 			}
 		}
 	}
@@ -139,6 +139,9 @@ export class Mapdata {
 	//find spawns for free-for-all mode
 	private lastChoice: number = 0;
 	findFFAspawn(): SpawnPoint {
+		if(this.spawns.length==0){
+			throw "no spawn is loaded";
+		}
 		const choice: number = (this.lastChoice + 1) % this.spawns.length;
 		this.lastChoice = choice;
 		return this.spawns[choice];

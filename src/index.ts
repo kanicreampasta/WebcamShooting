@@ -93,12 +93,13 @@ class GameManager {
 		for (const ld of this.stageLoaders) {
 			ld.loadStage(this.rendering.scene, this.physics.world, this.mapdata);
 		}
+		console.log(this.mapdata);
 		this.initPlayer();
 
 		this.onload();
 	}
 	startLoadingModels() {
-		this.stageLoaders.push(new ModelLoader("texturetest.glb"));
+		this.stageLoaders.push(new ModelLoader("IndiaPro.glb"));
 		this.loaders["human"] = new ModelLoader("human.glb");
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
