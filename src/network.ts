@@ -96,7 +96,6 @@ export class NetworkClient {
         if (this.pid === null) return;
         const pl = getPlayer();
         const payload: {
-            type: 'position',
             pid: string,
             position: [number, number, number],
             velocity: [number, number, number],
@@ -109,7 +108,6 @@ export class NetworkClient {
                 afterHP: number
             }[],
         } = {
-            type: 'position',
             pid: this.pid,
             position: pl.position,
             velocity: pl.velocity,
@@ -127,7 +125,10 @@ export class NetworkClient {
         }
         this.damageQueue.clear();
 
-        this.socket.send(JSON.stringify(payload));
+        this.socket.send(JSON.stringify({
+            type: 'position',
+            data: payload
+        }));
     }
 
     private onmessage(ev: MessageEvent<any>) {
