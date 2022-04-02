@@ -139,6 +139,8 @@ export class NetworkClient {
         const type = data['type'];
         if (typeof (type) !== 'string') return;
 
+        // console.log(ev.data.toString());
+
         switch (type) {
             case 'pid': {
                 const pid = data['pid'];
