@@ -95,7 +95,7 @@ class GameManager {
 		this.onload();
 	}
 	startLoadingModels() {
-		this.stageLoaders.push(new ModelLoader("texturetest.glb"));
+		this.stageLoaders.push(new ModelLoader("demostage.glb"));
 		this.loaders["human"] = new ModelLoader("human.glb");
 	}
 	addCube(position: THREE.Vector3, dimention: THREE.Vector3, rotation: THREE.Euler, color?: THREE.ColorRepresentation) {
