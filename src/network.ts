@@ -30,8 +30,8 @@ type PlayerUpdate = {
     }[],
 };
 
-const GAME_SERVER = "ws://localhost:3000";
-const VIDEO_SERVER = "http://192.168.1.15:8088/janus";
+const GAME_SERVER = "ws://localhost:5000";
+const VIDEO_SERVER = "http://localhost:5001/janus";
 
 export class NetworkClient {
     private socket: WebSocket;
