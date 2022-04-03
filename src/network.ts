@@ -30,8 +30,8 @@ type PlayerUpdate = {
     }[],
 };
 
-const GAME_SERVER = "ws://localhost:3000";
-const VIDEO_SERVER = "http://192.168.1.15:8088/janus";
+const GAME_SERVER = "ws://localhost:5000";
+const VIDEO_SERVER = "http://localhost:5001/janus";
 
 export class NetworkClient {
     private socket: WebSocket;
@@ -96,7 +96,6 @@ export class NetworkClient {
         if (this.pid === null) return;
         const pl = getPlayer();
         const payload: {
-            type: 'position',
             pid: string,
             position: [number, number, number],
             velocity: [number, number, number],
@@ -109,7 +108,6 @@ export class NetworkClient {
                 afterHP: number
             }[],
         } = {
-            type: 'position',
             pid: this.pid,
             position: pl.position,
             velocity: pl.velocity,
@@ -127,7 +125,10 @@ export class NetworkClient {
         }
         this.damageQueue.clear();
 
-        this.socket.send(JSON.stringify(payload));
+        this.socket.send(JSON.stringify({
+            type: 'position',
+            data: payload
+        }));
     }
 
     private onmessage(ev: MessageEvent<any>) {
@@ -137,6 +138,8 @@ export class NetworkClient {
         if (typeof (data) !== 'object') return;
         const type = data['type'];
         if (typeof (type) !== 'string') return;
+
+        // console.log(ev.data.toString());
 
         switch (type) {
             case 'pid': {
