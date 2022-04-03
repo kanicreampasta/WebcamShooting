@@ -27,6 +27,11 @@ const config = {
         concurrency: 100,
       }
     }),
+    new CopyPlugin({
+      patterns: [
+        { from: 'node_modules/ammo.js/builds/ammo.js', to: "" }
+      ]
+    }),
     // Add your plugins here
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
   ],
