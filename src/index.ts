@@ -278,12 +278,15 @@ class GameManager {
 
 				if (this.currentHitPlayer !== undefined) {
 					const damage = 5;
-					this.currentHitPlayer.gotDamage(damage);
+					const isAlive = this.currentHitPlayer.gotDamage(damage);
 					network.queueDamageOther(
 						this.currentHitPlayer,
 						damage,
 						this.currentHitPlayer.health.remainingHealth
 					);
+					if (!isAlive) {
+						network.queueKill(this.currentHitPlayer);
+					}
 					hitIndicator.style.display = 'block';
 					this.hitIndicatorTimer = this.hitIndicatorDuration;
 				}
@@ -325,6 +328,15 @@ class GameManager {
 
 	private startDamageEffect() {
 		this.damageEffectTimer = this.damageEffectDuration;
+	}
+
+	removePlayerFromWorld(player: Player) {
+		player.removeFromWorld(this.rendering.scene, this.physics.world);
+	}
+
+	// TODO: set initial position
+	addPlayerToWorld(player: Player) {
+		player.addToWorld(this.rendering.scene, this.physics.world);
 	}
 }
 class KeyState {
@@ -451,56 +463,79 @@ window.onload = async function () {
 		}).catch(console.error);
 	});
 	network.onplayerupdate = (pid, update) => {
-		if (pid === network.myPid) {
-			// 自分自身の場合はdamageのみ取得
-			const player = manager.getMyPlayer();
-			if (update !== undefined) {
-				let totalDamage = 0;
-				update.damages.forEach(d => totalDamage += d.amount);
-				if (totalDamage !== 0) {
-					manager.hurtPlayer(totalDamage);
+		switch (update.type) {
+			case 'update': {
+				if (pid === network.myPid) {
+					// 自分自身の場合はdamageのみ取得
+					const player = manager.getMyPlayer();
+					if (update !== undefined) {
+						let totalDamage = 0;
+						update.damages.forEach(d => totalDamage += d.amount);
+						if (totalDamage !== 0) {
+							manager.hurtPlayer(totalDamage);
+						}
+					}
+					return;
 				}
+				const player = manager.getPlayerById(pid);
+				if (player === undefined) {
+					// create new player
+					const position = update.position || [0, 0, 0];
+					let velocity: [number, number];
+					if (update.velocity === undefined) {
+						velocity = [0, 0];
+					} else {
+						velocity = [update.velocity[0], update.velocity[2]];
+					}
+					const newPlayer = manager.createNewPlayer(pid, position, velocity);
+					if (update.yaw !== undefined) {
+						newPlayer.yaw = update.yaw;
+					}
+					if (update.pitch !== undefined) {
+						newPlayer.pitch = update.pitch;
+					}
+					newPlayer.pid = pid;
+				} else {
+					// move existing player
+					if (update.velocity !== undefined) {
+						player.vx = update.velocity[0];
+						player.vz = update.velocity[2];
+					}
+					if (update.position !== undefined) {
+						const p = update.position;
+						player.warp(p[0], p[1], p[2]);
+					}
+					if (update.yaw !== undefined) {
+						player.yaw = update.yaw;
+					}
+					if (update.pitch !== undefined) {
+						player.pitch = update.pitch;
+					}
+					if (update.fired !== undefined && update.fired) {
+						const relpos = player.getPosition();
+						relpos.sub(manager.getMyPlayer().getPosition());
+						audioMgr.playSound3D('gunshot', relpos.toArray());
+					}
+				}
+				break;
 			}
-			return;
-		}
-		const player = manager.getPlayerById(pid);
-		if (player === undefined) {
-			// create new player
-			const position = update.position || [0, 0, 0];
-			let velocity: [number, number];
-			if (update.velocity === undefined) {
-				velocity = [0, 0];
-			} else {
-				velocity = [update.velocity[0], update.velocity[2]];
+			case 'killed': {
+				const player = manager.getPlayerById(pid);
+				if (player === undefined) {
+					console.warn(`onplayerupdate: killed: player ${pid} not found`);
+					break;
+				}
+				manager.removePlayerFromWorld(player);
+				break;
 			}
-			const newPlayer = manager.createNewPlayer(pid, position, velocity);
-			if (update.yaw !== undefined) {
-				newPlayer.yaw = update.yaw;
-			}
-			if (update.pitch !== undefined) {
-				newPlayer.pitch = update.pitch;
-			}
-			newPlayer.pid = pid;
-		} else {
-			// move existing player
-			if (update.velocity !== undefined) {
-				player.vx = update.velocity[0];
-				player.vz = update.velocity[2];
-			}
-			if (update.position !== undefined) {
-				const p = update.position;
-				player.warp(p[0], p[1], p[2]);
-			}
-			if (update.yaw !== undefined) {
-				player.yaw = update.yaw;
-			}
-			if (update.pitch !== undefined) {
-				player.pitch = update.pitch;
-			}
-			if (update.fired !== undefined && update.fired) {
-				const relpos = player.getPosition();
-				relpos.sub(manager.getMyPlayer().getPosition());
-				audioMgr.playSound3D('gunshot', relpos.toArray());
+			case 'revived': {
+				const player = manager.getPlayerById(pid);
+				if (player === undefined) {
+					console.warn(`onplayerupdate: revived: player ${pid} not found`);
+					break;
+				}
+				manager.addPlayerToWorld(player);
+				break;
 			}
 		}
 	};

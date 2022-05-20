@@ -19,6 +19,7 @@ type DamageInfo = {
 };
 
 type PlayerUpdate = {
+    type: 'update'
     position?: Position,
     velocity?: Velocity,
     yaw?: number,
@@ -28,6 +29,10 @@ type PlayerUpdate = {
         byPid: string,
         amount: number
     }[],
+} | {
+    type: 'killed'
+} | {
+    type: 'revived'
 };
 
 const GAME_SERVER = "ws://localhost:3000";
@@ -39,6 +44,7 @@ export class NetworkClient {
     private pid: string | null;
     private fired: boolean = false;
     private damageQueue: Map<string, DamageInfo> = new Map();
+    private killedQueue: string[] = [];
 
     onplayerupdate: undefined | ((pid: string, update: PlayerUpdate) => void);
 
@@ -107,6 +113,7 @@ export class NetworkClient {
                 damage: number,
                 afterHP: number
             }[],
+            kills?: string[],
         } = {
             pid: this.pid,
             position: pl.position,
@@ -124,6 +131,14 @@ export class NetworkClient {
             payload.damages.push(damage);
         }
         this.damageQueue.clear();
+
+        if (this.killedQueue.length !== 0) {
+            payload.kills = [];
+            for (const killedPid of this.killedQueue) {
+                payload.kills.push(killedPid);
+            }
+        }
+        this.killedQueue = [];
 
         this.socket.send(JSON.stringify({
             type: 'position',
@@ -156,6 +171,29 @@ export class NetworkClient {
                 break;
             }
             case 'update': {
+                const deaths = data['deaths'];
+                if (deaths !== undefined) {
+                    for (const death of deaths) {
+                        const killer = death['killer'];
+                        const killed = death['killed'];
+                        console.log(`${killer} killed ${killed}`);
+                        const update: PlayerUpdate = {
+                            type: 'killed'
+                        };
+                        this.onplayerupdate(killed, update);
+                    }
+                }
+
+                const revives = data['revives'];
+                if (revives !== undefined) {
+                    for (const revive of revives) {
+                        console.log(`${revive} revived`);
+                        this.onplayerupdate(revive, {
+                            type: 'revived'
+                        });
+                    }
+                }
+
                 const players = data['players'];
                 if (players === undefined) {
                     console.warn('invalid players data');
@@ -208,6 +246,10 @@ export class NetworkClient {
         }
     }
 
+    queueKill(killed: Player) {
+        this.killedQueue.push(killed.pid);
+    }
+
     private processPlayer(playerData: any) {
         if (this.onplayerupdate === undefined) {
             console.warn('onplayerupdate not set');
@@ -220,7 +262,9 @@ export class NetworkClient {
             return;
         }
 
-        const updateData: PlayerUpdate = {};
+        const updateData: PlayerUpdate = {
+            type: 'update'
+        };
 
         const position = playerData['position'];
         if (position !== undefined) {

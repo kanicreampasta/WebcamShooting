@@ -147,6 +147,34 @@ export class Player {
 			world.addRigidBody(this.hitTestBody, collisionFilterGroup, collisionFilterMask);
 		}
 	}
+	removeFromWorld(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
+		scene.remove(this.playerMesh);
+		world.removeRigidBody(this.rigidbody);
+		world.addRigidBody(this.hitTestBody);
+	}
+	addToWorld(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
+		if (this.playerMesh) {
+			scene.add(this.playerMesh);
+		} else {
+			console.warn('this.playerMesh is undefined');
+		}
+
+		if (this.rigidbody) {
+			const collisionFilterMask = 1;
+			const collisionFilterGroup = 2;
+			world.addRigidBody(this.rigidbody, collisionFilterGroup, collisionFilterMask);
+		} else {
+			console.warn('this.rigidbody is undefined');
+		}
+
+		if (this.isOtherPlayer && this.hitTestBody) {
+			const collisionFilterMask = 2;
+			const collisionFilterGroup = 4;
+			world.addRigidBody(this.hitTestBody, collisionFilterGroup, collisionFilterMask);
+		} else {
+			console.warn('this.isOtherPlayer == true && this.hitTestBody is undefined');
+		}
+	}
 	delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
 		world.removeRigidBody(this.rigidbody);
 		scene.remove(this.playerMesh);
@@ -358,12 +386,16 @@ export class Player {
 		const isHealed = this.health.heal(healAmount);
 	}
 
-	gotDamage(damageAmount: number, showEffect: boolean = false) {
+	gotDamage(damageAmount: number, showEffect: boolean = false): boolean {
 		const isAlive = this.health.damage(damageAmount);
 		if (!isAlive) {
 			console.warn("you are dead :>");
-			this.health.heal(100);
 		}
 		document.getElementById("log").innerText += "damage:" + damageAmount;
+		return isAlive;
+	}
+
+	getKilled() {
+
 	}
 }
