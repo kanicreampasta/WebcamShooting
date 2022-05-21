@@ -146,6 +146,13 @@ export class NetworkClient {
         }));
     }
 
+    sendReviveRequest(pid: string) {
+        this.socket.send(JSON.stringify({
+            type: 'revive',
+            pid: pid
+        }));
+    }
+
     private onmessage(ev: MessageEvent<any>) {
         // console.log(ev);
         const data = JSON.parse(ev.data);

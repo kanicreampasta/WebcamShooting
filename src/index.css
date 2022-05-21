@@ -1,56 +1,55 @@
-body{
-	margin:0;
+body {
+	margin: 0;
 }
 
-#logArea{
-	position:absolute;
-}
-
-#log{
-	color:#fff;
+#logArea {
+	position: absolute;
 	margin: 10px;
+}
+
+#log {
+	color: #fff;
 	text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;  
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;
 }
 
-#loglist{
-	color:#fff;
-	margin: 10px;
+#loglist {
+	color: #fff;
 	font-family: monospace;
 	text-shadow:
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;  
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;
 }
 
-#previewVideo{
-	position:absolute;
-	width:300px;
-	height:200px;
-	right:10px;
-	top:10px;
+#previewVideo {
+	position: absolute;
+	width: 300px;
+	height: 200px;
+	right: 10px;
+	top: 10px;
 }
 
-#gameUi{
+#gameUi {
 	/* position:absolute; */
 }
 
-#gunStatus{
-	position:absolute;
-	right:10px;
-	bottom:10px;
-	color:white;
+#gunStatus {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
+	color: white;
 }
 
-#healthStatus{
-	position:absolute;
-	left:10px;
-	bottom:10px;
-	color:white;
+#healthStatus {
+	position: absolute;
+	left: 10px;
+	bottom: 10px;
+	color: white;
 }
 
 .health-bar {
@@ -83,16 +82,29 @@ body{
 	margin-left: 5px;
 }
 
-#crosshair{
-	position:absolute;
-	top:calc(50% - 20pt);
-	left:calc(50% - 20pt); /* space is required */
+.respawn-message {
+	color: white;
+}
+
+.respawn-message.off {
+	display: none;
+}
+
+.respawn-message.on {
+	display: inherit;
+}
+
+#crosshair {
+	position: absolute;
+	top: calc(50% - 20pt);
+	left: calc(50% - 20pt);
+	/* space is required */
 	width: 40pt;
 	height: 40pt;
-	background:url("assets/crosshairs.png");
+	background: url("assets/crosshairs.png");
 	background-repeat: no-repeat;
 	background-size: 100% 100%;
-	font-size:50px;
+	font-size: 50px;
 }
 
 /* :root{
@@ -107,25 +119,26 @@ body{
 	position:absolute;
 	background: radial-gradient(rgba(255,0,0,0),rgba(255,0,0,var(--x)));
 } */
-#hitIndicator{
-	display:none;
-	position:absolute;
-	top:calc(50% - 20pt);
-	left:calc(50% - 20pt); /* space is required */
+#hitIndicator {
+	display: none;
+	position: absolute;
+	top: calc(50% - 20pt);
+	left: calc(50% - 20pt);
+	/* space is required */
 	width: 40pt;
 	height: 40pt;
-	background:url("assets/hit-indicator.png");
+	background: url("assets/hit-indicator.png");
 	background-repeat: no-repeat;
 	background-size: 100% 100%;
-	font-size:50px;
+	font-size: 50px;
 }
 
-#effectCanvas{
-	position:absolute;
-	top:0;
-	left:0;
-	bottom:0;
-	right:0;
-	z-index:100;
+#effectCanvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	z-index: 100;
 	pointer-events: none;
 }

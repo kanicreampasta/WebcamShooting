@@ -526,6 +526,9 @@ window.onload = async function () {
 					break;
 				}
 				manager.removePlayerFromWorld(player);
+				setTimeout(() => {
+					network.sendReviveRequest(pid);
+				}, 3000);
 				break;
 			}
 			case 'revived': {
