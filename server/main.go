@@ -63,7 +63,7 @@ func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid
 	}
 
 	fkey := RKeyFired + ":" + forPid
-	fired, err := rdb.SIsMember(ctx, fkey, pid).Result()
+	fired, err := rdb.SRem(ctx, fkey, pid).Result()
 	if err != nil {
 		log.Println("get fired:", err)
 		return nil, err
@@ -89,10 +89,13 @@ func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid
 			Amount: damage.Amount,
 		})
 	}
+	if len(damages) > 0 {
+		rdb.Del(ctx, dkey)
+	}
 
 	return &types.PlayerUpdateResponse{
 		Player:  &player,
-		Fired:   fired,
+		Fired:   fired > 0,
 		Pid:     pid,
 		Damages: damageResponse,
 	}, nil
