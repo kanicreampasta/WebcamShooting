@@ -243,6 +243,7 @@ func closeHandler(code int, text string, pid string) error {
 	pipe := rdb.Pipeline()
 	ctx := context.Background()
 
+	pipe.Del(ctx, RKeyPlayer+":"+pid)
 	pipe.SRem(ctx, RKeyPlayerList, pid)
 	pids := getPids(ctx)
 	for _, pid := range pids {
