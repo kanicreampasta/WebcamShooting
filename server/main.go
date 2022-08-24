@@ -130,8 +130,13 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 		return "", err
 	}
 
-	res := types.PidResponse{
+	pidRes := types.PidResponse{
 		Pid: pid,
+	}
+	res := types.Response{
+		ResponseOneof: &types.Response_PidResponse{
+			PidResponse: &pidRes,
+		},
 	}
 	out, err := proto.Marshal(&res)
 	if err != nil {
@@ -143,6 +148,7 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 		log.Println("handleJoinRequest write:", err)
 		return "", err
 	}
+	log.Printf("Joined: %s (%s)", username, pid)
 	return pid, nil
 }
 
@@ -208,13 +214,18 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 		log.Println("handleClientUpdate:", err)
 	}
 
-	// make response
-	response, err := gs.makeUpdateResponse(ctx, pid)
+	// make updateRes
+	updateRes, err := gs.makeUpdateResponse(ctx, pid)
 	if err != nil {
 		log.Println("make update response:", err)
 		return
 	}
-	out, err := proto.Marshal(response)
+	res := types.Response{
+		ResponseOneof: &types.Response_UpdateResponse{
+			UpdateResponse: updateRes,
+		},
+	}
+	out, err := proto.Marshal(&res)
 	if err != nil {
 		log.Println("marshal:", err)
 		return
@@ -322,5 +333,5 @@ func main() {
 	gs := NewGameServer()
 	http.HandleFunc("/", gs.rootHandler)
 	log.Println("starting in HTTP mode")
-	log.Fatal(http.ListenAndServe("0.0.0.0:3000", nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:5000", nil))
 }

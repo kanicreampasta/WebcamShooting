@@ -62,7 +62,10 @@ export class NetworkClient {
 
   async initGameServer(): Promise<void> {
     this.socket = new WebSocket(GAME_SERVER);
-    this.socket.addEventListener("message", (ev) => this.onmessage(ev));
+    this.socket.addEventListener(
+      "message",
+      async (ev) => await this.onmessage(ev)
+    );
     return new Promise((resolve) => {
       this.socket!.onopen = (ev) => resolve();
     });
@@ -86,7 +89,7 @@ export class NetworkClient {
 
   start(getPlayer: PlayerGetter) {
     const requestJoin = types.JoinRequest.create({
-      name: uuidv4(),
+      name: "testusername",
     });
     const req = types.Request.create({
       joinRequest: requestJoin,
@@ -150,11 +153,15 @@ export class NetworkClient {
     this.socket!.send(types.Request.encode(req).finish());
   }
 
-  private onmessage(ev: MessageEvent<any>) {
-    const bin = ev.data;
-    const res = types.Response.decode(bin);
+  private async onmessage(ev: MessageEvent<any>) {
+    const bin: Blob = ev.data;
+    const buf = await bin.arrayBuffer();
+    const ary = new Uint8Array(buf);
+    const res = types.Response.decode(ary);
     if (res.pidResponse) {
       const pid = res.pidResponse!.pid!;
+      console.log(`got pid from server: ${pid}`);
+      this.pid = pid;
       if (this.onmypid) {
         this.onmypid(pid);
       }
