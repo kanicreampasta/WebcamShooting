@@ -49,7 +49,7 @@ func generatePid() string {
 	return pid.String()
 }
 
-func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest) {
+func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest) (string, error) {
 	username := u.Name
 	pid := generatePid()
 	ctx := context.Background()
@@ -60,7 +60,7 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 	_, err := pipe.Exec(ctx)
 	if err != nil {
 		log.Println("join request:", err)
-		return
+		return "", err
 	}
 
 	res := types.PidResponse{
@@ -69,13 +69,14 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 	out, err := proto.Marshal(&res)
 	if err != nil {
 		log.Println("marshal:", err)
-		return
+		return "", err
 	}
 	err = c.WriteMessage(websocket.BinaryMessage, out)
 	if err != nil {
 		log.Println("handleJoinRequest write:", err)
-		return
+		return "", err
 	}
+	return pid, nil
 }
 
 func getPids(ctx context.Context) []string {
@@ -137,8 +138,39 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 	}
 }
 
+func closeHandler(code int, text string, pid string) error {
+	log.Println("close:", code, text)
+
+	pipe := rdb.Pipeline()
+	ctx := context.Background()
+
+	pipe.SRem(ctx, RKeyPlayerList, pid)
+	pids := getPids(ctx)
+	for _, pid := range pids {
+		fkey := RKeyFired + ":" + pid
+		pipe.SRem(ctx, fkey, pid)
+	}
+
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		log.Println("close handler:", err)
+		return err
+	}
+
+	return nil
+}
+
 func handleConnection(gs *GameServer, c *websocket.Conn) {
+	var pid string
+
 	for {
+		c.SetCloseHandler(func(code int, text string) error {
+			if pid == "" {
+				return nil
+			}
+			return closeHandler(code, text, pid)
+		})
+
 		ty, r, err := c.NextReader()
 		if err != nil {
 			log.Println("read:", err)
@@ -166,7 +198,12 @@ func handleConnection(gs *GameServer, c *websocket.Conn) {
 		case *types.Request_ClientUpdate:
 			gs.handleClientUpdate(c, req.ClientUpdate)
 		case *types.Request_JoinRequest:
-			gs.handleJoinRequest(c, req.JoinRequest)
+			newPid, err := gs.handleJoinRequest(c, req.JoinRequest)
+			if err != nil {
+				fail = true
+				break
+			}
+			pid = newPid
 		case nil:
 			log.Println("nil request")
 			fail = true
