@@ -1,27 +1,36 @@
-import { gAmmo } from './physics';
-import Ammo from './@types/ammo';
-import { removeExtmapAllowMixed } from 'video/adapter';
-import * as THREE from 'three';
-import { gScene } from './renderer';
-import { Player } from './player';
-import { gPlayers } from './index';
+import { gAmmo } from "./physics";
+import Ammo from "./@types/ammo";
+import { removeExtmapAllowMixed } from "video/adapter";
+import * as THREE from "three";
+import { gScene } from "./renderer";
+import { Player } from "./player";
+import { gPlayers } from "./index";
 
-
-type GunRate = {
-    type: 'semi',
-    minInterval: number
-} | {
-    type: 'auto',
-    rate: number
-};
+type GunRate =
+    | {
+          type: "semi";
+          minInterval: number;
+      }
+    | {
+          type: "auto";
+          rate: number;
+      };
 
 export class Gun {
     remainingBulletsInMagazine: number;
     outOfMagazine: number;
     isReloading = false;
 
-    constructor(private magazineSize: number, public rate: GunRate, public reloadTime: number) {
+    constructor(
+        private magazineSize: number,
+        public rate: GunRate,
+        public reloadTime: number
+    ) {
         this.remainingBulletsInMagazine = magazineSize;
+        this.outOfMagazine = 0;
+        this.yaw = 0;
+        this.pitch = 0;
+        this.point = new gAmmo.btVector3(0, 0, 0);
     }
 
     completeReload() {
@@ -30,7 +39,10 @@ export class Gun {
         } else {
             this.remainingBulletsInMagazine = this.magazineSize;
         }
-        this.outOfMagazine = Math.max(0, this.outOfMagazine - this.remainingBulletsInMagazine);
+        this.outOfMagazine = Math.max(
+            0,
+            this.outOfMagazine - this.remainingBulletsInMagazine
+        );
     }
 
     setTotalBullets(n: number) {
@@ -51,12 +63,21 @@ export class Gun {
     // private first = true;
     // private hitobj: THREE.Object3D;
     test(range: number, world: Ammo.btDiscreteDynamicsWorld): Player | null {
-        const start = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
-        let end = new gAmmo.btVector3(this.point.x(), this.point.y(), this.point.z());
+        const start = new gAmmo.btVector3(
+            this.point.x(),
+            this.point.y(),
+            this.point.z()
+        );
+        let end = new gAmmo.btVector3(
+            this.point.x(),
+            this.point.y(),
+            this.point.z()
+        );
         let direction = new gAmmo.btVector3(
             -Math.cos(this.pitch) * Math.sin(this.yaw),
             Math.sin(this.pitch),
-            -Math.cos(this.pitch) * Math.cos(this.yaw));
+            -Math.cos(this.pitch) * Math.cos(this.yaw)
+        );
         direction.op_mul(range);
         end = end.op_add(direction);
         // console.log(start.x() + "," + start.y() + "," + start.z());
