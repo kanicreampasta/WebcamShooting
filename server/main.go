@@ -23,6 +23,7 @@ const (
 	RKeyPlayer        = "player"
 	RKeyFired         = "fired"
 	RKeyDamage        = "damage"
+	RKeyDead          = "dead"
 )
 
 var upgrader = websocket.Upgrader{
@@ -62,6 +63,12 @@ func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid
 		return nil, err
 	}
 
+	isDead, err := rdb.SIsMember(ctx, RKeyDead, pid).Result()
+	if err != nil {
+		log.Println("is member:", err)
+		return nil, err
+	}
+
 	fkey := RKeyFired + ":" + forPid
 	fired, err := rdb.SRem(ctx, fkey, pid).Result()
 	if err != nil {
@@ -96,6 +103,7 @@ func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid
 	return &types.PlayerUpdateResponse{
 		Player:  &player,
 		Fired:   fired > 0,
+		Dead:    isDead,
 		Pid:     pid,
 		Damages: damageResponse,
 	}, nil
@@ -239,6 +247,20 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 	}
 }
 
+func (gs *GameServer) handleDeadUpdate(u *types.DeadUpdate) {
+	ctx := context.Background()
+	if err := rdb.SAdd(ctx, RKeyDead, u.Pid).Err(); err != nil {
+		log.Println("handleDeadUpdate:", err)
+	}
+}
+
+func (gs *GameServer) handleRespawn(u *types.RespawnRequest) {
+	ctx := context.Background()
+	if err := rdb.SRem(ctx, RKeyDead, u.Pid).Err(); err != nil {
+		log.Println("handleRespawn:", err)
+	}
+}
+
 func closeHandler(code int, text string, pid string) error {
 	log.Println("close:", code, text)
 
@@ -306,6 +328,10 @@ func handleConnection(gs *GameServer, c *websocket.Conn) {
 				break
 			}
 			pid = newPid
+		case *types.Request_DeadUpdate:
+			gs.handleDeadUpdate(req.DeadUpdate)
+		case *types.Request_RespawnRequest:
+			gs.handleRespawn(req.RespawnRequest)
 		case nil:
 			log.Println("nil request")
 			fail = true
