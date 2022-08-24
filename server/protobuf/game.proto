@@ -46,7 +46,8 @@ message Request {
     oneof request_oneof {
         JoinRequest join_request = 1;
         ClientUpdate client_update = 2;
-        RespawnRequest respawn_request = 3;
+        DeadUpdate dead_update = 3;
+        RespawnRequest respawn_request = 4;
     }
 }
 
