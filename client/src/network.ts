@@ -85,8 +85,10 @@ export class NetworkClient {
         const requestJoin = types.JoinRequest.create({
             name: uuidv4(),
         });
-        const req = types.JoinRequest.encode(requestJoin).finish();
-        this.socket.send(req);
+        const req = types.Request.create({
+            joinRequest: requestJoin,
+        });
+        this.socket.send(types.Request.encode(req).finish());
         this.loopKey = setInterval(() => this.loop(getPlayer), 1000 / 30);
     }
 
@@ -101,42 +103,48 @@ export class NetworkClient {
     private loop(getPlayer: PlayerGetter) {
         if (this.pid === null) return;
         const pl = getPlayer();
-        const payload: {
-            pid: string;
-            position: [number, number, number];
-            velocity: [number, number, number];
-            yaw: number;
-            pitch: number;
-            fired?: boolean;
-            damages?: {
-                pid: string;
-                damage: number;
-                afterHP: number;
-            }[];
-        } = {
+
+        const u: types.IClientUpdate = {
             pid: this.pid,
-            position: pl.position,
-            velocity: pl.velocity,
-            yaw: pl.yaw,
-            pitch: pl.pitch,
-            damages: [],
+            player: types.Player.create({
+                position: types.Vector3.create({
+                    x: pl.position[0],
+                    y: pl.position[1],
+                    z: pl.position[2],
+                }),
+                velocity: types.Vector3.create({
+                    x: pl.velocity[0],
+                    y: pl.velocity[1],
+                    z: pl.velocity[2],
+                }),
+                pitch: pl.pitch,
+                yaw: pl.yaw,
+            }),
         };
         if (this.fired) {
-            payload["fired"] = this.fired;
+            u.fired = true;
             this.fired = false;
             // console.log('fire');
         }
+        if (this.damageQueue.size > 0) {
+            u.damages = [];
+        }
         for (const damage of this.damageQueue.values()) {
-            payload.damages.push(damage);
+            u.damages.push(
+                types.Damage.create({
+                    pid: damage.pid,
+                    damage: damage.damage,
+                })
+            );
         }
         this.damageQueue.clear();
 
-        this.socket.send(
-            JSON.stringify({
-                type: "position",
-                data: payload,
-            })
-        );
+        const update = types.ClientUpdate.create(u);
+        const req = types.Request.create({
+            clientUpdate: update,
+        });
+
+        this.socket.send(types.Request.encode(req).finish());
     }
 
     private onmessage(ev: MessageEvent<any>) {
