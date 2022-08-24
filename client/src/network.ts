@@ -8,228 +8,228 @@ type Position = [number, number, number];
 type Velocity = [number, number, number];
 
 type PlayerGetter = () => {
-    position: Position;
-    velocity: Velocity;
-    yaw: number;
-    pitch: number;
-    hp: number;
+  position: Position;
+  velocity: Velocity;
+  yaw: number;
+  pitch: number;
+  hp: number;
 };
 
 type DamageInfo = {
-    pid: string;
-    damage: number;
-    afterHP: number;
+  pid: string;
+  damage: number;
+  afterHP: number;
 };
 
 type PlayerUpdate = {
-    position?: Position;
-    velocity?: Velocity;
-    yaw?: number;
-    pitch?: number;
-    fired?: boolean;
-    damages?: {
-        byPid: string;
-        amount: number;
-    }[];
+  position?: Position;
+  velocity?: Velocity;
+  yaw?: number;
+  pitch?: number;
+  fired?: boolean;
+  damages?: {
+    byPid: string;
+    amount: number;
+  }[];
 };
 
 const GAME_SERVER = "ws://localhost:5000";
 const VIDEO_SERVER = "http://localhost:5001/janus";
 
 export class NetworkClient {
-    private socket?: WebSocket;
-    private loopKey?: NodeJS.Timer;
-    private pid: string | null;
-    private fired: boolean = false;
-    private damageQueue: Map<string, DamageInfo> = new Map();
+  private socket?: WebSocket;
+  private loopKey?: NodeJS.Timer;
+  private pid: string | null;
+  private fired: boolean = false;
+  private damageQueue: Map<string, DamageInfo> = new Map();
 
-    onplayerupdate: undefined | ((pid: string, update: PlayerUpdate) => void);
+  onplayerupdate: undefined | ((pid: string, update: PlayerUpdate) => void);
 
-    onplayerdelete: undefined | ((pid: string) => void);
+  onplayerdelete: undefined | ((pid: string) => void);
 
-    onvideostream: undefined | video.VideoSetter;
+  onvideostream: undefined | video.VideoSetter;
 
-    onmypid: undefined | ((pid: string) => void);
+  onmypid: undefined | ((pid: string) => void);
 
-    setVideoStream(stream: MediaStream) {
-        video.setVideoStream(stream);
+  setVideoStream(stream: MediaStream) {
+    video.setVideoStream(stream);
+  }
+
+  constructor() {
+    this.socket = undefined;
+    this.pid = null;
+  }
+
+  async initGameServer(): Promise<void> {
+    this.socket = new WebSocket(GAME_SERVER);
+    this.socket.addEventListener("message", (ev) => this.onmessage(ev));
+    return new Promise((resolve) => {
+      this.socket!.onopen = (ev) => resolve();
+    });
+  }
+
+  async initVideoServer(): Promise<void> {
+    video.setOnVideoStream((stream, pid) => {
+      if (this.onvideostream) {
+        this.onvideostream(stream, pid);
+      }
+    });
+    await video.initJanus();
+    if (this.pid !== null) {
+      video.initiateSession(VIDEO_SERVER, this.pid);
+    } else {
+      this.onmypid = (pid) => {
+        video.initiateSession(VIDEO_SERVER, pid);
+      };
+    }
+  }
+
+  start(getPlayer: PlayerGetter) {
+    const requestJoin = types.JoinRequest.create({
+      name: uuidv4(),
+    });
+    const req = types.Request.create({
+      joinRequest: requestJoin,
+    });
+    this.socket!.send(types.Request.encode(req).finish());
+    this.loopKey = setInterval(() => this.loop(getPlayer), 1000 / 30);
+  }
+
+  stop() {
+    clearInterval(this.loopKey!);
+  }
+
+  public get myPid(): string {
+    return this.pid!;
+  }
+
+  private loop(getPlayer: PlayerGetter) {
+    if (this.pid === null) return;
+    const pl = getPlayer();
+
+    const u: types.IClientUpdate = {
+      pid: this.pid,
+      player: types.Player.create({
+        position: types.Vector3.create({
+          x: pl.position[0],
+          y: pl.position[1],
+          z: pl.position[2],
+        }),
+        velocity: types.Vector3.create({
+          x: pl.velocity[0],
+          y: pl.velocity[1],
+          z: pl.velocity[2],
+        }),
+        pitch: pl.pitch,
+        yaw: pl.yaw,
+      }),
+    };
+    if (this.fired) {
+      u.fired = true;
+      this.fired = false;
+      // console.log('fire');
+    }
+    if (this.damageQueue.size > 0) {
+      u.damages = [];
+    }
+    for (const damage of this.damageQueue.values()) {
+      u.damages!.push(
+        types.Damage.create({
+          pid: damage.pid,
+          damage: damage.damage,
+        })
+      );
+    }
+    this.damageQueue.clear();
+
+    const update = types.ClientUpdate.create(u);
+    const req = types.Request.create({
+      clientUpdate: update,
+    });
+
+    this.socket!.send(types.Request.encode(req).finish());
+  }
+
+  private onmessage(ev: MessageEvent<any>) {
+    const bin = ev.data;
+    const res = types.Response.decode(bin);
+    if (res.pidResponse) {
+      const pid = res.pidResponse!.pid!;
+      if (this.onmypid) {
+        this.onmypid(pid);
+      }
+    } else if (res.updateResponse) {
+      const update = res.updateResponse!;
+      for (const player of update.players!) {
+        this.processPlayer(player);
+      }
+    }
+  }
+
+  queueFired() {
+    if (this.socket === undefined || this.pid === undefined) {
+      return;
+    }
+    this.fired = true;
+  }
+
+  queueDamageOther(playerToHurt: Player, damage: number, afterHP: number) {
+    const enemyPID = playerToHurt.pid;
+    if (enemyPID === undefined) {
+      console.warn("enemy has undefined PID");
+      return;
+    }
+    if (!this.damageQueue.has(playerToHurt.pid!)) {
+      this.damageQueue.set(playerToHurt.pid!, {
+        pid: playerToHurt.pid!,
+        damage,
+        afterHP,
+      });
+    } else {
+      const info = this.damageQueue.get(playerToHurt.pid!);
+      info!.damage += damage;
+      info!.afterHP = afterHP;
+    }
+  }
+
+  private convertVector3(v: types.IVector3): [number, number, number] {
+    return [v.x!, v.y!, v.z!];
+  }
+
+  private processPlayer(playerData: types.IPlayerUpdateResponse) {
+    if (this.onplayerupdate === undefined) {
+      console.warn("onplayerupdate not set");
+      return;
     }
 
-    constructor() {
-        this.socket = undefined;
-        this.pid = null;
+    const pid = playerData["pid"];
+    if (pid === undefined || pid === null) {
+      console.warn("contains no pid information");
+      return;
     }
 
-    async initGameServer(): Promise<void> {
-        this.socket = new WebSocket(GAME_SERVER);
-        this.socket.addEventListener("message", (ev) => this.onmessage(ev));
-        return new Promise((resolve) => {
-            this.socket!.onopen = (ev) => resolve();
+    const updateData: PlayerUpdate = {};
+
+    updateData.position = this.convertVector3(playerData.player?.position!);
+
+    updateData.velocity = this.convertVector3(playerData.player?.velocity!);
+
+    updateData.yaw = playerData.player!.yaw!;
+    updateData.pitch = playerData.player!.pitch!;
+
+    updateData.fired = playerData.fired!;
+
+    const damages = playerData.damages;
+    if (damages) {
+      updateData.damages = [];
+      for (const damage of damages) {
+        updateData.damages.push({
+          byPid: damage.by!,
+          amount: damage.amount!,
         });
+      }
     }
 
-    async initVideoServer(): Promise<void> {
-        video.setOnVideoStream((stream, pid) => {
-            if (this.onvideostream) {
-                this.onvideostream(stream, pid);
-            }
-        });
-        await video.initJanus();
-        if (this.pid !== null) {
-            video.initiateSession(VIDEO_SERVER, this.pid);
-        } else {
-            this.onmypid = (pid) => {
-                video.initiateSession(VIDEO_SERVER, pid);
-            };
-        }
-    }
-
-    start(getPlayer: PlayerGetter) {
-        const requestJoin = types.JoinRequest.create({
-            name: uuidv4(),
-        });
-        const req = types.Request.create({
-            joinRequest: requestJoin,
-        });
-        this.socket!.send(types.Request.encode(req).finish());
-        this.loopKey = setInterval(() => this.loop(getPlayer), 1000 / 30);
-    }
-
-    stop() {
-        clearInterval(this.loopKey!);
-    }
-
-    public get myPid(): string {
-        return this.pid!;
-    }
-
-    private loop(getPlayer: PlayerGetter) {
-        if (this.pid === null) return;
-        const pl = getPlayer();
-
-        const u: types.IClientUpdate = {
-            pid: this.pid,
-            player: types.Player.create({
-                position: types.Vector3.create({
-                    x: pl.position[0],
-                    y: pl.position[1],
-                    z: pl.position[2],
-                }),
-                velocity: types.Vector3.create({
-                    x: pl.velocity[0],
-                    y: pl.velocity[1],
-                    z: pl.velocity[2],
-                }),
-                pitch: pl.pitch,
-                yaw: pl.yaw,
-            }),
-        };
-        if (this.fired) {
-            u.fired = true;
-            this.fired = false;
-            // console.log('fire');
-        }
-        if (this.damageQueue.size > 0) {
-            u.damages = [];
-        }
-        for (const damage of this.damageQueue.values()) {
-            u.damages!.push(
-                types.Damage.create({
-                    pid: damage.pid,
-                    damage: damage.damage,
-                })
-            );
-        }
-        this.damageQueue.clear();
-
-        const update = types.ClientUpdate.create(u);
-        const req = types.Request.create({
-            clientUpdate: update,
-        });
-
-        this.socket!.send(types.Request.encode(req).finish());
-    }
-
-    private onmessage(ev: MessageEvent<any>) {
-        const bin = ev.data;
-        const res = types.Response.decode(bin);
-        if (res.pidResponse) {
-            const pid = res.pidResponse!.pid!;
-            if (this.onmypid) {
-                this.onmypid(pid);
-            }
-        } else if (res.updateResponse) {
-            const update = res.updateResponse!;
-            for (const player of update.players!) {
-                this.processPlayer(player);
-            }
-        }
-    }
-
-    queueFired() {
-        if (this.socket === undefined || this.pid === undefined) {
-            return;
-        }
-        this.fired = true;
-    }
-
-    queueDamageOther(playerToHurt: Player, damage: number, afterHP: number) {
-        const enemyPID = playerToHurt.pid;
-        if (enemyPID === undefined) {
-            console.warn("enemy has undefined PID");
-            return;
-        }
-        if (!this.damageQueue.has(playerToHurt.pid!)) {
-            this.damageQueue.set(playerToHurt.pid!, {
-                pid: playerToHurt.pid!,
-                damage,
-                afterHP,
-            });
-        } else {
-            const info = this.damageQueue.get(playerToHurt.pid!);
-            info!.damage += damage;
-            info!.afterHP = afterHP;
-        }
-    }
-
-    private convertVector3(v: types.IVector3): [number, number, number] {
-        return [v.x!, v.y!, v.z!];
-    }
-
-    private processPlayer(playerData: types.IPlayerUpdateResponse) {
-        if (this.onplayerupdate === undefined) {
-            console.warn("onplayerupdate not set");
-            return;
-        }
-
-        const pid = playerData["pid"];
-        if (pid === undefined || pid === null) {
-            console.warn("contains no pid information");
-            return;
-        }
-
-        const updateData: PlayerUpdate = {};
-
-        updateData.position = this.convertVector3(playerData.player?.position!);
-
-        updateData.velocity = this.convertVector3(playerData.player?.velocity!);
-
-        updateData.yaw = playerData.player!.yaw!;
-        updateData.pitch = playerData.player!.pitch!;
-
-        updateData.fired = playerData.fired!;
-
-        const damages = playerData.damages;
-        if (damages) {
-            updateData.damages = [];
-            for (const damage of damages) {
-                updateData.damages.push({
-                    byPid: damage.by!,
-                    amount: damage.amount!,
-                });
-            }
-        }
-
-        this.onplayerupdate(pid, updateData);
-    }
+    this.onplayerupdate(pid, updateData);
+  }
 }

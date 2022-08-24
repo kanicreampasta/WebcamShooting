@@ -1,19 +1,24 @@
 const MAX_HEALTH = 51;
 
 export class PlayerHealth {
-  remainingHealth : number;
-  isHealing : {
-    status: boolean,
+  remainingHealth: number;
+  isHealing: {
+    status: boolean;
+  } = {
+    status: false,
   };
 
   constructor() {
-    this.remainingHealth = MAX_HEALTH
+    this.remainingHealth = MAX_HEALTH;
   }
 
   heal(healAmount: number): boolean {
     let isHealed = false;
     if (this.remainingHealth < MAX_HEALTH) {
-      this.remainingHealth = Math.min(this.remainingHealth+healAmount, MAX_HEALTH)
+      this.remainingHealth = Math.min(
+        this.remainingHealth + healAmount,
+        MAX_HEALTH
+      );
       isHealed = true;
     }
     return isHealed;
@@ -23,7 +28,7 @@ export class PlayerHealth {
     let isAlive = true;
     const newHealth = this.remainingHealth - damageAmount;
     if (newHealth <= 0) {
-      isAlive = false
+      isAlive = false;
     } else {
       this.remainingHealth = newHealth;
     }
