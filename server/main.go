@@ -20,7 +20,7 @@ var (
 const (
 	RKeyPlayerList    = "playerlist"
 	RKeyPlayerNameMap = "playername"
-	RKeyPlayers       = "players"
+	RKeyPlayer        = "player"
 	RKeyFired         = "fired"
 	RKeyDamage        = "damage"
 )
@@ -47,6 +47,73 @@ func generatePid() string {
 		panic("generate pid: " + err.Error())
 	}
 	return pid.String()
+}
+
+func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid string) (*types.PlayerUpdateResponse, error) {
+	pkey := RKeyPlayer + ":" + pid
+	pb, err := rdb.Get(ctx, pkey).Bytes()
+	if err != nil {
+		log.Println("get player:", err)
+		return nil, err
+	}
+	var player types.Player
+	if err = proto.Unmarshal(pb, &player); err != nil {
+		log.Println("unmarshal player:", err)
+		return nil, err
+	}
+
+	fkey := RKeyFired + ":" + forPid
+	fired, err := rdb.SIsMember(ctx, fkey, pid).Result()
+	if err != nil {
+		log.Println("get fired:", err)
+		return nil, err
+	}
+
+	dkey := RKeyDamage + ":" + forPid
+	damages, err := rdb.LRange(ctx, dkey, 0, -1).Result()
+	if err != nil {
+		log.Println("get damages:", err)
+		return nil, err
+	}
+
+	damageResponse := make([]*types.DamageResponse, 0)
+	for _, damage := range damages {
+		damageBytes := []byte(damage)
+		var damage types.DamageInternal
+		if err = proto.Unmarshal(damageBytes, &damage); err != nil {
+			log.Println("unmarshal damage:", err)
+			continue
+		}
+		damageResponse = append(damageResponse, &types.DamageResponse{
+			By:     damage.DamagedBy,
+			Amount: damage.Amount,
+		})
+	}
+
+	return &types.PlayerUpdateResponse{
+		Player:  &player,
+		Fired:   fired,
+		Pid:     pid,
+		Damages: damageResponse,
+	}, nil
+}
+
+func (gs *GameServer) makeUpdateResponse(ctx context.Context, forPid string) (*types.UpdateResponse, error) {
+	pids := getPids(ctx)
+
+	players := make([]*types.PlayerUpdateResponse, 0)
+	for _, pid := range pids {
+		player, err := gs.makePlayerResponse(ctx, forPid, pid)
+		if err != nil {
+			log.Println("make player response:", err)
+			continue
+		}
+		players = append(players, player)
+	}
+
+	return &types.UpdateResponse{
+		Players: players,
+	}, nil
 }
 
 func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest) (string, error) {
@@ -91,7 +158,7 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 	pid := u.Pid
 
 	ctx := context.Background()
-	key := RKeyPlayers + ":" + pid
+	key := RKeyPlayer + ":" + pid
 	pb, err := proto.Marshal(u.Player)
 	if err != nil {
 		panic("marshal player")
