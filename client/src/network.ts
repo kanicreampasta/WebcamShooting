@@ -2,6 +2,7 @@ import { Player } from "./player";
 import * as video from "./video/video";
 import { webcamshooting as types } from "./game.pb";
 import { v4 as uuidv4 } from "uuid";
+import { update } from "lodash";
 
 type Position = [number, number, number];
 type Velocity = [number, number, number];
@@ -153,8 +154,15 @@ export class NetworkClient {
         const bin = ev.data;
         const res = types.Response.decode(bin);
         if (res.pidResponse) {
-            const pid = res.pidResponse.pid;
+            const pid = res.pidResponse!.pid!;
+            if (this.onmypid) {
+                this.onmypid(pid);
+            }
         } else if (res.updateResponse) {
+            const update = res.updateResponse!;
+            for (const player of update.players!) {
+                this.processPlayer(player);
+            }
         }
     }
 
@@ -184,48 +192,42 @@ export class NetworkClient {
         }
     }
 
-    private processPlayer(playerData: any) {
+    private convertVector3(v: types.IVector3): [number, number, number] {
+        return [v.x!, v.y!, v.z!];
+    }
+
+    private processPlayer(playerData: types.IPlayerUpdateResponse) {
         if (this.onplayerupdate === undefined) {
             console.warn("onplayerupdate not set");
             return;
         }
 
         const pid = playerData["pid"];
-        if (pid === undefined) {
+        if (pid === undefined || pid === null) {
             console.warn("contains no pid information");
             return;
         }
 
         const updateData: PlayerUpdate = {};
 
-        const position = playerData["position"];
-        if (position !== undefined) {
-            updateData.position = position;
-        }
+        updateData.position = this.convertVector3(playerData.player?.position!);
 
-        const velocity = playerData["velocity"];
-        if (velocity !== undefined) {
-            updateData.velocity = velocity;
-        }
+        updateData.velocity = this.convertVector3(playerData.player?.velocity!);
 
-        const yaw = playerData["yaw"];
-        if (yaw !== undefined) {
-            updateData.yaw = yaw;
-        }
+        updateData.yaw = playerData.player!.yaw!;
+        updateData.pitch = playerData.player!.pitch!;
 
-        const pitch = playerData["pitch"];
-        if (pitch !== undefined) {
-            updateData.pitch = pitch;
-        }
+        updateData.fired = playerData.fired!;
 
-        const fired = playerData["fired"];
-        if (fired !== undefined) {
-            updateData.fired = fired;
-        }
-
-        const damages = playerData["damages"];
-        if (damages !== undefined) {
-            updateData.damages = damages;
+        const damages = playerData.damages;
+        if (damages) {
+            updateData.damages = [];
+            for (const damage of damages) {
+                updateData.damages.push({
+                    byPid: damage.by!,
+                    amount: damage.amount!,
+                });
+            }
         }
 
         this.onplayerupdate(pid, updateData);
