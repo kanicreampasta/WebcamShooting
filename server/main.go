@@ -203,6 +203,27 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 			}
 		}
 	}
+
+	if _, err = pipe.Exec(ctx); err != nil {
+		log.Println("handleClientUpdate:", err)
+	}
+
+	// make response
+	response, err := gs.makeUpdateResponse(ctx, pid)
+	if err != nil {
+		log.Println("make update response:", err)
+		return
+	}
+	out, err := proto.Marshal(response)
+	if err != nil {
+		log.Println("marshal:", err)
+		return
+	}
+	err = c.WriteMessage(websocket.BinaryMessage, out)
+	if err != nil {
+		log.Println("handleClientUpdate write:", err)
+		return
+	}
 }
 
 func closeHandler(code int, text string, pid string) error {
