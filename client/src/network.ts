@@ -1,6 +1,7 @@
 import { Player } from "./player";
 import * as video from "./video/video";
-import { JoinRequset } from "./game.pb";
+import { webcamshooting as types } from "./game.pb";
+import { v4 as uuidv4 } from "uuid";
 
 type Position = [number, number, number];
 type Velocity = [number, number, number];
@@ -81,10 +82,11 @@ export class NetworkClient {
     }
 
     start(getPlayer: PlayerGetter) {
-        // this.socket.send(JSON.stringify({
-        //     type: 'spawn'
-        // }));
-        const requestJoin = webcamshooting.this.socket.send();
+        const requestJoin = types.JoinRequest.create({
+            name: uuidv4(),
+        });
+        const req = types.JoinRequest.encode(requestJoin).finish();
+        this.socket.send(req);
         this.loopKey = setInterval(() => this.loop(getPlayer), 1000 / 30);
     }
 
