@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package webcamshooting;
-option go_package = "github.com/kanicreampasta/webcamshooting";
+option go_package = "github.com/kanicreampasta/webcamshooting/types";
 
 message Vector3 {
     float x = 1;
@@ -14,14 +14,18 @@ message Damage {
     float damage = 2;
 }
 
+message Player {
+    Vector3 position = 1;
+    Vector3 velocity = 2;
+    float yaw = 3;
+    float pitch = 4;
+}
+
 message ClientUpdate {
     string pid = 1;
-    Vector3 position = 2;
-    Vector3 velocity = 3;
-    float yaw = 4;
-    float pitch = 5;
-    bool fired = 6;
-    repeated Damage damages = 7;
+    Player player = 2;
+    bool fired = 3;
+    repeated Damage damages = 4;
 }
 
 message JoinRequest {
@@ -53,10 +57,7 @@ message DamageResponse {
 
 message PlayerUpdateResponse {
     string pid = 1;
-    Vector3 position = 2;
-    Vector3 velocity = 3;
-    float yaw = 4;
-    float pitch = 5;
+    Player player = 2;
     bool fired = 6;
     repeated DamageResponse damages = 7;
 }

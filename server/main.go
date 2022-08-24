@@ -1,10 +1,27 @@
 package main
 
 import (
+	"context"
+	"io/ioutil"
 	"log"
 	"net/http"
 
+	"github.com/go-redis/redis/v9"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/kanicreampasta/webcamshooting/types"
+	"google.golang.org/protobuf/proto"
+)
+
+var (
+	rdb *redis.Client
+)
+
+const (
+	RKeyPlayerList    = "playerlist"
+	RKeyPlayerNameMap = "playername"
+	RKeyPlayers       = "players"
+	RKeyFired         = "fired"
 )
 
 var upgrader = websocket.Upgrader{
@@ -23,8 +40,103 @@ func (gs *GameServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 	go handleConnection(gs, c)
 }
 
+func generatePid() string {
+	pid, err := uuid.NewRandom()
+	if err != nil {
+		panic("generate pid: " + err.Error())
+	}
+	return pid.String()
+}
+
+func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest) {
+	username := u.Name
+	pid := generatePid()
+	ctx := context.Background()
+	pipe := rdb.Pipeline()
+	pipe.SAdd(ctx, RKeyPlayerList, pid)
+	pipe.HSet(ctx, RKeyPlayerNameMap, pid, username)
+
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		log.Println("join request:", err)
+		return
+	}
+
+	res := types.PidResponse{
+		Pid: pid,
+	}
+	out, err := proto.Marshal(&res)
+	if err != nil {
+		log.Println("marshal:", err)
+		return
+	}
+	err = c.WriteMessage(websocket.BinaryMessage, out)
+	if err != nil {
+		log.Println("handleJoinRequest write:", err)
+		return
+	}
+}
+
+func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdate) {
+	pid := u.Pid
+
+	key := RKeyPlayers + ":" + pid
+	pb, err := proto.Marshal(u.Player)
+	if err != nil {
+		panic("marshal player")
+	}
+	if err = rdb.Set(context.Background(), key, pb, 0).Err(); err != nil {
+		log.Println("set player:", err)
+		return
+	}
+
+	if u.Fired {
+
+	}
+}
+
 func handleConnection(gs *GameServer, c *websocket.Conn) {
-	panic("unimplemented")
+	for {
+		ty, r, err := c.NextReader()
+		if err != nil {
+			log.Println("read:", err)
+			break
+		}
+		if ty != websocket.BinaryMessage {
+			log.Println("not binary message")
+			break
+		}
+
+		in, err := ioutil.ReadAll(r)
+		if err != nil {
+			log.Println("read:", err)
+			break
+		}
+
+		request := types.Request{}
+		if err = proto.Unmarshal(in, &request); err != nil {
+			log.Println("unmarshal:", err)
+			break
+		}
+
+		fail := false
+		switch req := request.RequestOneof.(type) {
+		case *types.Request_ClientUpdate:
+			gs.handleClientUpdate(c, req.ClientUpdate)
+		case *types.Request_JoinRequest:
+			gs.handleJoinRequest(c, req.JoinRequest)
+		case nil:
+			log.Println("nil request")
+			fail = true
+		default:
+			log.Println("unknown request")
+			fail = true
+		}
+
+		if fail {
+			break
+		}
+	}
 }
 
 func NewGameServer() *GameServer {
@@ -32,6 +144,14 @@ func NewGameServer() *GameServer {
 }
 
 func main() {
+	rdb = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	rdb.FlushAll(context.Background())
+
 	gs := NewGameServer()
 	http.HandleFunc("/", gs.rootHandler)
 	log.Println("starting in HTTP mode")
