@@ -26,7 +26,7 @@ export class AudioManager {
     const buf = this.sounds.get(name);
     const source = this.audioContext.createBufferSource();
     source.connect(this.audioContext.destination);
-    source.buffer = buf;
+    source.buffer = buf!;
     source.start();
   }
 
