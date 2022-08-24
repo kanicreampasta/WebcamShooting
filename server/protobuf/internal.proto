@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package webcamshooting;
+option go_package = "github.com/kanicreampasta/webcamshooting/types";
+
+message DamageInternal {
+    string damagedBy = 1;
+    float amount = 2;
+}

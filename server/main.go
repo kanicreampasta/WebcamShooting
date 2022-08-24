@@ -22,6 +22,7 @@ const (
 	RKeyPlayerNameMap = "playername"
 	RKeyPlayers       = "players"
 	RKeyFired         = "fired"
+	RKeyDamage        = "damage"
 )
 
 var upgrader = websocket.Upgrader{
@@ -77,9 +78,18 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 	}
 }
 
+func getPids(ctx context.Context) []string {
+	pids, err := rdb.SMembers(ctx, RKeyPlayerList).Result()
+	if err != nil {
+		panic("get pids")
+	}
+	return pids
+}
+
 func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdate) {
 	pid := u.Pid
 
+	ctx := context.Background()
 	key := RKeyPlayers + ":" + pid
 	pb, err := proto.Marshal(u.Player)
 	if err != nil {
@@ -90,8 +100,40 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 		return
 	}
 
+	var pids []string
+	pipe := rdb.Pipeline()
 	if u.Fired {
+		pids = getPids(ctx)
+		for _, pid := range pids {
+			fkey := RKeyFired + ":" + pid
+			if err = pipe.SAdd(ctx, fkey, pid).Err(); err != nil {
+				log.Println("set fired:", err)
+				continue
+			}
+		}
+	}
 
+	if len(u.Damages) > 0 {
+		if pids != nil {
+			pids = getPids(ctx)
+		}
+
+		for _, damage := range u.Damages {
+			damageInfo := types.DamageInternal{
+				DamagedBy: pid,
+				Amount:    damage.Damage,
+			}
+			damagepb, err := proto.Marshal(&damageInfo)
+			if err != nil {
+				panic("marshal damage")
+			}
+
+			dkey := RKeyDamage + ":" + damage.Pid
+			if err = pipe.LPush(ctx, dkey, damagepb).Err(); err != nil {
+				log.Println("set damage:", err)
+				continue
+			}
+		}
 	}
 }
 
