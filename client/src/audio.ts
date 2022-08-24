@@ -47,7 +47,7 @@ export class AudioManager {
 
     source.connect(panner);
     panner.connect(this.audioContext.destination);
-    source.buffer = buf;
+    source.buffer = buf!;
     source.start();
   }
 }
