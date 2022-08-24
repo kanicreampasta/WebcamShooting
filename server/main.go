@@ -181,8 +181,11 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 	pipe := rdb.Pipeline()
 	if u.Fired {
 		pids = getPids(ctx)
-		for _, pid := range pids {
-			fkey := RKeyFired + ":" + pid
+		for _, otherPid := range pids {
+			if otherPid == pid {
+				continue
+			}
+			fkey := RKeyFired + ":" + otherPid
 			if err = pipe.SAdd(ctx, fkey, pid).Err(); err != nil {
 				log.Println("set fired:", err)
 				continue
@@ -191,10 +194,6 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 	}
 
 	if len(u.Damages) > 0 {
-		if pids != nil {
-			pids = getPids(ctx)
-		}
-
 		for _, damage := range u.Damages {
 			damageInfo := types.DamageInternal{
 				DamagedBy: pid,
