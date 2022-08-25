@@ -26,6 +26,23 @@ export class ModelLoader {
         this.filename,
         // called when the resource is loaded
         (gltf: GLTF) => {
+          for (const mesh of gltf.scene.children) {
+            if (mesh instanceof THREE.Mesh) {
+              console.log(mesh);
+              let name=mesh.name;
+              if(name.startsWith("no_collision")){
+                name=name.slice("no_collision".length);
+                console.log("no_collision");
+                console.log(name);
+              }
+              if(name.startsWith("cutout")){
+                console.log("cutout");
+                const original_material:THREE.MeshStandardMaterial= mesh.material;
+                original_material.transparent=true;
+                original_material.alphaTest=0.5;
+              }
+            }
+          }
           this.gltf = gltf;
           resolve();
         },
@@ -50,6 +67,9 @@ export class ModelLoader {
     for (const mesh of this.gltf.scene.children) {
       if (mesh instanceof THREE.Mesh) {
         console.log(mesh);
+        if(mesh.name.startsWith("no_collision")){
+          continue;
+        }
         const geometry: THREE.BufferGeometry = mesh.geometry;
         const rawindex = geometry.index!.array;
         const rawverts = geometry.attributes.position.array;
