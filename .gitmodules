@@ -1,0 +1,6 @@
+[submodule "client/public/WebcamShootingMaps"]
+	path = client/public/WebcamShootingMaps
+	url = https://github.com/kanicreampasta/WebcamShootingMaps
+[submodule "client/public/WebcamShootingWeapons"]
+	path = client/public/WebcamShootingWeapons
+	url = git@github.com:kanicreampasta/WebcamShootingWeapons.git

@@ -95,7 +95,7 @@ class GameManager {
     this.onload();
   }
   startLoadingModels() {
-    this.stageLoaders.push(new ModelLoader("demostage.glb"));
+    this.stageLoaders.push(new ModelLoader("WebcamShootingMaps/mozdok/stage.glb"));
     this.loaders["human"] = new ModelLoader("human.glb");
   }
   addCube(
