@@ -1,0 +1,3 @@
+[submodule "client/public/WebcamShootingMaps"]
+	path = client/public/WebcamShootingMaps
+	url = https://github.com/kanicreampasta/WebcamShootingMaps
