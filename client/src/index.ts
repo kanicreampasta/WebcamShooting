@@ -96,7 +96,7 @@ class GameManager {
   }
   startLoadingModels() {
     this.stageLoaders.push(
-      new ModelLoader("WebcamShootingMaps/IndiaPro/stage.glb")
+      new ModelLoader("WebcamShootingMaps/mozdok/stage.glb")
     );
     this.loaders["human"] = new ModelLoader("human.glb");
   }
