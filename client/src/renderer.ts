@@ -20,6 +20,8 @@ export class RenderingManager {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
 
+    this.scene.background=new THREE.Color( 0xaaaaff );
+
     const directionalLight: THREE.DirectionalLight = new THREE.DirectionalLight(
       0xffffff,
       0.5

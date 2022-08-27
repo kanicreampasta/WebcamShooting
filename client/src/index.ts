@@ -95,7 +95,9 @@ class GameManager {
     this.onload();
   }
   startLoadingModels() {
-    this.stageLoaders.push(new ModelLoader("demostage.glb"));
+    this.stageLoaders.push(
+      new ModelLoader("WebcamShootingMaps/IndiaPro/stage.glb")
+    );
     this.loaders["human"] = new ModelLoader("human.glb");
   }
   addCube(
@@ -513,10 +515,11 @@ window.onload = async function () {
   network.onplayerupdate = (pid, update) => {
     if (pid === network!.myPid) {
       // 自分自身の場合はdamageのみ取得
-      const player = manager!.getMyPlayer();
+      // const player = manager!.getMyPlayer();
       if (update !== undefined) {
         let totalDamage = 0;
         update.damages!.forEach((d) => (totalDamage += d.amount));
+        // console.log(totalDamage);
         if (totalDamage !== 0) {
           manager!.hurtPlayer(totalDamage);
         }
