@@ -519,7 +519,7 @@ window.onload = async function () {
       if (update !== undefined) {
         let totalDamage = 0;
         update.damages!.forEach((d) => (totalDamage += d.amount));
-        console.log(totalDamage);
+        // console.log(totalDamage);
         if (totalDamage !== 0) {
           manager!.hurtPlayer(totalDamage);
         }
