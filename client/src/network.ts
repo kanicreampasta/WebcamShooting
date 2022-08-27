@@ -148,8 +148,20 @@ export class NetworkClient {
     return this.pid!;
   }
 
+  private processInstantEvents() {
+    for (const event of this.eventQueue) {
+      event.send(this);
+    }
+    if (this.eventQueue.length > 0) {
+      this.eventQueue = [];
+    }
+  }
+
   private loop(getPlayer: PlayerGetter) {
     if (this.pid === null) return;
+
+    this.processInstantEvents();
+
     const pl = getPlayer();
 
     const u: types.IClientUpdate = {
