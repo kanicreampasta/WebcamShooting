@@ -290,6 +290,7 @@ func (gs *GameServer) handleDeadUpdate(u *types.DeadUpdate) {
 		return
 	}
 	pl.IsDead = true
+	log.Printf("Player %s is dead", u.Pid)
 }
 
 func (gs *GameServer) handleRespawn(u *types.RespawnRequest) {
@@ -300,6 +301,7 @@ func (gs *GameServer) handleRespawn(u *types.RespawnRequest) {
 		return
 	}
 	pl.IsDead = false
+	log.Printf("Player %s respawned", u.Pid)
 }
 
 func (gs *GameServer) closeHandler(code int, text string, pid string) error {

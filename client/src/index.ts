@@ -4,7 +4,7 @@ import "./index.css";
 import { RenderingManager } from "./renderer";
 import { gAmmo, PhysicsManager } from "./physics";
 import { Player } from "./player";
-import { NetworkClient } from "./network";
+import { DeadEvent, NetworkClient } from "./network";
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from "./utils";
 import { FaceDetector } from "./face-detection/facedetection";
@@ -140,6 +140,14 @@ class GameManager {
       this.view = (this.view + 1) % 2;
     }
 
+    const player = this.getMyPlayer();
+    if (player.isDead()) {
+      return;
+    } else {
+      this.aliveProcess(dt, currentFrame);
+    }
+  }
+  private aliveProcess(dt: number, currentFrame: Date) {
     this.addThrust();
     this.processGun();
     // this.updateHealth();
@@ -350,6 +358,15 @@ class GameManager {
       (currentFleshHealth / maxFleshHealth) * 100 + "%";
     this.fleshRemainingNumber.innerText =
       currentFleshHealth + "/" + maxFleshHealth;
+
+    // check if dead
+    if (player.isDead()) {
+      this.deathProcess();
+    }
+  }
+
+  private deathProcess() {
+    network!.queueInstantEvent(new DeadEvent());
   }
 
   getCanvas(): HTMLCanvasElement {
