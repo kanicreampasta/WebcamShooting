@@ -69,6 +69,7 @@ class GameManager {
     this.effectCanvas.width = mainCanvas.width;
     this.effectCanvas.height = mainCanvas.height;
   }
+
   private initPlayer() {
     this.players = [];
     gPlayers = this.players;
@@ -80,6 +81,7 @@ class GameManager {
     this.startFrame = new Date();
     this.players[0].warp(0, 20, 0);
   }
+
   async loadGame() {
     {
       const promises: Promise<any>[] = this.stageLoaders.map((ld) => {
@@ -98,12 +100,14 @@ class GameManager {
 
     this.onload();
   }
+
   startLoadingModels() {
     this.stageLoaders.push(
       new ModelLoader("WebcamShootingMaps/IndiaPro/stage.glb")
     );
     this.loaders["human"] = new ModelLoader("human.glb");
   }
+
   addCube(
     position: THREE.Vector3,
     dimention: THREE.Vector3,
@@ -117,6 +121,7 @@ class GameManager {
       rotation
     );
   }
+
   step() {
     const currentFrame: Date = new Date();
     const dt: number =
@@ -168,6 +173,7 @@ class GameManager {
     }
     this.lastFrame = currentFrame;
   }
+
   private aliveProcess(dt: number, currentFrame: Date) {
     this.addThrust();
     this.processGun();
@@ -216,6 +222,7 @@ class GameManager {
 
     this.previousKeyState = _.cloneDeep(this.keyState);
   }
+
   private drawDamageEffect(dt: number) {
     this.effectCanvasCtx.clearRect(
       0,
@@ -246,6 +253,7 @@ class GameManager {
       this.damageEffectTimer -= dt;
     }
   }
+
   addPlayer(player: Player, id?: string): void {
     this.players.push(player);
     if (id !== undefined) {
@@ -253,6 +261,7 @@ class GameManager {
     }
     player.loadHuman(this.loaders["human"], this.physics.world);
   }
+
   createNewPlayer(
     id: string,
     position: [number, number, number],
@@ -266,6 +275,7 @@ class GameManager {
     this.addPlayer(player, id);
     return player;
   }
+
   deletePlayerByIndex(index: number): void {
     this.players[index].delete(this.rendering.scene, this.physics.world);
     const deleted = this.players.splice(index, 1)[0];
@@ -276,6 +286,7 @@ class GameManager {
       }
     }
   }
+
   deletePlayerById(id: string): void {
     if (this.playerIdMap.has(id)) {
       const playerToDelete = this.playerIdMap.get(id)!;
@@ -287,22 +298,28 @@ class GameManager {
       }
     }
   }
+
   getMyPlayer(): Player {
     return this.players[0];
   }
+
   setIdOfMyPlayer(id: string): void {
     this.playerIdMap.set(id, this.getMyPlayer());
   }
+
   getPlayerById(id: string): Player | undefined {
     return this.playerIdMap.get(id);
   }
+
   mouseMove(x: number, y: number) {
     this.players[0].yaw = (-x / window.innerWidth) * 6;
     this.players[0].pitch = -(y / window.innerHeight - 0.5) * Math.PI;
   }
+
   setKey(state: KeyState) {
     this.keyState = state;
   }
+
   addThrust() {
     const v = new THREE.Vector3(0, 0, 0);
     if (this.keyState.W) {
@@ -327,6 +344,7 @@ class GameManager {
       }
     }
   }
+
   private processGun() {
     const player = this.getMyPlayer();
     if (this.keyState.leftClick) {
