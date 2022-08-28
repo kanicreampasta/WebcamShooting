@@ -417,6 +417,21 @@ class GameManager {
   private startDamageEffect() {
     this.damageEffectTimer = this.damageEffectDuration;
   }
+
+  keepOrRemovePlayers(keptPlayerPids: Set<string>) {
+    if (keptPlayerPids.size === this.players.length) return;
+    // remove players whose pid is not in keptPlayerPids
+    for (let i = 0; i < this.players.length; i++) {
+      const player = this.players[i];
+      if (player.pid !== undefined) {
+        if (!keptPlayerPids.has(player.pid)) {
+          console.log("remove player from world: " + player.pid);
+          this.deletePlayerByIndex(i);
+          i--;
+        }
+      }
+    }
+  }
 }
 class KeyState {
   W: boolean = false;
@@ -624,6 +639,10 @@ window.onload = async function () {
         audioMgr!.playSound3D("gunshot", relpos.toArray());
       }
     }
+  };
+  network.onplayerPidsUpdate = (pids) => {
+    // remove left players
+    manager?.keepOrRemovePlayers(new Set(pids));
   };
   network.onplayerdelete = (pid) => {
     console.log(`deleted player ${pid}`);

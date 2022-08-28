@@ -86,6 +86,7 @@ export class NetworkClient {
   private eventQueue: InstantEvent[] = [];
 
   onplayerupdate: undefined | ((pid: string, update: PlayerUpdate) => void);
+  onplayerPidsUpdate: undefined | ((pids: string[]) => void);
 
   onplayerdelete: undefined | ((pid: string) => void);
 
@@ -229,6 +230,12 @@ export class NetworkClient {
       const update = res.updateResponse!;
       for (const player of update.players!) {
         this.processPlayer(player);
+      }
+      const pids = update.players!.map((p) => p.pid!);
+      if (this.onplayerPidsUpdate) {
+        this.onplayerPidsUpdate(pids);
+      } else {
+        console.log("onplayerPidsUpdate is not set");
       }
     }
   }
