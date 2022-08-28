@@ -418,4 +418,8 @@ export class Player {
   isDead(): boolean {
     return this.health.isDead();
   }
+
+  setHealth(hp: number) {
+    this.health.remainingHealth = hp;
+  }
 }

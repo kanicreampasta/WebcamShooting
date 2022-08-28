@@ -4,7 +4,7 @@ import "./index.css";
 import { RenderingManager } from "./renderer";
 import { gAmmo, PhysicsManager } from "./physics";
 import { Player } from "./player";
-import { DeadEvent, NetworkClient } from "./network";
+import { DeadEvent, NetworkClient, RespawnEvent } from "./network";
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from "./utils";
 import { FaceDetector } from "./face-detection/facedetection";
@@ -12,6 +12,8 @@ import { AudioManager } from "./audio";
 import * as _ from "lodash";
 
 export let gPlayers: Player[];
+
+const RESPAWN_WAIT_TIME = 5;
 
 class GameManager {
   rendering: RenderingManager;
@@ -46,6 +48,8 @@ class GameManager {
 
   private effectCanvas: HTMLCanvasElement;
   private effectCanvasCtx: CanvasRenderingContext2D;
+
+  private respawnTimer: number = -1;
 
   constructor(onload: () => void) {
     this.rendering = new RenderingManager();
@@ -142,10 +146,20 @@ class GameManager {
 
     const player = this.getMyPlayer();
     if (player.isDead()) {
-      return;
+      // console.log("reaspwn timer", this.respawnTimer);
+      this.respawnTimer -= dt;
+      if (this.respawnTimer < 0) {
+        this.respawnTimer = -1;
+        const initPosition = [0, 20, 0] as [number, number, number];
+        const initHealth = 51;
+        network!.queueInstantEvent(new RespawnEvent(initPosition));
+        player.warp(...initPosition);
+        player.setHealth(initHealth);
+      }
     } else {
       this.aliveProcess(dt, currentFrame);
     }
+    this.lastFrame = currentFrame;
   }
   private aliveProcess(dt: number, currentFrame: Date) {
     this.addThrust();
@@ -193,7 +207,6 @@ class GameManager {
 
     this.drawDamageEffect(dt);
 
-    this.lastFrame = currentFrame;
     this.previousKeyState = _.cloneDeep(this.keyState);
   }
   private drawDamageEffect(dt: number) {
@@ -367,6 +380,7 @@ class GameManager {
 
   private deathProcess() {
     network!.queueInstantEvent(new DeadEvent());
+    this.respawnTimer = RESPAWN_WAIT_TIME;
   }
 
   getCanvas(): HTMLCanvasElement {
