@@ -299,6 +299,10 @@ class GameManager {
     }
   }
 
+  removePlayerFromWorldById(id: string): void {}
+
+  addPlayerToWorldById(id: string): void {}
+
   getMyPlayer(): Player {
     return this.players[0];
   }

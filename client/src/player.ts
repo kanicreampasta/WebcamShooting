@@ -192,7 +192,17 @@ export class Player {
   }
   delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
     world.removeRigidBody(this.rigidbody);
+    if (this.hitTestBody) {
+      world.removeRigidBody(this.hitTestBody);
+    }
     scene.remove(this.playerMesh);
+  }
+  readdToWorld(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
+    world.addRigidBody(this.rigidbody);
+    if (this.hitTestBody) {
+      world.addRigidBody(this.hitTestBody);
+    }
+    scene.add(this.playerMesh);
   }
   applyGraphics() {
     const trans = new gAmmo.btTransform();
