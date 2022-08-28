@@ -3,7 +3,18 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { gAmmo } from "./physics";
 import Ammo from "./@types/ammo";
 // import * as CANNON from 'cannon';
-
+function GetMeshRecursive(objects: THREE.Object3D<THREE.Event>[]): THREE.Mesh[] {
+  let meshes: THREE.Mesh[] = [];
+  for (const obj of objects) {
+    if (obj instanceof THREE.Group) {
+      meshes = meshes.concat(GetMeshRecursive(obj.children));
+    }
+    if(obj instanceof THREE.Mesh){
+      meshes.push(obj);
+    }
+  }
+  return meshes;
+}
 export class ModelLoader {
   filename: string;
   private gltf?: GLTF;
@@ -29,17 +40,17 @@ export class ModelLoader {
           for (const mesh of gltf.scene.children) {
             if (mesh instanceof THREE.Mesh) {
               console.log(mesh);
-              let name=mesh.name;
-              if(name.startsWith("no_collision")){
-                name=name.slice("no_collision".length);
+              let name = mesh.name;
+              if (name.startsWith("no_collision")) {
+                name = name.slice("no_collision".length);
                 console.log("no_collision");
                 console.log(name);
               }
-              if(name.startsWith("cutout")){
+              if (name.startsWith("cutout")) {
                 console.log("cutout");
-                const original_material:THREE.MeshStandardMaterial= mesh.material;
-                original_material.transparent=true;
-                original_material.alphaTest=0.5;
+                const original_material: THREE.MeshStandardMaterial = mesh.material;
+                original_material.transparent = true;
+                original_material.alphaTest = 0.5;
               }
             }
           }
@@ -64,10 +75,10 @@ export class ModelLoader {
     }
     const compoundShape = new gAmmo.btCompoundShape();
     console.log("scene children: " + this.gltf.scene.children.length);
-    for (const mesh of this.gltf.scene.children) {
+    for (const mesh of GetMeshRecursive(this.gltf.scene.children)) {
       if (mesh instanceof THREE.Mesh) {
         console.log(mesh);
-        if(mesh.name.startsWith("no_collision")){
+        if (mesh.name.startsWith("no_collision")) {
           continue;
         }
         const geometry: THREE.BufferGeometry = mesh.geometry;
