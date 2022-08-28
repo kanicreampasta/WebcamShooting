@@ -150,11 +150,18 @@ class GameManager {
       this.respawnTimer -= dt;
       if (this.respawnTimer < 0) {
         this.respawnTimer = -1;
+
         const initPosition = [0, 20, 0] as [number, number, number];
         const initHealth = 51;
+
         network!.queueInstantEvent(new RespawnEvent(initPosition));
+
         player.warp(...initPosition);
         player.setHealth(initHealth);
+
+        this.rendering.enableView("alive");
+      } else {
+        this.rendering.updateRespawnTimerText(this.respawnTimer);
       }
     } else {
       this.aliveProcess(dt, currentFrame);
@@ -381,6 +388,8 @@ class GameManager {
   private deathProcess() {
     network!.queueInstantEvent(new DeadEvent());
     this.respawnTimer = RESPAWN_WAIT_TIME;
+
+    this.rendering.enableView("dead");
   }
 
   getCanvas(): HTMLCanvasElement {

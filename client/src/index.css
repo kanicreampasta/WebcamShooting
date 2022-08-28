@@ -94,6 +94,18 @@ body {
 	background-repeat: no-repeat;
 	background-size: 100% 100%;
 	font-size: 50px;
+	display: none;
+}
+
+#crosshair.active {
+	display: block;
+}
+
+.centered {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 /* :root{
@@ -130,4 +142,25 @@ body {
 	right: 0;
 	z-index: 100;
 	pointer-events: none;
+}
+
+#aliveView {
+	display: none;
+}
+
+#aliveView.active {
+	display: block;
+}
+
+#deadView {
+	display: none;
+}
+
+#deadView.active {
+	display: block;
+}
+
+.respawn-text {
+	font-size: x-large;
+	font-weight: bold;
 }
