@@ -4,8 +4,6 @@ services:
     build: ./server
     ports:
       - "5000:3000"
-    env_file:
-      - gameserver.env
   janus:
     build: ./janus-docker
     ports:
