@@ -1279,6 +1279,483 @@ export const webcamshooting = $root.webcamshooting = (() => {
         return JoinRequest;
     })();
 
+    webcamshooting.DeadUpdate = (function() {
+
+        /**
+         * Properties of a DeadUpdate.
+         * @memberof webcamshooting
+         * @interface IDeadUpdate
+         * @property {string|null} [pid] DeadUpdate pid
+         * @property {string|null} [killedBy] DeadUpdate killedBy
+         */
+
+        /**
+         * Constructs a new DeadUpdate.
+         * @memberof webcamshooting
+         * @classdesc Represents a DeadUpdate.
+         * @implements IDeadUpdate
+         * @constructor
+         * @param {webcamshooting.IDeadUpdate=} [properties] Properties to set
+         */
+        function DeadUpdate(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * DeadUpdate pid.
+         * @member {string} pid
+         * @memberof webcamshooting.DeadUpdate
+         * @instance
+         */
+        DeadUpdate.prototype.pid = "";
+
+        /**
+         * DeadUpdate killedBy.
+         * @member {string|null|undefined} killedBy
+         * @memberof webcamshooting.DeadUpdate
+         * @instance
+         */
+        DeadUpdate.prototype.killedBy = null;
+
+        // OneOf field names bound to virtual getters and setters
+        let $oneOfFields;
+
+        /**
+         * DeadUpdate _killedBy.
+         * @member {"killedBy"|undefined} _killedBy
+         * @memberof webcamshooting.DeadUpdate
+         * @instance
+         */
+        Object.defineProperty(DeadUpdate.prototype, "_killedBy", {
+            get: $util.oneOfGetter($oneOfFields = ["killedBy"]),
+            set: $util.oneOfSetter($oneOfFields)
+        });
+
+        /**
+         * Creates a new DeadUpdate instance using the specified properties.
+         * @function create
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {webcamshooting.IDeadUpdate=} [properties] Properties to set
+         * @returns {webcamshooting.DeadUpdate} DeadUpdate instance
+         */
+        DeadUpdate.create = function create(properties) {
+            return new DeadUpdate(properties);
+        };
+
+        /**
+         * Encodes the specified DeadUpdate message. Does not implicitly {@link webcamshooting.DeadUpdate.verify|verify} messages.
+         * @function encode
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {webcamshooting.IDeadUpdate} message DeadUpdate message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        DeadUpdate.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.pid != null && Object.hasOwnProperty.call(message, "pid"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.pid);
+            if (message.killedBy != null && Object.hasOwnProperty.call(message, "killedBy"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.killedBy);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified DeadUpdate message, length delimited. Does not implicitly {@link webcamshooting.DeadUpdate.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {webcamshooting.IDeadUpdate} message DeadUpdate message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        DeadUpdate.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a DeadUpdate message from the specified reader or buffer.
+         * @function decode
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {webcamshooting.DeadUpdate} DeadUpdate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        DeadUpdate.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webcamshooting.DeadUpdate();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        message.pid = reader.string();
+                        break;
+                    }
+                case 2: {
+                        message.killedBy = reader.string();
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a DeadUpdate message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {webcamshooting.DeadUpdate} DeadUpdate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        DeadUpdate.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a DeadUpdate message.
+         * @function verify
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        DeadUpdate.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            let properties = {};
+            if (message.pid != null && message.hasOwnProperty("pid"))
+                if (!$util.isString(message.pid))
+                    return "pid: string expected";
+            if (message.killedBy != null && message.hasOwnProperty("killedBy")) {
+                properties._killedBy = 1;
+                if (!$util.isString(message.killedBy))
+                    return "killedBy: string expected";
+            }
+            return null;
+        };
+
+        /**
+         * Creates a DeadUpdate message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {webcamshooting.DeadUpdate} DeadUpdate
+         */
+        DeadUpdate.fromObject = function fromObject(object) {
+            if (object instanceof $root.webcamshooting.DeadUpdate)
+                return object;
+            let message = new $root.webcamshooting.DeadUpdate();
+            if (object.pid != null)
+                message.pid = String(object.pid);
+            if (object.killedBy != null)
+                message.killedBy = String(object.killedBy);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a DeadUpdate message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {webcamshooting.DeadUpdate} message DeadUpdate
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        DeadUpdate.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.defaults)
+                object.pid = "";
+            if (message.pid != null && message.hasOwnProperty("pid"))
+                object.pid = message.pid;
+            if (message.killedBy != null && message.hasOwnProperty("killedBy")) {
+                object.killedBy = message.killedBy;
+                if (options.oneofs)
+                    object._killedBy = "killedBy";
+            }
+            return object;
+        };
+
+        /**
+         * Converts this DeadUpdate to JSON.
+         * @function toJSON
+         * @memberof webcamshooting.DeadUpdate
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        DeadUpdate.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for DeadUpdate
+         * @function getTypeUrl
+         * @memberof webcamshooting.DeadUpdate
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        DeadUpdate.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/webcamshooting.DeadUpdate";
+        };
+
+        return DeadUpdate;
+    })();
+
+    webcamshooting.RespawnRequest = (function() {
+
+        /**
+         * Properties of a RespawnRequest.
+         * @memberof webcamshooting
+         * @interface IRespawnRequest
+         * @property {string|null} [pid] RespawnRequest pid
+         * @property {webcamshooting.IVector3|null} [position] RespawnRequest position
+         */
+
+        /**
+         * Constructs a new RespawnRequest.
+         * @memberof webcamshooting
+         * @classdesc Represents a RespawnRequest.
+         * @implements IRespawnRequest
+         * @constructor
+         * @param {webcamshooting.IRespawnRequest=} [properties] Properties to set
+         */
+        function RespawnRequest(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * RespawnRequest pid.
+         * @member {string} pid
+         * @memberof webcamshooting.RespawnRequest
+         * @instance
+         */
+        RespawnRequest.prototype.pid = "";
+
+        /**
+         * RespawnRequest position.
+         * @member {webcamshooting.IVector3|null|undefined} position
+         * @memberof webcamshooting.RespawnRequest
+         * @instance
+         */
+        RespawnRequest.prototype.position = null;
+
+        /**
+         * Creates a new RespawnRequest instance using the specified properties.
+         * @function create
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {webcamshooting.IRespawnRequest=} [properties] Properties to set
+         * @returns {webcamshooting.RespawnRequest} RespawnRequest instance
+         */
+        RespawnRequest.create = function create(properties) {
+            return new RespawnRequest(properties);
+        };
+
+        /**
+         * Encodes the specified RespawnRequest message. Does not implicitly {@link webcamshooting.RespawnRequest.verify|verify} messages.
+         * @function encode
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {webcamshooting.IRespawnRequest} message RespawnRequest message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        RespawnRequest.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.pid != null && Object.hasOwnProperty.call(message, "pid"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.pid);
+            if (message.position != null && Object.hasOwnProperty.call(message, "position"))
+                $root.webcamshooting.Vector3.encode(message.position, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified RespawnRequest message, length delimited. Does not implicitly {@link webcamshooting.RespawnRequest.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {webcamshooting.IRespawnRequest} message RespawnRequest message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        RespawnRequest.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a RespawnRequest message from the specified reader or buffer.
+         * @function decode
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {webcamshooting.RespawnRequest} RespawnRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        RespawnRequest.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.webcamshooting.RespawnRequest();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        message.pid = reader.string();
+                        break;
+                    }
+                case 2: {
+                        message.position = $root.webcamshooting.Vector3.decode(reader, reader.uint32());
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a RespawnRequest message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {webcamshooting.RespawnRequest} RespawnRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        RespawnRequest.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a RespawnRequest message.
+         * @function verify
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        RespawnRequest.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.pid != null && message.hasOwnProperty("pid"))
+                if (!$util.isString(message.pid))
+                    return "pid: string expected";
+            if (message.position != null && message.hasOwnProperty("position")) {
+                let error = $root.webcamshooting.Vector3.verify(message.position);
+                if (error)
+                    return "position." + error;
+            }
+            return null;
+        };
+
+        /**
+         * Creates a RespawnRequest message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {webcamshooting.RespawnRequest} RespawnRequest
+         */
+        RespawnRequest.fromObject = function fromObject(object) {
+            if (object instanceof $root.webcamshooting.RespawnRequest)
+                return object;
+            let message = new $root.webcamshooting.RespawnRequest();
+            if (object.pid != null)
+                message.pid = String(object.pid);
+            if (object.position != null) {
+                if (typeof object.position !== "object")
+                    throw TypeError(".webcamshooting.RespawnRequest.position: object expected");
+                message.position = $root.webcamshooting.Vector3.fromObject(object.position);
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a RespawnRequest message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {webcamshooting.RespawnRequest} message RespawnRequest
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        RespawnRequest.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.defaults) {
+                object.pid = "";
+                object.position = null;
+            }
+            if (message.pid != null && message.hasOwnProperty("pid"))
+                object.pid = message.pid;
+            if (message.position != null && message.hasOwnProperty("position"))
+                object.position = $root.webcamshooting.Vector3.toObject(message.position, options);
+            return object;
+        };
+
+        /**
+         * Converts this RespawnRequest to JSON.
+         * @function toJSON
+         * @memberof webcamshooting.RespawnRequest
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        RespawnRequest.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for RespawnRequest
+         * @function getTypeUrl
+         * @memberof webcamshooting.RespawnRequest
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        RespawnRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/webcamshooting.RespawnRequest";
+        };
+
+        return RespawnRequest;
+    })();
+
     webcamshooting.Request = (function() {
 
         /**
@@ -1287,6 +1764,8 @@ export const webcamshooting = $root.webcamshooting = (() => {
          * @interface IRequest
          * @property {webcamshooting.IJoinRequest|null} [joinRequest] Request joinRequest
          * @property {webcamshooting.IClientUpdate|null} [clientUpdate] Request clientUpdate
+         * @property {webcamshooting.IDeadUpdate|null} [deadUpdate] Request deadUpdate
+         * @property {webcamshooting.IRespawnRequest|null} [respawnRequest] Request respawnRequest
          */
 
         /**
@@ -1320,17 +1799,33 @@ export const webcamshooting = $root.webcamshooting = (() => {
          */
         Request.prototype.clientUpdate = null;
 
+        /**
+         * Request deadUpdate.
+         * @member {webcamshooting.IDeadUpdate|null|undefined} deadUpdate
+         * @memberof webcamshooting.Request
+         * @instance
+         */
+        Request.prototype.deadUpdate = null;
+
+        /**
+         * Request respawnRequest.
+         * @member {webcamshooting.IRespawnRequest|null|undefined} respawnRequest
+         * @memberof webcamshooting.Request
+         * @instance
+         */
+        Request.prototype.respawnRequest = null;
+
         // OneOf field names bound to virtual getters and setters
         let $oneOfFields;
 
         /**
          * Request requestOneof.
-         * @member {"joinRequest"|"clientUpdate"|undefined} requestOneof
+         * @member {"joinRequest"|"clientUpdate"|"deadUpdate"|"respawnRequest"|undefined} requestOneof
          * @memberof webcamshooting.Request
          * @instance
          */
         Object.defineProperty(Request.prototype, "requestOneof", {
-            get: $util.oneOfGetter($oneOfFields = ["joinRequest", "clientUpdate"]),
+            get: $util.oneOfGetter($oneOfFields = ["joinRequest", "clientUpdate", "deadUpdate", "respawnRequest"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -1362,6 +1857,10 @@ export const webcamshooting = $root.webcamshooting = (() => {
                 $root.webcamshooting.JoinRequest.encode(message.joinRequest, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
             if (message.clientUpdate != null && Object.hasOwnProperty.call(message, "clientUpdate"))
                 $root.webcamshooting.ClientUpdate.encode(message.clientUpdate, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.deadUpdate != null && Object.hasOwnProperty.call(message, "deadUpdate"))
+                $root.webcamshooting.DeadUpdate.encode(message.deadUpdate, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.respawnRequest != null && Object.hasOwnProperty.call(message, "respawnRequest"))
+                $root.webcamshooting.RespawnRequest.encode(message.respawnRequest, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
             return writer;
         };
 
@@ -1402,6 +1901,14 @@ export const webcamshooting = $root.webcamshooting = (() => {
                     }
                 case 2: {
                         message.clientUpdate = $root.webcamshooting.ClientUpdate.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 3: {
+                        message.deadUpdate = $root.webcamshooting.DeadUpdate.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 4: {
+                        message.respawnRequest = $root.webcamshooting.RespawnRequest.decode(reader, reader.uint32());
                         break;
                     }
                 default:
@@ -1458,6 +1965,26 @@ export const webcamshooting = $root.webcamshooting = (() => {
                         return "clientUpdate." + error;
                 }
             }
+            if (message.deadUpdate != null && message.hasOwnProperty("deadUpdate")) {
+                if (properties.requestOneof === 1)
+                    return "requestOneof: multiple values";
+                properties.requestOneof = 1;
+                {
+                    let error = $root.webcamshooting.DeadUpdate.verify(message.deadUpdate);
+                    if (error)
+                        return "deadUpdate." + error;
+                }
+            }
+            if (message.respawnRequest != null && message.hasOwnProperty("respawnRequest")) {
+                if (properties.requestOneof === 1)
+                    return "requestOneof: multiple values";
+                properties.requestOneof = 1;
+                {
+                    let error = $root.webcamshooting.RespawnRequest.verify(message.respawnRequest);
+                    if (error)
+                        return "respawnRequest." + error;
+                }
+            }
             return null;
         };
 
@@ -1482,6 +2009,16 @@ export const webcamshooting = $root.webcamshooting = (() => {
                 if (typeof object.clientUpdate !== "object")
                     throw TypeError(".webcamshooting.Request.clientUpdate: object expected");
                 message.clientUpdate = $root.webcamshooting.ClientUpdate.fromObject(object.clientUpdate);
+            }
+            if (object.deadUpdate != null) {
+                if (typeof object.deadUpdate !== "object")
+                    throw TypeError(".webcamshooting.Request.deadUpdate: object expected");
+                message.deadUpdate = $root.webcamshooting.DeadUpdate.fromObject(object.deadUpdate);
+            }
+            if (object.respawnRequest != null) {
+                if (typeof object.respawnRequest !== "object")
+                    throw TypeError(".webcamshooting.Request.respawnRequest: object expected");
+                message.respawnRequest = $root.webcamshooting.RespawnRequest.fromObject(object.respawnRequest);
             }
             return message;
         };
@@ -1508,6 +2045,16 @@ export const webcamshooting = $root.webcamshooting = (() => {
                 object.clientUpdate = $root.webcamshooting.ClientUpdate.toObject(message.clientUpdate, options);
                 if (options.oneofs)
                     object.requestOneof = "clientUpdate";
+            }
+            if (message.deadUpdate != null && message.hasOwnProperty("deadUpdate")) {
+                object.deadUpdate = $root.webcamshooting.DeadUpdate.toObject(message.deadUpdate, options);
+                if (options.oneofs)
+                    object.requestOneof = "deadUpdate";
+            }
+            if (message.respawnRequest != null && message.hasOwnProperty("respawnRequest")) {
+                object.respawnRequest = $root.webcamshooting.RespawnRequest.toObject(message.respawnRequest, options);
+                if (options.oneofs)
+                    object.requestOneof = "respawnRequest";
             }
             return object;
         };
@@ -2241,6 +2788,7 @@ export const webcamshooting = $root.webcamshooting = (() => {
          * @interface IPlayerUpdateResponse
          * @property {string|null} [pid] PlayerUpdateResponse pid
          * @property {webcamshooting.IPlayer|null} [player] PlayerUpdateResponse player
+         * @property {boolean|null} [dead] PlayerUpdateResponse dead
          * @property {boolean|null} [fired] PlayerUpdateResponse fired
          * @property {Array.<webcamshooting.IDamageResponse>|null} [damages] PlayerUpdateResponse damages
          */
@@ -2276,6 +2824,14 @@ export const webcamshooting = $root.webcamshooting = (() => {
          * @instance
          */
         PlayerUpdateResponse.prototype.player = null;
+
+        /**
+         * PlayerUpdateResponse dead.
+         * @member {boolean} dead
+         * @memberof webcamshooting.PlayerUpdateResponse
+         * @instance
+         */
+        PlayerUpdateResponse.prototype.dead = false;
 
         /**
          * PlayerUpdateResponse fired.
@@ -2321,6 +2877,8 @@ export const webcamshooting = $root.webcamshooting = (() => {
                 writer.uint32(/* id 1, wireType 2 =*/10).string(message.pid);
             if (message.player != null && Object.hasOwnProperty.call(message, "player"))
                 $root.webcamshooting.Player.encode(message.player, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.dead != null && Object.hasOwnProperty.call(message, "dead"))
+                writer.uint32(/* id 3, wireType 0 =*/24).bool(message.dead);
             if (message.fired != null && Object.hasOwnProperty.call(message, "fired"))
                 writer.uint32(/* id 6, wireType 0 =*/48).bool(message.fired);
             if (message.damages != null && message.damages.length)
@@ -2366,6 +2924,10 @@ export const webcamshooting = $root.webcamshooting = (() => {
                     }
                 case 2: {
                         message.player = $root.webcamshooting.Player.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 3: {
+                        message.dead = reader.bool();
                         break;
                     }
                 case 6: {
@@ -2421,6 +2983,9 @@ export const webcamshooting = $root.webcamshooting = (() => {
                 if (error)
                     return "player." + error;
             }
+            if (message.dead != null && message.hasOwnProperty("dead"))
+                if (typeof message.dead !== "boolean")
+                    return "dead: boolean expected";
             if (message.fired != null && message.hasOwnProperty("fired"))
                 if (typeof message.fired !== "boolean")
                     return "fired: boolean expected";
@@ -2455,6 +3020,8 @@ export const webcamshooting = $root.webcamshooting = (() => {
                     throw TypeError(".webcamshooting.PlayerUpdateResponse.player: object expected");
                 message.player = $root.webcamshooting.Player.fromObject(object.player);
             }
+            if (object.dead != null)
+                message.dead = Boolean(object.dead);
             if (object.fired != null)
                 message.fired = Boolean(object.fired);
             if (object.damages) {
@@ -2488,12 +3055,15 @@ export const webcamshooting = $root.webcamshooting = (() => {
             if (options.defaults) {
                 object.pid = "";
                 object.player = null;
+                object.dead = false;
                 object.fired = false;
             }
             if (message.pid != null && message.hasOwnProperty("pid"))
                 object.pid = message.pid;
             if (message.player != null && message.hasOwnProperty("player"))
                 object.player = $root.webcamshooting.Player.toObject(message.player, options);
+            if (message.dead != null && message.hasOwnProperty("dead"))
+                object.dead = message.dead;
             if (message.fired != null && message.hasOwnProperty("fired"))
                 object.fired = message.fired;
             if (message.damages && message.damages.length) {

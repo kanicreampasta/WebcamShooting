@@ -19,12 +19,7 @@ var (
 	rdb *redis.Client
 )
 
-const (
-	RKeyPlayerList    = "playerlist"
-	RKeyPlayerNameMap = "playername"
-	RKeyFired         = "fired"
-	RKeyDamage        = "damage"
-)
+const ()
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
@@ -42,6 +37,11 @@ type PlayerInfo struct {
 	Velocity Vector3
 	Yaw      float32
 	Pitch    float32
+
+	IsDead bool
+
+	FireEvents   map[string]bool
+	DamageEvents []*types.DamageInternal
 }
 
 type GameServer struct {
@@ -66,18 +66,21 @@ func generatePid() string {
 	return pid.String()
 }
 
-func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid string) (*types.PlayerUpdateResponse, error) {
+func (gs *GameServer) makePlayerResponse(forPid string, pid string) (*types.PlayerUpdateResponse, error) {
 	var (
-		player *types.Player
-		err    error
+		player  *types.Player
+		fired   bool
+		dead    bool
+		damages []*types.DamageInternal
+		err     error
 	)
-	if player, err = func() (*types.Player, error) {
-		gs.PlayerListLock.RLock()
-		defer gs.PlayerListLock.RUnlock()
+	if player, fired, dead, damages, err = func() (*types.Player, bool, bool, []*types.DamageInternal, error) {
+		gs.PlayerListLock.Lock()
+		defer gs.PlayerListLock.Unlock()
 		var ok bool
 		pl, ok := gs.PlayerList[pid]
 		if !ok {
-			return nil, errors.New("player not found")
+			return nil, false, false, nil, errors.New("player not found")
 		}
 		player := &types.Player{
 			Position: &types.Vector3{
@@ -93,56 +96,64 @@ func (gs *GameServer) makePlayerResponse(ctx context.Context, forPid string, pid
 			Yaw:   pl.Yaw,
 			Pitch: pl.Pitch,
 		}
-		return player, nil
+
+		forPl, ok := gs.PlayerList[forPid]
+		if !ok {
+			return nil, false, false, nil, errors.New("forplayer not found")
+		}
+
+		fired, ok := forPl.FireEvents[pid]
+		// clear fired
+		if ok {
+			forPl.FireEvents[pid] = false
+		}
+
+		dead := pl.IsDead
+
+		var damages []*types.DamageInternal
+		if forPid == pid {
+			damages = pl.DamageEvents
+			// empty pl.DamageEvents
+			if len(damages) > 0 {
+				pl.DamageEvents = make([]*types.DamageInternal, 0)
+				log.Println("inserted damage")
+			}
+		} else {
+			damages = make([]*types.DamageInternal, 0)
+		}
+		return player, fired, dead, damages, nil
 	}(); err != nil {
-		return nil, err
-	}
-
-	fkey := RKeyFired + ":" + forPid
-	fired, err := rdb.SRem(ctx, fkey, pid).Result()
-	if err != nil {
-		log.Println("get fired:", err)
-		return nil, err
-	}
-
-	dkey := RKeyDamage + ":" + forPid
-	damages, err := rdb.LRange(ctx, dkey, 0, -1).Result()
-	if err != nil {
-		log.Println("get damages:", err)
 		return nil, err
 	}
 
 	damageResponse := make([]*types.DamageResponse, 0)
 	for _, damage := range damages {
-		damageBytes := []byte(damage)
-		var damage types.DamageInternal
-		if err = proto.Unmarshal(damageBytes, &damage); err != nil {
-			log.Println("unmarshal damage:", err)
-			continue
-		}
 		damageResponse = append(damageResponse, &types.DamageResponse{
 			By:     damage.DamagedBy,
 			Amount: damage.Amount,
 		})
 	}
-	if len(damages) > 0 {
-		rdb.Del(ctx, dkey)
-	}
 
 	return &types.PlayerUpdateResponse{
 		Player:  player,
-		Fired:   fired > 0,
+		Fired:   fired,
+		Dead:    dead,
 		Pid:     pid,
 		Damages: damageResponse,
 	}, nil
 }
 
-func (gs *GameServer) makeUpdateResponse(ctx context.Context, forPid string) (*types.UpdateResponse, error) {
-	pids := getPids(ctx)
+func (gs *GameServer) makeUpdateResponse(forPid string) (*types.UpdateResponse, error) {
+
+	pids := func() []string {
+		gs.PlayerListLock.RLock()
+		defer gs.PlayerListLock.RUnlock()
+		return gs.getPids()
+	}()
 
 	players := make([]*types.PlayerUpdateResponse, 0)
 	for _, pid := range pids {
-		player, err := gs.makePlayerResponse(ctx, forPid, pid)
+		player, err := gs.makePlayerResponse(forPid, pid)
 		if err != nil {
 			log.Println("make player response:", err)
 			continue
@@ -158,15 +169,11 @@ func (gs *GameServer) makeUpdateResponse(ctx context.Context, forPid string) (*t
 func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest) (string, error) {
 	username := u.Name
 	pid := generatePid()
-	ctx := context.Background()
-	pipe := rdb.Pipeline()
-	pipe.SAdd(ctx, RKeyPlayerList, pid)
-	pipe.HSet(ctx, RKeyPlayerNameMap, pid, username)
-
-	_, err := pipe.Exec(ctx)
-	if err != nil {
-		log.Println("join request:", err)
-		return "", err
+	gs.PlayerListLock.Lock()
+	defer gs.PlayerListLock.Unlock()
+	gs.PlayerList[pid] = &PlayerInfo{
+		Pid:        pid,
+		FireEvents: make(map[string]bool),
 	}
 
 	pidRes := types.PidResponse{
@@ -191,10 +198,10 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 	return pid, nil
 }
 
-func getPids(ctx context.Context) []string {
-	pids, err := rdb.SMembers(ctx, RKeyPlayerList).Result()
-	if err != nil {
-		panic("get pids")
+func (gs *GameServer) getPids() []string {
+	pids := make([]string, 0)
+	for pid := range gs.PlayerList {
+		pids = append(pids, pid)
 	}
 	return pids
 }
@@ -202,13 +209,12 @@ func getPids(ctx context.Context) []string {
 func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdate) {
 	pid := u.Pid
 
-	func() {
+	err := func() error {
 		gs.PlayerListLock.Lock()
 		defer gs.PlayerListLock.Unlock()
 		pl, ok := gs.PlayerList[pid]
 		if !ok {
-			pl = &PlayerInfo{}
-			gs.PlayerList[pid] = pl
+			return errors.New("not registered")
 		}
 
 		pl.Pid = pid
@@ -220,50 +226,41 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 		pl.Velocity.Z = u.Player.Velocity.Z
 		pl.Yaw = u.Player.Yaw
 		pl.Pitch = u.Player.Pitch
-	}()
 
-	ctx := context.Background()
-	var pids []string
-	pipe := rdb.Pipeline()
-	if u.Fired {
-		pids = getPids(ctx)
-		for _, otherPid := range pids {
-			if otherPid == pid {
-				continue
-			}
-			fkey := RKeyFired + ":" + otherPid
-			if err := pipe.SAdd(ctx, fkey, pid).Err(); err != nil {
-				log.Println("set fired:", err)
-				continue
+		pids := gs.getPids()
+		if u.Fired {
+			for _, otherPid := range pids {
+				if otherPid == pid {
+					continue
+				}
+				otherPl := gs.PlayerList[otherPid]
+				if otherPl == nil {
+					continue
+				}
+				otherPl.FireEvents[pid] = true
 			}
 		}
-	}
 
-	if len(u.Damages) > 0 {
 		for _, damage := range u.Damages {
-			damageInfo := types.DamageInternal{
+			damagedPl := gs.PlayerList[damage.Pid]
+			if damagedPl == nil {
+				continue
+			}
+			damagedPl.DamageEvents = append(damagedPl.DamageEvents, &types.DamageInternal{
 				DamagedBy: pid,
 				Amount:    damage.Damage,
-			}
-			damagepb, err := proto.Marshal(&damageInfo)
-			if err != nil {
-				panic("marshal damage")
-			}
-
-			dkey := RKeyDamage + ":" + damage.Pid
-			if err = pipe.LPush(ctx, dkey, damagepb).Err(); err != nil {
-				log.Println("set damage:", err)
-				continue
-			}
+			})
 		}
-	}
+		return nil
+	}()
 
-	if _, err := pipe.Exec(ctx); err != nil {
+	if err != nil {
 		log.Println("handleClientUpdate:", err)
+		return
 	}
 
 	// make updateRes
-	updateRes, err := gs.makeUpdateResponse(ctx, pid)
+	updateRes, err := gs.makeUpdateResponse(pid)
 	if err != nil {
 		log.Println("make update response:", err)
 		return
@@ -285,24 +282,36 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 	}
 }
 
-func closeHandler(code int, text string, pid string) error {
+func (gs *GameServer) handleDeadUpdate(u *types.DeadUpdate) {
+	gs.PlayerListLock.Lock()
+	defer gs.PlayerListLock.Unlock()
+	pl := gs.PlayerList[u.Pid]
+	if pl == nil {
+		return
+	}
+	pl.IsDead = true
+	log.Printf("Player %s is dead", u.Pid)
+}
+
+func (gs *GameServer) handleRespawn(u *types.RespawnRequest) {
+	gs.PlayerListLock.Lock()
+	defer gs.PlayerListLock.Unlock()
+	pl := gs.PlayerList[u.Pid]
+	if pl == nil {
+		return
+	}
+	pl.IsDead = false
+	log.Printf("Player %s respawned", u.Pid)
+}
+
+func (gs *GameServer) closeHandler(code int, text string, pid string) error {
 	log.Println("close:", code, text)
 
-	pipe := rdb.Pipeline()
-	ctx := context.Background()
+	gs.PlayerListLock.Lock()
+	defer gs.PlayerListLock.Unlock()
 
-	pipe.SRem(ctx, RKeyPlayerList, pid)
-	pids := getPids(ctx)
-	for _, pid := range pids {
-		fkey := RKeyFired + ":" + pid
-		pipe.SRem(ctx, fkey, pid)
-	}
-
-	_, err := pipe.Exec(ctx)
-	if err != nil {
-		log.Println("close handler:", err)
-		return err
-	}
+	// delete pid from player list
+	delete(gs.PlayerList, pid)
 
 	return nil
 }
@@ -315,7 +324,7 @@ func handleConnection(gs *GameServer, c *websocket.Conn) {
 			if pid == "" {
 				return nil
 			}
-			return closeHandler(code, text, pid)
+			return gs.closeHandler(code, text, pid)
 		})
 
 		ty, r, err := c.NextReader()
@@ -351,6 +360,10 @@ func handleConnection(gs *GameServer, c *websocket.Conn) {
 				break
 			}
 			pid = newPid
+		case *types.Request_DeadUpdate:
+			gs.handleDeadUpdate(req.DeadUpdate)
+		case *types.Request_RespawnRequest:
+			gs.handleRespawn(req.RespawnRequest)
 		case nil:
 			log.Println("nil request")
 			fail = true
@@ -366,7 +379,9 @@ func handleConnection(gs *GameServer, c *websocket.Conn) {
 }
 
 func NewGameServer() *GameServer {
-	return &GameServer{}
+	return &GameServer{
+		PlayerList: make(map[string]*PlayerInfo),
+	}
 }
 
 func main() {

@@ -32,10 +32,22 @@ message JoinRequest {
     string name = 1;
 }
 
+message DeadUpdate {
+    string pid = 1;
+    optional string killed_by = 2;
+}
+
+message RespawnRequest {
+    string pid = 1;
+    Vector3 position = 2;
+}
+
 message Request {
     oneof request_oneof {
         JoinRequest join_request = 1;
         ClientUpdate client_update = 2;
+        DeadUpdate dead_update = 3;
+        RespawnRequest respawn_request = 4;
     }
 }
 
@@ -58,6 +70,7 @@ message DamageResponse {
 message PlayerUpdateResponse {
     string pid = 1;
     Player player = 2;
+    bool dead = 3;
     bool fired = 6;
     repeated DamageResponse damages = 7;
 }
