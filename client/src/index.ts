@@ -696,8 +696,7 @@ window.onload = async function () {
     })
     .then(async (stream) => {
       console.log("initializing video server");
-      network!.setVideoStream(stream);
-      await network!.initVideoServer();
+      await network!.initVideoServer(stream);
     });
   {
     let mouseMoveX = 0;

@@ -32,9 +32,8 @@ type PlayerUpdate = {
   }[];
 };
 
-const GAME_SERVER = "ws://192.168.1.21:5000";
-export const VIDEO_SERVER = "http://192.168.1.21:5001/janus";
-
+const GAME_SERVER = "ws://localhost:5000";
+export const VIDEO_SERVER_SIGNALING = "ws://localhost:5004/websocket";
 export abstract class InstantEvent {
   abstract send(client: NetworkClient): void;
 }
@@ -97,10 +96,6 @@ export class NetworkClient {
 
   onmypid: undefined | ((pid: string) => void);
 
-  setVideoStream(stream: MediaStream) {
-    video.setVideoStream(stream);
-  }
-
   constructor() {
     this.socket = undefined;
     this.pid = null;
@@ -117,18 +112,18 @@ export class NetworkClient {
     });
   }
 
-  async initVideoServer(): Promise<void> {
+  async initVideoServer(myStream: MediaStream): Promise<void> {
     video.setOnVideoStream((stream, pid) => {
       if (this.onvideostream) {
         this.onvideostream(stream, pid);
       }
     });
     if (this.pid !== null) {
-      video.initializeVideo(this.pid);
+      video.initializeVideo(this.pid, myStream);
       logMyPid(this.pid);
     } else {
       this.onmypid = (pid) => {
-        video.initializeVideo(pid);
+        video.initializeVideo(pid, myStream);
         logMyPid(pid);
       };
     }
