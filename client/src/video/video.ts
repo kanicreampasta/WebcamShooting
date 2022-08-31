@@ -2,7 +2,7 @@ import Janus from "./janus.es";
 import adapter from "./adapter";
 
 const roomName = 1234;
-let myStream: MediaStream;
+let myStream: MediaStream | null;
 
 export type VideoSetter = (stream: MediaStream | null, pid?: string) => void;
 let onvideostream: VideoSetter;
@@ -31,7 +31,6 @@ let myroom = 1234; // Demo room
 //   myroom = parseInt(getQueryStringValue("room"));
 let myusername: string | null = null;
 let myid: string | null = null;
-let mystream: any | null = null;
 // We use this other ID just to map our subscriptions to us
 let mypvtid: any | null = null;
 
@@ -81,12 +80,13 @@ export const initializeVideo = function (username: string) {
                 );
                 console.log("  -- This is a publisher/manager");
                 // Prepare the username registration
+                registerUsername(myusername!);
               },
               error: function (error: any) {
                 console.error("  -- Error attaching plugin...", error);
               },
               consentDialog: function (on: any) {
-                console.debug(
+                console.log(
                   "Consent dialog should be " + (on ? "on" : "off") + " now"
                 );
                 if (on) {
@@ -131,9 +131,9 @@ export const initializeVideo = function (username: string) {
                 );
               },
               onmessage: function (msg: any, jsep: any) {
-                console.debug(" ::: Got a message (publisher) :::", msg);
+                console.log(" ::: Got a message (publisher) :::", msg);
                 let event = msg["videoroom"];
-                console.debug("Event: " + event);
+                console.log("Event: " + event);
                 if (event) {
                   if (event === "joined") {
                     // Publisher/manager created, negotiate WebRTC and attach to existing feeds, if any
@@ -149,7 +149,7 @@ export const initializeVideo = function (username: string) {
                     // Any new feed to attach to?
                     if (msg["publishers"]) {
                       let list = msg["publishers"];
-                      console.debug(
+                      console.log(
                         "Got a list of available publishers/feeds:",
                         list
                       );
@@ -164,7 +164,7 @@ export const initializeVideo = function (username: string) {
                           stream["display"] = display;
                         }
                         feedStreams[id] = streams;
-                        console.debug(
+                        console.log(
                           "  >> [" + id + "] " + display + ":",
                           streams
                         );
@@ -186,7 +186,7 @@ export const initializeVideo = function (username: string) {
                       feedStreams[myid!] = streams;
                     } else if (msg["publishers"]) {
                       let list = msg["publishers"];
-                      console.debug(
+                      console.log(
                         "Got a list of available publishers/feeds:",
                         list
                       );
@@ -201,7 +201,7 @@ export const initializeVideo = function (username: string) {
                           stream["display"] = display;
                         }
                         feedStreams[id] = streams;
-                        console.debug(
+                        console.log(
                           "  >> [" + id + "] " + display + ":",
                           streams
                         );
@@ -219,7 +219,7 @@ export const initializeVideo = function (username: string) {
                         }
                       }
                       if (remoteFeed) {
-                        console.debug(
+                        console.log(
                           "Feed " +
                             remoteFeed.rfid +
                             " (" +
@@ -247,7 +247,7 @@ export const initializeVideo = function (username: string) {
                         }
                       }
                       if (remoteFeed) {
-                        console.debug(
+                        console.log(
                           "Feed " +
                             remoteFeed.rfid +
                             " (" +
@@ -269,15 +269,15 @@ export const initializeVideo = function (username: string) {
                   }
                 }
                 if (jsep) {
-                  console.debug("Handling SDP as well...", jsep);
+                  console.log("Handling SDP as well...", jsep);
                   sfutest.handleRemoteJsep({ jsep: jsep });
                   // Check if any of the media we wanted to publish has
                   // been rejected (e.g., wrong or unsupported codec)
                   let audio = msg["audio_codec"];
                   if (
-                    mystream &&
-                    mystream.getAudioTracks() &&
-                    mystream.getAudioTracks().length > 0 &&
+                    myStream &&
+                    myStream.getAudioTracks() &&
+                    myStream.getAudioTracks().length > 0 &&
                     !audio
                   ) {
                     // Audio has been rejected
@@ -287,9 +287,9 @@ export const initializeVideo = function (username: string) {
                   }
                   let video = msg["video_codec"];
                   if (
-                    mystream &&
-                    mystream.getVideoTracks() &&
-                    mystream.getVideoTracks().length > 0 &&
+                    myStream &&
+                    myStream.getVideoTracks() &&
+                    myStream.getVideoTracks().length > 0 &&
                     !video
                   ) {
                     // Video has been rejected
@@ -301,7 +301,7 @@ export const initializeVideo = function (username: string) {
                 }
               },
               onlocaltrack: function (track: any, on: any) {
-                console.debug(
+                console.log(
                   "Local track " + (on ? "added" : "removed") + ":",
                   track
                 );
@@ -376,7 +376,7 @@ export const initializeVideo = function (username: string) {
                 console.log(
                   " ::: Got a cleanup notification: we are unpublished now :::"
                 );
-                mystream = null;
+                myStream = null;
                 delete feedStreams[myid!];
                 localTracks = {};
                 localVideos = 0;
@@ -437,6 +437,13 @@ function publishOwnFeed(useAudio: boolean) {
 
   sfutest.createOffer({
     tracks: tracks,
+    media: {
+      audioRecv: false,
+      videoRecv: false,
+      audioSend: false,
+      videoSend: true,
+    },
+    stream: myStream,
     customizeSdp: function (jsep: any) {
       // If DTX is enabled, munge the SDP
       // if (doDtx) {
@@ -447,7 +454,7 @@ function publishOwnFeed(useAudio: boolean) {
       // }
     },
     success: function (jsep: any) {
-      console.debug("Got publisher SDP!", jsep);
+      console.log("Got publisher SDP!", jsep);
       let publish = { request: "configure", audio: useAudio, video: true };
       // You can force a specific codec to use when publishing by using the
       // audiocodec and videocodec properties, for instance:
@@ -587,9 +594,9 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
       );
     },
     onmessage: function (msg: any, jsep: any) {
-      console.debug(" ::: Got a message (subscriber) :::", msg);
+      console.log(" ::: Got a message (subscriber) :::", msg);
       let event = msg["videoroom"];
-      console.debug("Event: " + event);
+      console.log("Event: " + event);
       if (msg["error"]) {
         console.error(msg["error"]);
       } else if (event) {
@@ -636,7 +643,7 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
         }
       }
       if (jsep) {
-        console.debug("Handling SDP as well...", jsep);
+        console.log("Handling SDP as well...", jsep);
         let stereo = jsep.sdp.indexOf("stereo=1") !== -1;
         // Answer and attach
         remoteFeed.createAnswer({
@@ -656,7 +663,7 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
             }
           },
           success: function (jsep: any) {
-            console.debug("Got SDP!", jsep);
+            console.log("Got SDP!", jsep);
             let body = { request: "start", room: myroom };
             remoteFeed.send({ message: body, jsep: jsep });
           },
@@ -670,7 +677,7 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
       // The subscriber stream is recvonly, we don't expect anything here
     },
     onremotetrack: function (track: any, mid: any, on: any) {
-      console.debug(
+      console.log(
         "Remote feed #" +
           remoteFeed.rfindex +
           ", remote track (mid=" +
@@ -683,6 +690,7 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
       if (!on) {
         // Track removed, get rid of the stream and the rendering
         let stream = remoteFeed.remoteTracks[mid];
+        console.log("remote track removed: ", stream);
         if (stream) {
           try {
             let tracks = stream.getTracks();
@@ -714,10 +722,10 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
         return;
       }
       // If we're here, a new track was added
-      if (remoteFeed.spinner) {
-        remoteFeed.spinner.stop();
-        remoteFeed.spinner = null;
-      }
+      // if (remoteFeed.spinner) {
+      //   remoteFeed.spinner.stop();
+      //   remoteFeed.spinner = null;
+      // }
       // if ($("#remotevideo" + remoteFeed.rfindex + "-" + mid).length > 0) return;
       if (track.kind === "audio") {
         // New audio track: create a stream out of it, and use a hidden <audio> element
@@ -731,12 +739,12 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
         //     mid +
         //     '" autoplay playsinline/>'
         // );
-        (Janus as any).attachMediaStream(
-          // TODO: specify audio speaker here
-          //  $("#remotevideo" + remoteFeed.rfindex + "-" + mid).get(0)
-          undefined,
-          stream
-        );
+        // (Janus as any).attachMediaStream(asssss
+        //   // TODO: specify audio speaker here
+        //   //  $("#remotevideo" + remoteFeed.rfindex + "-" + mid).get(0)
+        //   undefined,
+        //   stream
+        // );
         if (remoteFeed.remoteVideos === 0) {
           // No video, at least for now: show a placeholder
           // if (
@@ -775,12 +783,8 @@ function newRemoteFeed(id: any, display: string, streams: any[]) {
         //     remoteFeed.rfindex +
         //     '" style="position: absolute; bottom: 0px; right: 0px; margin: 15px;"></span>'
         // );
-        (Janus as any).attachMediaStream(
-          // specify video surface here
-          /*$("#remotevideo" + remoteFeed.rfindex + "-" + mid).get(0)*/
-          onvideostream(stream, display),
-          stream
-        );
+        // specify video surface here
+        onvideostream(stream, display);
         // Note: we'll need this for additional videos too
         if (!bitrateTimer[remoteFeed.rfindex]) {
           // $("#curbitrate" + remoteFeed.rfindex)

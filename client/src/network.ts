@@ -1,8 +1,7 @@
 import { Player } from "./player";
 import * as video from "./video/video";
 import { webcamshooting as types } from "./game.pb";
-import { v4 as uuidv4 } from "uuid";
-import { update } from "lodash";
+import { appendToLog } from "./utils";
 
 type Position = [number, number, number];
 type Velocity = [number, number, number];
@@ -33,8 +32,8 @@ type PlayerUpdate = {
   }[];
 };
 
-const GAME_SERVER = "ws://localhost:5000";
-export const VIDEO_SERVER = "http://localhost:5001/janus";
+const GAME_SERVER = "ws://192.168.1.21:5000";
+export const VIDEO_SERVER = "http://192.168.1.21:5001/janus";
 
 export abstract class InstantEvent {
   abstract send(client: NetworkClient): void;
@@ -74,6 +73,10 @@ export class RespawnEvent extends InstantEvent {
     });
     client.send(types.Request.encode(msg).finish());
   }
+}
+
+function logMyPid(mypid: string) {
+  appendToLog(`My PID: ${mypid}`);
 }
 
 export class NetworkClient {
@@ -122,9 +125,11 @@ export class NetworkClient {
     });
     if (this.pid !== null) {
       video.initializeVideo(this.pid);
+      logMyPid(this.pid);
     } else {
       this.onmypid = (pid) => {
         video.initializeVideo(pid);
+        logMyPid(pid);
       };
     }
   }
