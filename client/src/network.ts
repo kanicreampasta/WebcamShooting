@@ -34,7 +34,7 @@ type PlayerUpdate = {
 };
 
 const GAME_SERVER = "ws://localhost:5000";
-const VIDEO_SERVER = "http://localhost:5001/janus";
+export const VIDEO_SERVER = "http://localhost:5001/janus";
 
 export abstract class InstantEvent {
   abstract send(client: NetworkClient): void;
@@ -120,12 +120,11 @@ export class NetworkClient {
         this.onvideostream(stream, pid);
       }
     });
-    await video.initJanus();
     if (this.pid !== null) {
-      video.initiateSession(VIDEO_SERVER, this.pid);
+      video.initializeVideo(this.pid);
     } else {
       this.onmypid = (pid) => {
-        video.initiateSession(VIDEO_SERVER, pid);
+        video.initializeVideo(pid);
       };
     }
   }

@@ -316,6 +316,7 @@ class GameManager {
   }
 
   mouseMove(x: number, y: number) {
+    if (this.players.length === 0) return;
     this.players[0].yaw = (-x / window.innerWidth) * 6;
     this.players[0].pitch = -(y / window.innerHeight - 0.5) * Math.PI;
   }
