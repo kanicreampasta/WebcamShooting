@@ -1,25 +1,17 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
 
-	"github.com/go-redis/redis/v9"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/kanicreampasta/webcamshooting/types"
 	"google.golang.org/protobuf/proto"
 )
-
-var (
-	rdb *redis.Client
-)
-
-const ()
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
@@ -66,72 +58,94 @@ func generatePid() string {
 	return pid.String()
 }
 
-func (gs *GameServer) makePlayerResponse(forPid string, pid string) (*types.PlayerUpdateResponse, error) {
-	var (
-		player  *types.Player
-		fired   bool
-		dead    bool
-		damages []*types.DamageInternal
-		err     error
-	)
-	if player, fired, dead, damages, err = func() (*types.Player, bool, bool, []*types.DamageInternal, error) {
-		gs.PlayerListLock.Lock()
-		defer gs.PlayerListLock.Unlock()
-		var ok bool
-		pl, ok := gs.PlayerList[pid]
-		if !ok {
-			return nil, false, false, nil, errors.New("player not found")
-		}
-		player := &types.Player{
-			Position: &types.Vector3{
-				X: pl.Position.X,
-				Y: pl.Position.Y,
-				Z: pl.Position.Z,
-			},
-			Velocity: &types.Vector3{
-				X: pl.Velocity.X,
-				Y: pl.Velocity.Y,
-				Z: pl.Velocity.Z,
-			},
-			Yaw:   pl.Yaw,
-			Pitch: pl.Pitch,
-		}
+func (gs *GameServer) makePlayerResponses(forPid string) ([]*types.PlayerUpdateResponse, error) {
+	gs.PlayerListLock.Lock()
+	defer gs.PlayerListLock.Unlock()
 
-		forPl, ok := gs.PlayerList[forPid]
-		if !ok {
-			return nil, false, false, nil, errors.New("forplayer not found")
-		}
-
-		fired, ok := forPl.FireEvents[pid]
-		// clear fired
-		if ok {
-			forPl.FireEvents[pid] = false
-		}
-
-		dead := pl.IsDead
-
-		var damages []*types.DamageInternal
-		if forPid == pid {
-			damages = pl.DamageEvents
-			// empty pl.DamageEvents
-			if len(damages) > 0 {
-				pl.DamageEvents = make([]*types.DamageInternal, 0)
-				log.Println("inserted damage")
-			}
-		} else {
-			damages = make([]*types.DamageInternal, 0)
-		}
-		return player, fired, dead, damages, nil
-	}(); err != nil {
-		return nil, err
+	forPl, ok := gs.PlayerList[forPid]
+	if !ok {
+		return nil, errors.New("forplayer not found")
 	}
 
+	results := make([]<-chan makeResponseResult, 0)
+	for _, pl := range gs.PlayerList {
+		results = append(results, gs.makePlayerResponseChan(forPl, pl))
+	}
+
+	// wait for all results
+	responses := make([]*types.PlayerUpdateResponse, 0)
+	for _, result := range results {
+		r := <-result
+		if r.Err != nil {
+			return nil, r.Err
+		}
+		responses = append(responses, r.Result)
+	}
+
+	// clear queues
+	// clear fire events
+	forPl.FireEvents = make(map[string]bool)
+	// log.Printf("cleared fire events for %v", forPid)
+	// clear damage events
+	forPl.DamageEvents = make([]*types.DamageInternal, 0)
+
+	return responses, nil
+}
+
+type makeResponseResult struct {
+	Err    error
+	Result *types.PlayerUpdateResponse
+}
+
+func (gs *GameServer) makePlayerResponseChan(forPl *PlayerInfo, pl *PlayerInfo) <-chan makeResponseResult {
+	out := make(chan makeResponseResult)
+
+	go func() {
+		r, err := gs.makePlayerResponseNoLock(forPl, pl)
+		if err != nil {
+			out <- makeResponseResult{Err: err}
+			return
+		}
+		out <- makeResponseResult{Result: r}
+	}()
+
+	return out
+}
+
+func (gs *GameServer) makePlayerResponseNoLock(forPl *PlayerInfo, pl *PlayerInfo) (*types.PlayerUpdateResponse, error) {
+	pid := pl.Pid
+	forPid := forPl.Pid
+
+	player := &types.Player{
+		Position: &types.Vector3{
+			X: pl.Position.X,
+			Y: pl.Position.Y,
+			Z: pl.Position.Z,
+		},
+		Velocity: &types.Vector3{
+			X: pl.Velocity.X,
+			Y: pl.Velocity.Y,
+			Z: pl.Velocity.Z,
+		},
+		Yaw:   pl.Yaw,
+		Pitch: pl.Pitch,
+	}
+
+	fired := forPl.FireEvents[pid]
+	// log.Printf("read fired for %v: %v", forPid, fired)
+
+	dead := pl.IsDead
+
 	damageResponse := make([]*types.DamageResponse, 0)
-	for _, damage := range damages {
-		damageResponse = append(damageResponse, &types.DamageResponse{
-			By:     damage.DamagedBy,
-			Amount: damage.Amount,
-		})
+	if forPid == pid {
+		damages := pl.DamageEvents
+
+		for _, damage := range damages {
+			damageResponse = append(damageResponse, &types.DamageResponse{
+				By:     damage.DamagedBy,
+				Amount: damage.Amount,
+			})
+		}
 	}
 
 	return &types.PlayerUpdateResponse{
@@ -145,20 +159,10 @@ func (gs *GameServer) makePlayerResponse(forPid string, pid string) (*types.Play
 
 func (gs *GameServer) makeUpdateResponse(forPid string) (*types.UpdateResponse, error) {
 
-	pids := func() []string {
-		gs.PlayerListLock.RLock()
-		defer gs.PlayerListLock.RUnlock()
-		return gs.getPids()
-	}()
+	players, err := gs.makePlayerResponses(forPid)
 
-	players := make([]*types.PlayerUpdateResponse, 0)
-	for _, pid := range pids {
-		player, err := gs.makePlayerResponse(forPid, pid)
-		if err != nil {
-			log.Println("make player response:", err)
-			continue
-		}
-		players = append(players, player)
+	if err != nil {
+		return nil, err
 	}
 
 	return &types.UpdateResponse{
@@ -198,14 +202,6 @@ func (gs *GameServer) handleJoinRequest(c *websocket.Conn, u *types.JoinRequest)
 	return pid, nil
 }
 
-func (gs *GameServer) getPids() []string {
-	pids := make([]string, 0)
-	for pid := range gs.PlayerList {
-		pids = append(pids, pid)
-	}
-	return pids
-}
-
 func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdate) {
 	pid := u.Pid
 
@@ -227,16 +223,12 @@ func (gs *GameServer) handleClientUpdate(c *websocket.Conn, u *types.ClientUpdat
 		pl.Yaw = u.Player.Yaw
 		pl.Pitch = u.Player.Pitch
 
-		pids := gs.getPids()
 		if u.Fired {
-			for _, otherPid := range pids {
+			for otherPid, otherPl := range gs.PlayerList {
 				if otherPid == pid {
 					continue
 				}
-				otherPl := gs.PlayerList[otherPid]
-				if otherPl == nil {
-					continue
-				}
+				// log.Printf("set fired for %v", otherPid)
 				otherPl.FireEvents[pid] = true
 			}
 		}
@@ -385,14 +377,6 @@ func NewGameServer() *GameServer {
 }
 
 func main() {
-	rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	rdb.FlushAll(context.Background())
-
 	gs := NewGameServer()
 	http.HandleFunc("/", gs.rootHandler)
 	log.Println("starting in HTTP mode")
