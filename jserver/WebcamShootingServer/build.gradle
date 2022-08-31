@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = 'one.panda_number.wcs.Main'
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+
+    // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
+    implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.21.5'
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-reload4j
+    implementation group: 'org.slf4j', name: 'slf4j-reload4j', version: '2.0.0'
+
+
+}
+
+test {
+    useJUnitPlatform()
+}

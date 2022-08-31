@@ -3,6 +3,10 @@ syntax = "proto3";
 package webcamshooting;
 option go_package = "github.com/kanicreampasta/webcamshooting/types";
 
+option java_multiple_files = true;
+option java_package = "one.panda_number.wcs.protos";
+option java_outer_classname = "GameProtos";
+
 message Vector3 {
     float x = 1;
     float y = 2;
