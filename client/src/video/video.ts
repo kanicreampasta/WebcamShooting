@@ -172,6 +172,17 @@ function startVideoRoom(janus: Janus, username: string) {
         console.log("send a request to limit bandwidth to 64kbits");
       }
     },
+    slowLink: function (uplink: any, lost: any, mid: any) {
+      console.log(
+        "Janus reports problems " +
+          (uplink ? "sending" : "receiving") +
+          " packets on mid " +
+          mid +
+          " (" +
+          lost +
+          " lost packets)"
+      );
+    },
     iceState: function (state: any) {
       console.log("iceState changed to " + state);
     },
