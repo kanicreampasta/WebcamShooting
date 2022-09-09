@@ -14,10 +14,7 @@ export function setOnVideoStream(
 
 import { VIDEO_SERVER_SIGNALING as server } from "../network";
 
-export const initializeVideo = function (
-  username: string,
-  stream: MediaStream
-) {
+export const initializeVideo = function (pid: string, stream: MediaStream) {
   const pc = new RTCPeerConnection();
   pc.ontrack = (event) => {
     console.log("got ontrack event", event);
@@ -37,6 +34,7 @@ export const initializeVideo = function (
     };
   };
 
+  console.log(`my stream id is ${stream.id}`);
   stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
   const ws = new WebSocket(server);
@@ -89,5 +87,15 @@ export const initializeVideo = function (
 
   ws.onerror = (evt) => {
     console.error("signaling ws error", evt);
+  };
+
+  ws.onopen = () => {
+    // send my stream id and pid to server
+    ws.send(
+      JSON.stringify({
+        event: "pid",
+        pid: pid,
+      })
+    );
   };
 };

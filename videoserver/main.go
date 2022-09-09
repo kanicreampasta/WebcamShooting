@@ -24,11 +24,15 @@ var (
 	listLock        sync.RWMutex
 	peerConnections []peerConnectionState
 	trackLocals     map[string]*webrtc.TrackLocalStaticRTP
+
+	pidToStreamIdMap     map[string]string = make(map[string]string)
+	pidToStreamIdMapLock sync.Mutex
 )
 
 type websocketMessage struct {
-	Event string `json:"event"`
-	Data  string `json:"data"`
+	Event string  `json:"event"`
+	Data  string  `json:"data"`
+	Pid   *string `json:"pid,omitempty"`
 }
 
 type peerConnectionState struct {
@@ -60,6 +64,8 @@ func main() {
 	// 		log.Fatal(err)
 	// 	}
 	// })
+
+	http.HandleFunc("/ids", idsHandler)
 
 	// request a keyframe every 3 seconds
 	go func() {
@@ -213,6 +219,45 @@ func dispatchKeyFrame() {
 	}
 }
 
+type idsResponseList struct {
+	PID      string `json:"pid"`
+	StreamID string `json:"sid"`
+}
+
+type idsResponse struct {
+	IDs []idsResponseList `json:"ids"`
+}
+
+func idsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	pidToStreamIdMapLock.Lock()
+	ids := make([]idsResponseList, 0)
+	for pid, streamId := range pidToStreamIdMap {
+		ids = append(ids, idsResponseList{
+			PID:      pid,
+			StreamID: streamId,
+		})
+	}
+	pidToStreamIdMapLock.Unlock()
+
+	idsResponse := idsResponse{
+		IDs: ids,
+	}
+
+	jsonResponse, err := json.Marshal(idsResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
 // Handle incoming websockets
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	// Upgrade HTTP request to Websocket
@@ -284,8 +329,33 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 
+	var myStreamID string
+	var myPID string
+
+	tryReportMyID := func() {
+		if myStreamID == "" || myPID == "" {
+			return
+		}
+
+		pidToStreamIdMapLock.Lock()
+		defer pidToStreamIdMapLock.Unlock()
+		pidToStreamIdMap[myPID] = myStreamID
+	}
+
+	// delete pid and stream id on close
+	defer func() {
+		if myStreamID != "" && myPID != "" {
+			pidToStreamIdMapLock.Lock()
+			defer pidToStreamIdMapLock.Unlock()
+			delete(pidToStreamIdMap, myPID)
+		}
+	}()
+
 	peerConnection.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
 		// Create a track to fan out our incoming video to all peers
+		log.Printf("OnTrack stream ID: %v", t.StreamID())
+		myStreamID = t.StreamID()
+		tryReportMyID()
 		trackLocal := addTrack(t)
 		defer removeTrack(trackLocal)
 
@@ -339,6 +409,13 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				return
 			}
+		case "pid":
+			if message.Pid == nil {
+				log.Printf("bad message format: pid is null")
+				return
+			}
+			myPID = *message.Pid
+			tryReportMyID()
 		}
 	}
 }
