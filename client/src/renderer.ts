@@ -20,7 +20,7 @@ export class RenderingManager {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
 
-    this.scene.background=new THREE.Color( 0xaaaaff );
+    this.scene.background = new THREE.Color(0xaaaaff);
 
     const directionalLight: THREE.DirectionalLight = new THREE.DirectionalLight(
       0xffffff,
@@ -94,5 +94,24 @@ export class RenderingManager {
   }
   getCanvas(): HTMLCanvasElement {
     return this.renderer.domElement;
+  }
+
+  enableView(ty: "alive" | "dead") {
+    const alive = document.getElementById("aliveView") as HTMLDivElement;
+    const dead = document.getElementById("deadView") as HTMLDivElement;
+    if (ty === "alive") {
+      alive.classList.add("active");
+      dead.classList.remove("active");
+    } else {
+      alive.classList.remove("active");
+      dead.classList.add("active");
+    }
+  }
+
+  private respawnTimerSpan = document.getElementById(
+    "respawnTimer"
+  ) as HTMLSpanElement;
+  updateRespawnTimerText(timeInSeconds: number) {
+    this.respawnTimerSpan.textContent = timeInSeconds.toString();
   }
 }

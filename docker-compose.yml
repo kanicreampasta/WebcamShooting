@@ -1,0 +1,15 @@
+version: '3'
+services:
+  gameserver:
+    build: ./server
+    ports:
+      - "5000:3000"
+  janus:
+    build: ./janus-docker
+    ports:
+      - "5001:8088"
+      - "5002:8089"
+  frontend:
+    build: ./client
+    ports:
+      - "5003:80"

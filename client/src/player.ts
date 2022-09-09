@@ -192,7 +192,17 @@ export class Player {
   }
   delete(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
     world.removeRigidBody(this.rigidbody);
+    if (this.hitTestBody) {
+      world.removeRigidBody(this.hitTestBody);
+    }
     scene.remove(this.playerMesh);
+  }
+  readdToWorld(scene: THREE.Scene, world: Ammo.btDiscreteDynamicsWorld) {
+    world.addRigidBody(this.rigidbody);
+    if (this.hitTestBody) {
+      world.addRigidBody(this.hitTestBody);
+    }
+    scene.add(this.playerMesh);
   }
   applyGraphics() {
     const trans = new gAmmo.btTransform();
@@ -407,11 +417,19 @@ export class Player {
   }
 
   gotDamage(damageAmount: number, showEffect: boolean = false) {
-    const isAlive = this.health.damage(damageAmount);
-    if (!isAlive) {
-      console.warn("you are dead :>");
-      this.health.heal(100);
-    }
+    this.health.damage(damageAmount);
+    // if (!isAlive) {
+    //   console.warn("you are dead :>");
+    //   // this.health.heal(100);
+    // }
     document.getElementById("log")!.innerText += "damage:" + damageAmount;
+  }
+
+  isDead(): boolean {
+    return this.health.isDead();
+  }
+
+  setHealth(hp: number) {
+    this.health.remainingHealth = hp;
   }
 }

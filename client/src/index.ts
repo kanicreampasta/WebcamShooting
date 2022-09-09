@@ -4,7 +4,7 @@ import "./index.css";
 import { RenderingManager } from "./renderer";
 import { gAmmo, PhysicsManager } from "./physics";
 import { Player } from "./player";
-import { NetworkClient } from "./network";
+import { DeadEvent, NetworkClient, RespawnEvent } from "./network";
 import { ModelLoader } from "./model-loader";
 import { appendToLog } from "./utils";
 import { FaceDetector } from "./face-detection/facedetection";
@@ -12,6 +12,8 @@ import { AudioManager } from "./audio";
 import * as _ from "lodash";
 
 export let gPlayers: Player[];
+
+const RESPAWN_WAIT_TIME = 5;
 
 class GameManager {
   rendering: RenderingManager;
@@ -47,6 +49,8 @@ class GameManager {
   private effectCanvas: HTMLCanvasElement;
   private effectCanvasCtx: CanvasRenderingContext2D;
 
+  private respawnTimer: number = -1;
+
   constructor(onload: () => void) {
     this.rendering = new RenderingManager();
     this.physics = new PhysicsManager();
@@ -65,6 +69,7 @@ class GameManager {
     this.effectCanvas.width = mainCanvas.width;
     this.effectCanvas.height = mainCanvas.height;
   }
+
   private initPlayer() {
     this.players = [];
     gPlayers = this.players;
@@ -76,6 +81,7 @@ class GameManager {
     this.startFrame = new Date();
     this.players[0].warp(0, 20, 0);
   }
+
   async loadGame() {
     {
       const promises: Promise<any>[] = this.stageLoaders.map((ld) => {
@@ -94,12 +100,14 @@ class GameManager {
 
     this.onload();
   }
+
   startLoadingModels() {
     this.stageLoaders.push(
       new ModelLoader("WebcamShootingMaps/IndiaPro/stage.glb")
     );
     this.loaders["human"] = new ModelLoader("human.glb");
   }
+
   addCube(
     position: THREE.Vector3,
     dimention: THREE.Vector3,
@@ -113,6 +121,7 @@ class GameManager {
       rotation
     );
   }
+
   step() {
     const currentFrame: Date = new Date();
     const dt: number =
@@ -140,6 +149,32 @@ class GameManager {
       this.view = (this.view + 1) % 2;
     }
 
+    const player = this.getMyPlayer();
+    if (player.isDead()) {
+      // console.log("reaspwn timer", this.respawnTimer);
+      this.respawnTimer -= dt;
+      if (this.respawnTimer < 0) {
+        this.respawnTimer = -1;
+
+        const initPosition = [0, 20, 0] as [number, number, number];
+        const initHealth = 51;
+
+        network!.queueInstantEvent(new RespawnEvent(initPosition));
+
+        player.warp(...initPosition);
+        player.setHealth(initHealth);
+
+        this.rendering.enableView("alive");
+      } else {
+        this.rendering.updateRespawnTimerText(this.respawnTimer);
+      }
+    } else {
+      this.aliveProcess(dt, currentFrame);
+    }
+    this.lastFrame = currentFrame;
+  }
+
+  private aliveProcess(dt: number, currentFrame: Date) {
     this.addThrust();
     this.processGun();
     // this.updateHealth();
@@ -185,9 +220,9 @@ class GameManager {
 
     this.drawDamageEffect(dt);
 
-    this.lastFrame = currentFrame;
     this.previousKeyState = _.cloneDeep(this.keyState);
   }
+
   private drawDamageEffect(dt: number) {
     this.effectCanvasCtx.clearRect(
       0,
@@ -218,6 +253,7 @@ class GameManager {
       this.damageEffectTimer -= dt;
     }
   }
+
   addPlayer(player: Player, id?: string): void {
     this.players.push(player);
     if (id !== undefined) {
@@ -225,6 +261,7 @@ class GameManager {
     }
     player.loadHuman(this.loaders["human"], this.physics.world);
   }
+
   createNewPlayer(
     id: string,
     position: [number, number, number],
@@ -238,6 +275,7 @@ class GameManager {
     this.addPlayer(player, id);
     return player;
   }
+
   deletePlayerByIndex(index: number): void {
     this.players[index].delete(this.rendering.scene, this.physics.world);
     const deleted = this.players.splice(index, 1)[0];
@@ -248,6 +286,7 @@ class GameManager {
       }
     }
   }
+
   deletePlayerById(id: string): void {
     if (this.playerIdMap.has(id)) {
       const playerToDelete = this.playerIdMap.get(id)!;
@@ -259,22 +298,33 @@ class GameManager {
       }
     }
   }
+
+  removePlayerFromWorldById(id: string): void {}
+
+  addPlayerToWorldById(id: string): void {}
+
   getMyPlayer(): Player {
     return this.players[0];
   }
+
   setIdOfMyPlayer(id: string): void {
     this.playerIdMap.set(id, this.getMyPlayer());
   }
+
   getPlayerById(id: string): Player | undefined {
     return this.playerIdMap.get(id);
   }
+
   mouseMove(x: number, y: number) {
+    if (this.players.length === 0) return;
     this.players[0].yaw = (-x / window.innerWidth) * 6;
     this.players[0].pitch = -(y / window.innerHeight - 0.5) * Math.PI;
   }
+
   setKey(state: KeyState) {
     this.keyState = state;
   }
+
   addThrust() {
     const v = new THREE.Vector3(0, 0, 0);
     if (this.keyState.W) {
@@ -299,6 +349,7 @@ class GameManager {
       }
     }
   }
+
   private processGun() {
     const player = this.getMyPlayer();
     if (this.keyState.leftClick) {
@@ -350,6 +401,18 @@ class GameManager {
       (currentFleshHealth / maxFleshHealth) * 100 + "%";
     this.fleshRemainingNumber.innerText =
       currentFleshHealth + "/" + maxFleshHealth;
+
+    // check if dead
+    if (player.isDead()) {
+      this.deathProcess();
+    }
+  }
+
+  private deathProcess() {
+    network!.queueInstantEvent(new DeadEvent());
+    this.respawnTimer = RESPAWN_WAIT_TIME;
+
+    this.rendering.enableView("dead");
   }
 
   getCanvas(): HTMLCanvasElement {
@@ -358,6 +421,21 @@ class GameManager {
 
   private startDamageEffect() {
     this.damageEffectTimer = this.damageEffectDuration;
+  }
+
+  keepOrRemovePlayers(keptPlayerPids: Set<string>) {
+    if (keptPlayerPids.size === this.players.length) return;
+    // remove players whose pid is not in keptPlayerPids
+    for (let i = 0; i < this.players.length; i++) {
+      const player = this.players[i];
+      if (player.pid !== undefined) {
+        if (!keptPlayerPids.has(player.pid)) {
+          console.log("remove player from world: " + player.pid);
+          this.deletePlayerByIndex(i);
+          i--;
+        }
+      }
+    }
   }
 }
 class KeyState {
@@ -567,6 +645,10 @@ window.onload = async function () {
       }
     }
   };
+  network.onplayerPidsUpdate = (pids) => {
+    // remove left players
+    manager?.keepOrRemovePlayers(new Set(pids));
+  };
   network.onplayerdelete = (pid) => {
     console.log(`deleted player ${pid}`);
     manager!.deletePlayerById(pid);
@@ -614,8 +696,7 @@ window.onload = async function () {
     })
     .then(async (stream) => {
       console.log("initializing video server");
-      network!.setVideoStream(stream);
-      await network!.initVideoServer();
+      await network!.initVideoServer(stream);
     });
   {
     let mouseMoveX = 0;

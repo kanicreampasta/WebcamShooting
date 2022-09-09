@@ -29,6 +29,7 @@ export class PlayerHealth {
     const newHealth = this.remainingHealth - damageAmount;
     if (newHealth <= 0) {
       isAlive = false;
+      this.remainingHealth = 0;
     } else {
       this.remainingHealth = newHealth;
     }
@@ -37,5 +38,9 @@ export class PlayerHealth {
 
   getMaxHealthValue(): number {
     return MAX_HEALTH;
+  }
+
+  isDead(): boolean {
+    return this.remainingHealth <= 0;
   }
 }

@@ -541,6 +541,215 @@ export namespace webcamshooting {
         public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
+    /** Properties of a DeadUpdate. */
+    interface IDeadUpdate {
+
+        /** DeadUpdate pid */
+        pid?: (string|null);
+
+        /** DeadUpdate killedBy */
+        killedBy?: (string|null);
+    }
+
+    /** Represents a DeadUpdate. */
+    class DeadUpdate implements IDeadUpdate {
+
+        /**
+         * Constructs a new DeadUpdate.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: webcamshooting.IDeadUpdate);
+
+        /** DeadUpdate pid. */
+        public pid: string;
+
+        /** DeadUpdate killedBy. */
+        public killedBy?: (string|null);
+
+        /** DeadUpdate _killedBy. */
+        public _killedBy?: "killedBy";
+
+        /**
+         * Creates a new DeadUpdate instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns DeadUpdate instance
+         */
+        public static create(properties?: webcamshooting.IDeadUpdate): webcamshooting.DeadUpdate;
+
+        /**
+         * Encodes the specified DeadUpdate message. Does not implicitly {@link webcamshooting.DeadUpdate.verify|verify} messages.
+         * @param message DeadUpdate message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: webcamshooting.IDeadUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified DeadUpdate message, length delimited. Does not implicitly {@link webcamshooting.DeadUpdate.verify|verify} messages.
+         * @param message DeadUpdate message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: webcamshooting.IDeadUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a DeadUpdate message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns DeadUpdate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webcamshooting.DeadUpdate;
+
+        /**
+         * Decodes a DeadUpdate message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns DeadUpdate
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): webcamshooting.DeadUpdate;
+
+        /**
+         * Verifies a DeadUpdate message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a DeadUpdate message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns DeadUpdate
+         */
+        public static fromObject(object: { [k: string]: any }): webcamshooting.DeadUpdate;
+
+        /**
+         * Creates a plain object from a DeadUpdate message. Also converts values to other types if specified.
+         * @param message DeadUpdate
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: webcamshooting.DeadUpdate, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this DeadUpdate to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for DeadUpdate
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a RespawnRequest. */
+    interface IRespawnRequest {
+
+        /** RespawnRequest pid */
+        pid?: (string|null);
+
+        /** RespawnRequest position */
+        position?: (webcamshooting.IVector3|null);
+    }
+
+    /** Represents a RespawnRequest. */
+    class RespawnRequest implements IRespawnRequest {
+
+        /**
+         * Constructs a new RespawnRequest.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: webcamshooting.IRespawnRequest);
+
+        /** RespawnRequest pid. */
+        public pid: string;
+
+        /** RespawnRequest position. */
+        public position?: (webcamshooting.IVector3|null);
+
+        /**
+         * Creates a new RespawnRequest instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns RespawnRequest instance
+         */
+        public static create(properties?: webcamshooting.IRespawnRequest): webcamshooting.RespawnRequest;
+
+        /**
+         * Encodes the specified RespawnRequest message. Does not implicitly {@link webcamshooting.RespawnRequest.verify|verify} messages.
+         * @param message RespawnRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: webcamshooting.IRespawnRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified RespawnRequest message, length delimited. Does not implicitly {@link webcamshooting.RespawnRequest.verify|verify} messages.
+         * @param message RespawnRequest message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: webcamshooting.IRespawnRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a RespawnRequest message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns RespawnRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): webcamshooting.RespawnRequest;
+
+        /**
+         * Decodes a RespawnRequest message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns RespawnRequest
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): webcamshooting.RespawnRequest;
+
+        /**
+         * Verifies a RespawnRequest message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a RespawnRequest message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns RespawnRequest
+         */
+        public static fromObject(object: { [k: string]: any }): webcamshooting.RespawnRequest;
+
+        /**
+         * Creates a plain object from a RespawnRequest message. Also converts values to other types if specified.
+         * @param message RespawnRequest
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: webcamshooting.RespawnRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this RespawnRequest to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for RespawnRequest
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
     /** Properties of a Request. */
     interface IRequest {
 
@@ -549,6 +758,12 @@ export namespace webcamshooting {
 
         /** Request clientUpdate */
         clientUpdate?: (webcamshooting.IClientUpdate|null);
+
+        /** Request deadUpdate */
+        deadUpdate?: (webcamshooting.IDeadUpdate|null);
+
+        /** Request respawnRequest */
+        respawnRequest?: (webcamshooting.IRespawnRequest|null);
     }
 
     /** Represents a Request. */
@@ -566,8 +781,14 @@ export namespace webcamshooting {
         /** Request clientUpdate. */
         public clientUpdate?: (webcamshooting.IClientUpdate|null);
 
+        /** Request deadUpdate. */
+        public deadUpdate?: (webcamshooting.IDeadUpdate|null);
+
+        /** Request respawnRequest. */
+        public respawnRequest?: (webcamshooting.IRespawnRequest|null);
+
         /** Request requestOneof. */
-        public requestOneof?: ("joinRequest"|"clientUpdate");
+        public requestOneof?: ("joinRequest"|"clientUpdate"|"deadUpdate"|"respawnRequest");
 
         /**
          * Creates a new Request instance using the specified properties.
@@ -962,6 +1183,9 @@ export namespace webcamshooting {
         /** PlayerUpdateResponse player */
         player?: (webcamshooting.IPlayer|null);
 
+        /** PlayerUpdateResponse dead */
+        dead?: (boolean|null);
+
         /** PlayerUpdateResponse fired */
         fired?: (boolean|null);
 
@@ -983,6 +1207,9 @@ export namespace webcamshooting {
 
         /** PlayerUpdateResponse player. */
         public player?: (webcamshooting.IPlayer|null);
+
+        /** PlayerUpdateResponse dead. */
+        public dead: boolean;
 
         /** PlayerUpdateResponse fired. */
         public fired: boolean;

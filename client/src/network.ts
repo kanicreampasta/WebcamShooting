@@ -1,8 +1,7 @@
 import { Player } from "./player";
 import * as video from "./video/video";
 import { webcamshooting as types } from "./game.pb";
-import { v4 as uuidv4 } from "uuid";
-import { update } from "lodash";
+import { appendToLog } from "./utils";
 
 type Position = [number, number, number];
 type Velocity = [number, number, number];
@@ -34,26 +33,71 @@ type PlayerUpdate = {
 };
 
 const GAME_SERVER = "ws://localhost:5000";
-const VIDEO_SERVER = "http://localhost:5001/janus";
+const VIDEO_SERVER_SIGNALING_HOST = "localhost:5004";
+export const VIDEO_SERVER_SIGNALING_WS = "ws://" + VIDEO_SERVER_SIGNALING_HOST;
+export const VIDEO_SERVER_SIGNALING_HTTP =
+  "http://" + VIDEO_SERVER_SIGNALING_HOST;
+export abstract class InstantEvent {
+  abstract send(client: NetworkClient): void;
+}
+
+export class DeadEvent extends InstantEvent {
+  send(client: NetworkClient) {
+    const req = types.DeadUpdate.create({
+      pid: client.pid,
+    });
+    const msg = types.Request.create({
+      deadUpdate: req,
+    });
+    client.send(types.Request.encode(msg).finish());
+  }
+}
+
+export class RespawnEvent extends InstantEvent {
+  private pos: Position;
+
+  constructor(pos: Position) {
+    super();
+    this.pos = pos;
+  }
+
+  send(client: NetworkClient) {
+    const req = types.RespawnRequest.create({
+      pid: client.pid,
+      position: types.Vector3.create({
+        x: this.pos[0],
+        y: this.pos[1],
+        z: this.pos[2],
+      }),
+    });
+    const msg = types.Request.create({
+      respawnRequest: req,
+    });
+    client.send(types.Request.encode(msg).finish());
+  }
+}
+
+function logMyPid(mypid: string) {
+  appendToLog(`My PID: ${mypid}`);
+}
 
 export class NetworkClient {
   private socket?: WebSocket;
   private loopKey?: NodeJS.Timer;
-  private pid: string | null;
+  pid: string | null;
+
   private fired: boolean = false;
   private damageQueue: Map<string, DamageInfo> = new Map();
+  private eventQueue: InstantEvent[] = [];
 
   onplayerupdate: undefined | ((pid: string, update: PlayerUpdate) => void);
+  onplayerPidsUpdate: undefined | ((pids: string[]) => void);
 
   onplayerdelete: undefined | ((pid: string) => void);
 
   onvideostream: undefined | video.VideoSetter;
 
   onmypid: undefined | ((pid: string) => void);
-
-  setVideoStream(stream: MediaStream) {
-    video.setVideoStream(stream);
-  }
 
   constructor() {
     this.socket = undefined;
@@ -71,18 +115,19 @@ export class NetworkClient {
     });
   }
 
-  async initVideoServer(): Promise<void> {
+  async initVideoServer(myStream: MediaStream): Promise<void> {
     video.setOnVideoStream((stream, pid) => {
       if (this.onvideostream) {
         this.onvideostream(stream, pid);
       }
     });
-    await video.initJanus();
     if (this.pid !== null) {
-      video.initiateSession(VIDEO_SERVER, this.pid);
+      video.initializeVideo(this.pid, myStream);
+      logMyPid(this.pid);
     } else {
       this.onmypid = (pid) => {
-        video.initiateSession(VIDEO_SERVER, pid);
+        video.initializeVideo(pid, myStream);
+        logMyPid(pid);
       };
     }
   }
@@ -106,8 +151,20 @@ export class NetworkClient {
     return this.pid!;
   }
 
+  private processInstantEvents() {
+    for (const event of this.eventQueue) {
+      event.send(this);
+    }
+    if (this.eventQueue.length > 0) {
+      this.eventQueue = [];
+    }
+  }
+
   private loop(getPlayer: PlayerGetter) {
     if (this.pid === null) return;
+
+    this.processInstantEvents();
+
     const pl = getPlayer();
 
     const u: types.IClientUpdate = {
@@ -153,6 +210,12 @@ export class NetworkClient {
     this.socket!.send(types.Request.encode(req).finish());
   }
 
+  send(
+    data: Parameters<NonNullable<NetworkClient["socket"]>["send"]>[0]
+  ): void {
+    this.socket!.send(data);
+  }
+
   private async onmessage(ev: MessageEvent<any>) {
     const bin: Blob = ev.data;
     const buf = await bin.arrayBuffer();
@@ -169,6 +232,12 @@ export class NetworkClient {
       const update = res.updateResponse!;
       for (const player of update.players!) {
         this.processPlayer(player);
+      }
+      const pids = update.players!.map((p) => p.pid!);
+      if (this.onplayerPidsUpdate) {
+        this.onplayerPidsUpdate(pids);
+      } else {
+        console.log("onplayerPidsUpdate is not set");
       }
     }
   }
@@ -197,6 +266,10 @@ export class NetworkClient {
       info!.damage += damage;
       info!.afterHP = afterHP;
     }
+  }
+
+  queueInstantEvent(ev: InstantEvent) {
+    this.eventQueue.push(ev);
   }
 
   private convertVector3(v: types.IVector3): [number, number, number] {
