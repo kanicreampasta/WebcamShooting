@@ -12,11 +12,14 @@ export function setOnVideoStream(
   };
 }
 
-import { VIDEO_SERVER_SIGNALING as server } from "../network";
+import {
+  VIDEO_SERVER_SIGNALING_WS as wsServer,
+  VIDEO_SERVER_SIGNALING_HTTP as httpServer,
+} from "../network";
 
 export const initializeVideo = function (pid: string, stream: MediaStream) {
   const pc = new RTCPeerConnection();
-  pc.ontrack = (event) => {
+  pc.ontrack = async (event) => {
     console.log("got ontrack event", event);
     if (event.track.kind === "audio") {
       return;
@@ -24,6 +27,22 @@ export const initializeVideo = function (pid: string, stream: MediaStream) {
 
     // TODO: attach remote stream
     const srcObject = event.streams[0];
+    const sid = srcObject.id;
+    try {
+      const ids = await fetch(httpServer + "/ids");
+      const idsJson = (await ids.json()) as {
+        ids: { sid: string; pid: string }[];
+      };
+      // find pid of sid
+      const pid = idsJson.ids.find(({ sid }) => sid === sid)?.pid;
+      if (pid === undefined) {
+        console.error("pid not found for sid: sid=" + sid);
+      } else {
+        onvideostream(srcObject, pid);
+      }
+    } catch (e) {
+      console.error(e);
+    }
 
     event.track.onmute = (event) => {
       console.log("track muted", event);
@@ -37,7 +56,7 @@ export const initializeVideo = function (pid: string, stream: MediaStream) {
   console.log(`my stream id is ${stream.id}`);
   stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-  const ws = new WebSocket(server);
+  const ws = new WebSocket(wsServer + "/websocket");
   pc.onicecandidate = (e) => {
     if (!e.candidate) {
       return;

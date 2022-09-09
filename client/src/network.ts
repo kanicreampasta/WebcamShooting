@@ -33,7 +33,10 @@ type PlayerUpdate = {
 };
 
 const GAME_SERVER = "ws://localhost:5000";
-export const VIDEO_SERVER_SIGNALING = "ws://localhost:5004/websocket";
+const VIDEO_SERVER_SIGNALING_HOST = "localhost:5004";
+export const VIDEO_SERVER_SIGNALING_WS = "ws://" + VIDEO_SERVER_SIGNALING_HOST;
+export const VIDEO_SERVER_SIGNALING_HTTP =
+  "http://" + VIDEO_SERVER_SIGNALING_HOST;
 export abstract class InstantEvent {
   abstract send(client: NetworkClient): void;
 }
