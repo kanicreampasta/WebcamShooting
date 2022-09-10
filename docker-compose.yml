@@ -3,12 +3,11 @@ services:
   gameserver:
     build: ./server
     ports:
-      - "5000:3000"
-  janus:
-    build: ./janus-docker
+      - "5000:5000"
+  videoserver:
+    build: ./videoserver
     ports:
-      - "5001:8088"
-      - "5002:8089"
+      - "5004:5004"
   frontend:
     build: ./client
     ports:
