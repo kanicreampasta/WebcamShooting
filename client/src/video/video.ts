@@ -34,10 +34,12 @@ export const initializeVideo = function (pid: string, stream: MediaStream) {
         ids: { sid: string; pid: string }[];
       };
       // find pid of sid
-      const pid = idsJson.ids.find(({ sid }) => sid === sid)?.pid;
+      const streamId = sid;
+      const pid = idsJson.ids.find(({ sid }) => streamId === sid)?.pid;
       if (pid === undefined) {
         console.error("pid not found for sid: sid=" + sid);
       } else {
+        console.log(`[video] pid=${pid} sid=${sid}`);
         onvideostream(srcObject, pid);
       }
     } catch (e) {

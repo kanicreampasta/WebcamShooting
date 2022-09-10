@@ -15,6 +15,8 @@ export let gPlayers: Player[];
 
 const RESPAWN_WAIT_TIME = 5;
 
+type PlayerOperation = (player: Player) => void;
+
 class GameManager {
   rendering: RenderingManager;
   physics: PhysicsManager;
@@ -260,6 +262,16 @@ class GameManager {
       this.playerIdMap.set(id, player);
     }
     player.loadHuman(this.loaders["human"], this.physics.world);
+
+    let remainingOperations: typeof this.operationQueue = [];
+    for (const op of this.operationQueue) {
+      if (op.id === id) {
+        op.f(player);
+      } else {
+        remainingOperations.push(op);
+      }
+    }
+    this.operationQueue = remainingOperations;
   }
 
   createNewPlayer(
@@ -313,6 +325,20 @@ class GameManager {
 
   getPlayerById(id: string): Player | undefined {
     return this.playerIdMap.get(id);
+  }
+
+  private operationQueue: {
+    id: string;
+    f: PlayerOperation;
+  }[] = [];
+  queuePlayerOperation(id: string, f: PlayerOperation): void {
+    const player = this.getPlayerById(id);
+    if (player !== undefined) {
+      f(player);
+    } else {
+      console.log(`pid ${id} not found, queued operation`);
+      this.operationQueue.push({ id, f });
+    }
   }
 
   mouseMove(x: number, y: number) {
@@ -655,12 +681,14 @@ window.onload = async function () {
   };
   // video server network
   network.onvideostream = (stream, pid) => {
-    console.log(`got stream ${stream} for pid ${pid}`);
+    console.log(`got stream ${stream?.id} for pid ${pid}`);
     if (pid === undefined) {
       appendToLog(`local stream connected`);
     } else {
       appendToLog(`got stream of player ${pid}`);
-      manager!.getPlayerById(pid)?.setFaceImage(stream!);
+      manager!.queuePlayerOperation(pid, (targetPlayer) => {
+        targetPlayer.setFaceImage(stream!);
+      });
     }
   };
   getCamera()
