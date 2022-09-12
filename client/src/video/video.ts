@@ -21,7 +21,9 @@ export const initializeVideo = function (pid: string, stream: MediaStream) {
   const pc = new RTCPeerConnection({
     iceServers: [
       {
-        urls: "stun:stun.l.google.com:19302",
+        urls: "turn:wcs.panda-number.one:5349",
+        username: "wcs",
+        credential: "wcs",
       },
     ],
   });
