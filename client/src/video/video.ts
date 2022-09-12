@@ -18,7 +18,13 @@ import {
 } from "../network";
 
 export const initializeVideo = function (pid: string, stream: MediaStream) {
-  const pc = new RTCPeerConnection();
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: "stun:stun.l.google.com:19302",
+      },
+    ],
+  });
   pc.ontrack = async (event) => {
     console.log("got ontrack event", event);
     if (event.track.kind === "audio") {
