@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package webcamshooting;
+option go_package = "github.com/kanicreampasta/webcamshooting/types";
+
+message Vector3 {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message Damage {
+    string pid = 1;
+    float damage = 2;
+}
+
+message Player {
+    Vector3 position = 1;
+    Vector3 velocity = 2;
+    float yaw = 3;
+    float pitch = 4;
+}
+
+message ClientUpdate {
+    string pid = 1;
+    Player player = 2;
+    bool fired = 3;
+    repeated Damage damages = 4;
+}
+
+message JoinRequest {
+    string name = 1;
+}
+
+message DeadUpdate {
+    string pid = 1;
+    optional string killed_by = 2;
+}
+
+message RespawnRequest {
+    string pid = 1;
+    Vector3 position = 2;
+}
+
+message Request {
+    oneof request_oneof {
+        JoinRequest join_request = 1;
+        ClientUpdate client_update = 2;
+        DeadUpdate dead_update = 3;
+        RespawnRequest respawn_request = 4;
+    }
+}
+
+message Response {
+    oneof response_oneof {
+        PidResponse pid_response = 1;
+        UpdateResponse update_response = 2;
+    }
+}
+
+message PidResponse {
+    string pid = 1;
+}
+
+message DamageResponse {
+    string by = 1;
+    float amount = 2;
+}
+
+message PlayerUpdateResponse {
+    string pid = 1;
+    Player player = 2;
+    bool dead = 3;
+    bool fired = 6;
+    repeated DamageResponse damages = 7;
+}
+
+message UpdateResponse {
+    repeated PlayerUpdateResponse players = 1;
+}
